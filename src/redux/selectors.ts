@@ -1,0 +1,127 @@
+import type { RootState } from "./store";
+
+const rows = (state: RootState, key: "bookings" | "trips" | "drivers" | "vehicles" | "invoices") => state[key].allItems || state[key].items || [];
+
+function groupCount(items: any[], key: string): { _id: string; value: number }[] {
+  return Object.entries(items.reduce((acc, item) => {
+    const label = item[key] || "Unknown";
+    acc[label] = (acc[label] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>)).map(([_id, value]) => ({ _id, value: Number(value) }));
+}
+
+function monthName(value: string) {
+  return new Date(value).toLocaleString("en-IN", { month: "short" });
+}
+
+function trend(items: any[], valuePicker: (item: any) => number): { _id: string; value: number }[] {
+  const grouped = items.reduce((acc, item) => {
+    const label = item.createdAt ? monthName(item.createdAt) : "Current";
+    acc[label] = (acc[label] || 0) + valuePicker(item);
+    return acc;
+  }, {} as Record<string, number>);
+  return Object.entries(grouped).map(([_id, value]) => ({ _id, value: Number(value) }));
+}
+
+export function selectDashboardData(state: RootState) {
+  const bookings = rows(state, "bookings");
+  const trips = rows(state, "trips");
+  const drivers = rows(state, "drivers");
+  const vehicles = rows(state, "vehicles");
+  const invoices = rows(state, "invoices");
+  const payments = state.payments.items || [];
+  const pendingInvoices = invoices.filter((invoice) => Number(invoice.balanceAmount || 0) > 0);
+
+  return {
+    cards: {
+      totalBookings: bookings.length,
+      activeTrips: trips.filter((trip) => ["Assigned", "In Trip"].includes(trip.status)).length,
+      completedTrips: trips.filter((trip) => trip.status === "Completed").length,
+      pendingInvoices: pendingInvoices.length,
+      revenueSummary: payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
+      pendingPayments: pendingInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceAmount || 0), 0),
+      availableDrivers: drivers.filter((driver) => driver.status === "Available").length,
+      availableCars: vehicles.filter((vehicle) => vehicle.status === "Available").length
+    },
+    charts: {
+      revenue: trend(payments, (payment) => Number(payment.amount || 0)),
+      trips: trend(trips, () => 1),
+      bookings: trend(bookings, () => 1),
+      invoiceStatus: groupCount(invoices, "status")
+    },
+    recentBookings: bookings.slice(0, 5),
+    recentInvoices: invoices.slice(0, 5)
+  };
+}
+
+const reportColumns: Record<string, { key: string; header: string }[]> = {
+  "daily-trips": [
+    { key: "tripNumber", header: "Trip" }, { key: "status", header: "Status" }, { key: "totalKm", header: "KM" }, { key: "driverName", header: "Driver" }, { key: "vehicle", header: "Vehicle" }
+  ],
+  drivers: [
+    { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "status", header: "Status" }, { key: "licenseNumber", header: "License" }
+  ],
+  vehicles: [
+    { key: "registrationNumber", header: "Registration" }, { key: "vehicleModel", header: "Model" }, { key: "cabCategory", header: "Category" }, { key: "status", header: "Status" }
+  ],
+  bookings: [
+    { key: "bookingId", header: "Booking" }, { key: "passengerName", header: "Passenger" }, { key: "businessUnit", header: "Client" }, { key: "status", header: "Status" }
+  ],
+  invoices: [
+    { key: "invoiceNumber", header: "Invoice" }, { key: "clientName", header: "Client" }, { key: "status", header: "Status" }, { key: "finalAmount", header: "Total" }, { key: "balanceAmount", header: "Balance" }
+  ],
+  payments: [
+    { key: "invoiceNumber", header: "Invoice" }, { key: "amount", header: "Amount" }, { key: "method", header: "Method" }, { key: "referenceNumber", header: "Reference" }
+  ]
+};
+
+export function selectReport(state: RootState, type: string) {
+  const bookings = rows(state, "bookings");
+  const trips = rows(state, "trips");
+  const drivers = rows(state, "drivers");
+  const vehicles = rows(state, "vehicles");
+  const invoices = rows(state, "invoices");
+  const payments = state.payments.items || [];
+  const data: Record<string, any[]> = {
+    "daily-trips": trips.map((trip) => ({ ...trip, driverName: trip.driver?.driverName, vehicle: trip.vehicle?.registrationNumber })),
+    drivers,
+    vehicles,
+    bookings,
+    invoices,
+    payments,
+    revenue: payments,
+    "pending-payments": invoices.filter((invoice) => Number(invoice.balanceAmount || 0) > 0),
+    utilization: vehicles.map((vehicle) => ({ ...vehicle, utilization: vehicle.status === "In Trip" ? 100 : vehicle.status === "Available" ? 35 : 0 })),
+    custom: [...bookings, ...trips].slice(0, 20)
+  };
+  const selectedRows = data[type] || data["daily-trips"] || [];
+  const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+  const pendingAmount = invoices.reduce((sum, invoice) => sum + Number(invoice.balanceAmount || 0), 0);
+
+  return {
+    type,
+    title: type.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
+    columns: reportColumns[type] || Object.keys(selectedRows[0] || {}).slice(0, 5).map((key) => ({ key, header: key })),
+    rows: selectedRows,
+    summary: {
+      records: selectedRows.length,
+      totalKm: trips.reduce((sum, trip) => sum + Number(trip.totalKm || 0), 0),
+      totalRevenue,
+      pendingAmount
+    },
+    charts: {
+      trend: trend(selectedRows, (item) => Number(item.amount || item.finalAmount || 1)),
+      status: groupCount(selectedRows, "status")
+    }
+  };
+}
+
+export function selectReportSummary(state: RootState) {
+  const invoices = rows(state, "invoices");
+  const payments = state.payments.items || [];
+  return {
+    invoiceCount: invoices.length,
+    revenue: payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
+    outstanding: invoices.reduce((sum, invoice) => sum + Number(invoice.balanceAmount || 0), 0)
+  };
+}
