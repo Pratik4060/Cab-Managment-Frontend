@@ -6,6 +6,7 @@ import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { bookingActions } from "../redux/slices/bookingSlice";
+import { invoiceActions } from "../redux/slices/invoiceSlice";
 import { driverActions } from "../redux/slices/driverSlice";
 import { tripActions, updateTripStatus } from "../redux/slices/tripSlice";
 import { vehicleActions } from "../redux/slices/vehicleSlice";
@@ -369,7 +370,7 @@ export function TripsPage() {
             }}
             onSave={async (payload) => {
               await dispatch(updateTripStatus({ id: selectedTrip._id, payload }));
-              await dispatch(tripActions.fetchAll(undefined));
+              await dispatch(invoiceActions.generateInvoice({ ...selectedTrip, ...payload, trip: { ...(selectedTrip.trip || {}), ...payload } }));
               setDutySlipOpen(false);
               setSelectedTrip(null);
             }}

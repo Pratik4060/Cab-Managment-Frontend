@@ -26,7 +26,7 @@ export function CarsPage() {
 
 export function DriversPage() {
   return <EntityPage title="Drivers" subtitle="Availability, documents, contacts, and trip history readiness." stateKey="drivers" actions={driverActions} columns={[
-    { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "licenseNumber", header: "License" }, { key: "aadhaarNumber", header: "Aadhaar" }, { key: "panNumber", header: "PAN" }, { key: "status", header: "Status" }
+    { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "licenseNumber", header: "License" }, { key: "aadhaarNumber", header: "Aadhaar" }, { key: "status", header: "Status" }
   ]} fields={[
     { name: "driverName", label: "Driver Name", required: true },
     { name: "contactNumber", label: "Contact Number", required: true },
