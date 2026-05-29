@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { invoiceActions, sendInvoice } from "../redux/slices/invoiceSlice";
 import { downloadFile } from "../utils/downloadFile";
 
-type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Overdue";
+type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
 
 type InvoiceDutySlipState = {
   kmOut: string;
@@ -47,11 +47,9 @@ export function InvoicesPage() {
         <div className="flex gap-2">
           <select className="input w-44" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All Status</option>
-            <option value="Draft">Draft</option>
-            <option value="Sent">Sent</option>
             <option value="Partial">Partial</option>
             <option value="Paid">Paid</option>
-            <option value="Overdue">Overdue</option>
+            <option value="Pending">Pending</option>
           </select>
           <button className="btn-secondary" onClick={() => downloadFile("/reports/invoices/export.xlsx", "invoices.xlsx")}>
             <Download className="h-4 w-4" />
@@ -150,7 +148,7 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Passenger" value={invoice.booking?.passengerName || "-"} />
         <InfoCard label="Trip" value={invoice.trip?.tripNumber || "-"} />
-        <InfoCard label="Status" value={<select className="input mt-1" value={form.status} onChange={(event) => updateField("status", event.target.value as InvoiceStatus)}>{["Draft", "Sent", "Partial", "Paid", "Overdue"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
+        <InfoCard label="Status" value={<select className="input mt-1" value={form.status} onChange={(event) => updateField("status", event.target.value as InvoiceStatus)}>{["Partial", "Paid", "Pending"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
         <InfoCard label="Payment Status" value={<PaymentStatusBadge invoice={buildPreviewInvoice(invoice, form)} />} />
         <InfoCard label="KM OUT" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
         <InfoCard label="KM IN" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
@@ -231,8 +229,9 @@ function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
       : existingPaid;
   const remainingAmount = Math.max(0, finalAmount - paidAmount);
   const status = remainingAmount === 0 ? "Paid" : form.status;
+  const paymentStatus = status === "Paid" ? "Paid" : status === "Partial" ? "Partial" : paidAmount > 0 ? "Partial" : "Pending";
 
-  return { kmOut, kmIn, totalKm, ratePerKm, tripFare, tollCharges, parkingCharges, extraCharges, gstPercent, gstAmount, subtotal, finalAmount, paidAmount, remainingAmount, status };
+  return { kmOut, kmIn, totalKm, ratePerKm, tripFare, tollCharges, parkingCharges, extraCharges, gstPercent, gstAmount, subtotal, finalAmount, paidAmount, remainingAmount, status, paymentStatus };
 }
 
 function buildPreviewInvoice(invoice: any, form: InvoiceDutySlipState) {
@@ -240,6 +239,7 @@ function buildPreviewInvoice(invoice: any, form: InvoiceDutySlipState) {
   return {
     ...invoice,
     status: computed.status,
+    paymentStatus: computed.paymentStatus,
     finalAmount: computed.finalAmount,
     paidAmount: computed.paidAmount,
     remainingAmount: computed.remainingAmount,
@@ -272,18 +272,17 @@ function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
     Sent: "bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-100",
     Paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
     Partial: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200",
-    Overdue: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-200"
+    Pending: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-200"
   };
   return <span className={`rounded-md px-2 py-1 text-xs font-semibold ${styles[status] || styles.Draft}`}>{status}</span>;
 }
 
 function PaymentStatusBadge({ invoice }: { invoice: any }) {
   const amount = remainingAmount(invoice);
-  const status = amount === 0 ? "Paid" : Number(invoice.paidAmount || 0) > 0 ? "Partial" : invoice.status === "Sent" ? "Waiting" : "Pending";
+  const status = invoice.paymentStatus || (amount === 0 ? "Paid" : Number(invoice.paidAmount || 0) > 0 || invoice.status === "Partial" ? "Partial" : "Pending");
   const styles: Record<string, string> = {
     Paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
     Partial: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200",
-    Waiting: "bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-100",
     Pending: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
   };
   return <span className={`rounded-md px-2 py-1 text-xs font-semibold ${styles[status]}`}>{status}</span>;
