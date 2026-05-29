@@ -64,6 +64,14 @@ function invoiceRemainingAmount(invoice: any) {
   return Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0);
 }
 
+function invoicePaymentStatus(invoice: any) {
+  return invoiceRemainingAmount(invoice) === 0
+    ? "Paid"
+    : Number(invoice.paidAmount || 0) > 0
+      ? "Partial"
+      : "Pending";
+}
+
 export function selectDashboardData(state: RootState, period: DashboardPeriod = "month") {
   const bookings = rows(state, "bookings").filter((item) => isInPeriod(item, period));
   const trips = rows(state, "trips").filter((item) => isInPeriod(item, period));
@@ -71,7 +79,7 @@ export function selectDashboardData(state: RootState, period: DashboardPeriod = 
   const vehicles = rows(state, "vehicles").filter((item) => isInPeriod(item, period));
   const invoices = rows(state, "invoices").filter((item) => isInPeriod(item, period));
   const payments = (state.payments.items || []).filter((item) => isInPeriod(item, period));
-  const pendingInvoices = invoices.filter((invoice) => invoiceRemainingAmount(invoice) > 0);
+  const pendingInvoices = invoices.filter((invoice) => invoicePaymentStatus(invoice) === "Pending");
 
   return {
     cards: {
@@ -133,18 +141,18 @@ export function selectReport(state: RootState, type: string) {
       ...invoice,
       remainingAmount: invoiceRemainingAmount(invoice),
       balanceAmount: invoiceRemainingAmount(invoice),
-      status: invoice.status === "Overdue" ? "Pending" : invoice.status,
-      paymentStatus: invoiceRemainingAmount(invoice) === 0 ? "Paid" : Number(invoice.paidAmount || 0) > 0 ? "Partial" : "Pending"
+      paymentStatus: invoicePaymentStatus(invoice),
+      status: invoicePaymentStatus(invoice)
     })),
     payments,
     revenue: payments,
-    "pending-payments": invoices.filter((invoice) => invoiceRemainingAmount(invoice) > 0),
+    "pending-payments": invoices.filter((invoice) => invoicePaymentStatus(invoice) === "Pending"),
     utilization: vehicles.map((vehicle) => ({ ...vehicle, utilization: vehicle.status === "Available" ? 35 : 0 })),
     custom: [...bookings, ...trips].slice(0, 20)
   };
   const selectedRows = data[type] || data["daily-trips"] || [];
   const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-  const pendingAmount = invoices.reduce((sum, invoice) => sum + invoiceRemainingAmount(invoice), 0);
+  const pendingAmount = invoices.reduce((sum, invoice) => sum + (invoiceRemainingAmount(invoice) > 0 ? invoiceRemainingAmount(invoice) : 0), 0);
 
   return {
     type,
@@ -170,6 +178,6 @@ export function selectReportSummary(state: RootState) {
   return {
     invoiceCount: invoices.length,
     revenue: payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
-    outstanding: invoices.reduce((sum, invoice) => sum + invoiceRemainingAmount(invoice), 0)
+    outstanding: invoices.reduce((sum, invoice) => sum + (invoiceRemainingAmount(invoice) > 0 ? invoiceRemainingAmount(invoice) : 0), 0)
   };
 }

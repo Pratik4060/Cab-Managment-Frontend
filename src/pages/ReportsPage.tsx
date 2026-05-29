@@ -23,6 +23,14 @@ function remainingAmount(invoice: any) {
   return Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0);
 }
 
+function paymentStatus(invoice: any) {
+  return remainingAmount(invoice) === 0
+    ? "Paid"
+    : Number(invoice.paidAmount || 0) > 0
+      ? "Partial"
+      : "Pending";
+}
+
 export function ReportsPage() {
   const dispatch = useAppDispatch();
   const report = useAppSelector((state) => selectReport(state, REPORT_TYPE));
@@ -55,29 +63,36 @@ export function ReportsPage() {
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
   }, [columnMenuOpen]);
 
+  const normalizedRows = useMemo<ReportRow[]>(() => {
+    return (invoices as ReportRow[]).map((row) => ({
+      ...row,
+      status: paymentStatus(row),
+      remainingAmount: remainingAmount(row),
+      balanceAmount: remainingAmount(row),
+      paymentStatus: paymentStatus(row)
+    }));
+  }, [invoices]);
+
+  const summaryRows = useMemo(() => {
+    const search = filters.search.toLowerCase();
+    return normalizedRows.filter((row) => {
+      const createdAt = row.createdAt ? new Date(row.createdAt) : null;
+      if (filters.from && createdAt && createdAt < new Date(filters.from)) return false;
+      if (filters.to && createdAt && createdAt > new Date(`${filters.to}T23:59:59`)) return false;
+      return !search || Object.values(row).join(" ").toLowerCase().includes(search);
+    });
+  }, [filters.from, filters.search, filters.to, normalizedRows]);
+
   const rows = useMemo<ReportRow[]>(() => {
     const search = filters.search.toLowerCase();
-    return (invoices as ReportRow[])
+    return summaryRows
       .filter((row) => {
-        const createdAt = row.createdAt ? new Date(row.createdAt) : null;
-        if (filters.from && createdAt && createdAt < new Date(filters.from)) return false;
-        if (filters.to && createdAt && createdAt > new Date(`${filters.to}T23:59:59`)) return false;
         if (filters.status) {
-          const matchesStatus = filters.status === "Pending"
-            ? remainingAmount(row) > 0
-            : row.status === filters.status;
-          if (!matchesStatus) return false;
+          if (row.status !== filters.status) return false;
         }
         return !search || Object.values(row).join(" ").toLowerCase().includes(search);
-      })
-      .map((row) => ({
-        ...row,
-        status: row.status === "Overdue" ? "Pending" : row.status,
-        remainingAmount: remainingAmount(row),
-        balanceAmount: remainingAmount(row),
-        paymentStatus: remainingAmount(row) === 0 ? "Paid" : Number(row.paidAmount || 0) > 0 ? "Partial" : "Pending"
-      }));
-  }, [filters.from, filters.search, filters.status, filters.to, invoices]);
+      });
+  }, [filters.search, filters.status, summaryRows]);
 
   const columns = ((report?.columns || []) as ReportColumn[]).filter((column) => visibleColumns[column.key] !== false);
   const exportQuery = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([, value]) => value))).toString();
@@ -86,12 +101,12 @@ export function ReportsPage() {
   const statusData = report?.charts?.status || [];
 
   const stats = useMemo(() => {
-    const totalAmount = rows.reduce((sum, row) => sum + Number(row.finalAmount || 0), 0);
-    const paidAmount = rows.reduce((sum, row) => sum + Number(row.paidAmount || 0), 0);
-    const outstandingAmount = rows.reduce((sum, row) => sum + remainingAmount(row), 0);
+    const totalAmount = summaryRows.reduce((sum, row) => sum + Number(row.finalAmount || 0), 0);
+    const paidAmount = summaryRows.reduce((sum, row) => sum + Number(row.paidAmount || 0), 0);
+    const outstandingAmount = summaryRows.reduce((sum, row) => sum + (remainingAmount(row) > 0 ? remainingAmount(row) : 0), 0);
     const partialInvoices = rows.filter((row) => row.paymentStatus === "Partial").length;
     return { totalAmount, paidAmount, outstandingAmount, partialInvoices };
-  }, [rows]);
+  }, [rows, summaryRows]);
 
   function resetFilters() {
     const empty = { from: "", to: "", search: "", status: "" };
