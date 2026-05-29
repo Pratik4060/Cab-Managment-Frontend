@@ -67,7 +67,8 @@ export function selectDashboardData(state: RootState, period: DashboardPeriod = 
   const vehicles = rows(state, "vehicles").filter((item) => isInPeriod(item, period));
   const invoices = rows(state, "invoices").filter((item) => isInPeriod(item, period));
   const payments = (state.payments.items || []).filter((item) => isInPeriod(item, period));
-  const pendingInvoices = invoices.filter((invoice) => Number(invoice.balanceAmount || 0) > 0);
+  const remainingAmount = (invoice: any) => Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0);
+  const pendingInvoices = invoices.filter((invoice) => remainingAmount(invoice) > 0);
 
   return {
     cards: {
@@ -76,7 +77,7 @@ export function selectDashboardData(state: RootState, period: DashboardPeriod = 
       completedTrips: 0,
       pendingInvoices: pendingInvoices.length,
       revenueSummary: payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
-      pendingPayments: pendingInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceAmount || 0), 0),
+      pendingPayments: pendingInvoices.reduce((sum, invoice) => sum + remainingAmount(invoice), 0),
       availableDrivers: drivers.filter((driver) => driver.status === "Available").length,
       availableCars: vehicles.filter((vehicle) => vehicle.status === "Available").length
     },
@@ -106,7 +107,7 @@ const reportColumns: Record<string, { key: string; header: string }[]> = {
     { key: "bookingId", header: "Booking" }, { key: "passengerName", header: "Passenger" }, { key: "businessUnit", header: "Client" }, { key: "status", header: "Status" }
   ],
   invoices: [
-    { key: "invoiceNumber", header: "Invoice" }, { key: "clientName", header: "Client" }, { key: "status", header: "Status" }, { key: "finalAmount", header: "Total" }, { key: "balanceAmount", header: "Balance" }
+    { key: "invoiceNumber", header: "Invoice" }, { key: "clientName", header: "Client" }, { key: "status", header: "Status" }, { key: "finalAmount", header: "Total" }, { key: "remainingAmount", header: "Remaining Amount" }
   ],
   payments: [
     { key: "invoiceNumber", header: "Invoice" }, { key: "amount", header: "Amount" }, { key: "method", header: "Method" }, { key: "referenceNumber", header: "Reference" }
@@ -128,13 +129,13 @@ export function selectReport(state: RootState, type: string) {
     invoices,
     payments,
     revenue: payments,
-    "pending-payments": invoices.filter((invoice) => Number(invoice.balanceAmount || 0) > 0),
+    "pending-payments": invoices.filter((invoice) => remainingAmount(invoice) > 0),
     utilization: vehicles.map((vehicle) => ({ ...vehicle, utilization: vehicle.status === "Available" ? 35 : 0 })),
     custom: [...bookings, ...trips].slice(0, 20)
   };
   const selectedRows = data[type] || data["daily-trips"] || [];
   const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-  const pendingAmount = invoices.reduce((sum, invoice) => sum + Number(invoice.balanceAmount || 0), 0);
+  const pendingAmount = invoices.reduce((sum, invoice) => sum + remainingAmount(invoice), 0);
 
   return {
     type,
@@ -160,6 +161,6 @@ export function selectReportSummary(state: RootState) {
   return {
     invoiceCount: invoices.length,
     revenue: payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
-    outstanding: invoices.reduce((sum, invoice) => sum + Number(invoice.balanceAmount || 0), 0)
+    outstanding: invoices.reduce((sum, invoice) => sum + remainingAmount(invoice), 0)
   };
 }

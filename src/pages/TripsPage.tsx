@@ -1,4 +1,4 @@
-import { ClipboardCheck, Pencil, Plus } from "lucide-react";
+import { ClipboardCheck, FileText, Pencil, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
@@ -18,11 +18,13 @@ type DutySlipFormState = {
   tollCharges: string;
   parkingCharges: string;
   extraCharges: string;
+  gstCharges: string;
 };
 
 export function TripsPage() {
   const dispatch = useAppDispatch();
   const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [dutySlipOpen, setDutySlipOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -200,15 +202,27 @@ export function TripsPage() {
             rows={pendingBookings}
             columns={pendingColumns}
             actions={(row) => (
-              <button
-                className="btn-secondary whitespace-nowrap"
-                onClick={() => {
-                  setSelectedBooking(row);
-                  setAssignOpen(true);
-                }}
-              >
-                Assign Trip
-              </button>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="btn-secondary"
+                  onClick={() => {
+                    setSelectedBooking(row);
+                    setEditOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </button>
+                <button
+                  className="btn-secondary whitespace-nowrap"
+                  onClick={() => {
+                    setSelectedBooking(row);
+                    setAssignOpen(true);
+                  }}
+                >
+                  Assign Trip
+                </button>
+              </div>
             )}
           />
         </section>
@@ -233,15 +247,14 @@ export function TripsPage() {
             actions={(row) => (
               <div className="flex justify-end gap-2">
                 <button
-                  className="btn-secondary"
-                  title="Edit trip"
+                  className="btn-secondary p-2"
+                  title="Generate duty slip"
                   onClick={() => {
                     setSelectedTrip(row);
                     setDutySlipOpen(true);
                   }}
                 >
-                  <Pencil className="h-4 w-4" />
-                  Edit
+                  <FileText className="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -270,6 +283,42 @@ export function TripsPage() {
             setAddOpen(false);
           }}
         />
+      </Modal>
+
+      <Modal open={editOpen} title="Edit Trip" onClose={() => setEditOpen(false)}>
+        {selectedBooking && (
+          <EntityForm
+            fields={inquiryFields}
+            schema={z.object({
+              bookingId: z.string().optional(),
+              businessUnit: z.string().optional(),
+              passengerName: z.string().min(1, "Passenger name is required"),
+              mobileNumber: z.string().optional(),
+              reportingAddress: z.string().optional(),
+              dropAddress: z.string().optional(),
+              carType: z.string().optional(),
+              cabRequestNumber: z.string().optional(),
+              senderEmail: z.string().optional()
+            })}
+            defaults={{
+              bookingId: selectedBooking.bookingId,
+              businessUnit: selectedBooking.businessUnit,
+              passengerName: selectedBooking.passengerName,
+              mobileNumber: selectedBooking.mobileNumber,
+              reportingAddress: selectedBooking.reportingAddress,
+              dropAddress: selectedBooking.dropAddress,
+              carType: selectedBooking.carType,
+              cabRequestNumber: selectedBooking.cabRequestNumber,
+              senderEmail: selectedBooking.senderEmail
+            }}
+            submitLabel="Update Trip"
+            onSubmit={async (values) => {
+              await dispatch(bookingActions.updateOne({ id: selectedBooking._id, payload: { ...values, status: selectedBooking.status || "New" } }));
+              setEditOpen(false);
+              setSelectedBooking(null);
+            }}
+          />
+        )}
       </Modal>
 
       <Modal open={assignOpen} title="Assign Trip" onClose={() => setAssignOpen(false)}>
@@ -305,7 +354,7 @@ export function TripsPage() {
 
       <Modal
         open={dutySlipOpen}
-        title={`Edit Trip ${selectedTrip?.tripNumber || ""}`}
+        title={`Duty Slip Generation ${selectedTrip?.tripNumber || ""}`}
         onClose={() => {
           setDutySlipOpen(false);
           setSelectedTrip(null);
@@ -355,6 +404,7 @@ function DutySlipEditor({ trip, onSave, onCancel }: { trip: any; onSave: (payloa
       tollCharges: normalizeNumber(form.tollCharges),
       parkingCharges: normalizeNumber(form.parkingCharges),
       extraCharges: normalizeNumber(form.extraCharges)
+      ,gstCharges: normalizeNumber(form.gstCharges)
     });
   }
 
@@ -372,12 +422,13 @@ function DutySlipEditor({ trip, onSave, onCancel }: { trip: any; onSave: (payloa
         <TripCard label="Toll" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
         <TripCard label="Parking" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
         <TripCard label="Extras" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
+        <TripCard label="GST (%)" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
         <TripCard label="Total KM" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{totalKm.toLocaleString()}</p>} />
       </div>
 
       <div className="flex justify-end gap-2">
         <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
-        <button type="button" className="btn-primary" onClick={handleSave}>Save</button>
+        <button type="button" className="btn-primary" onClick={handleSave}>Generate Invoice</button>
       </div>
     </div>
   );
@@ -410,6 +461,7 @@ function buildDutySlipState(trip: any): DutySlipFormState {
     tollCharges: String(trip?.tollCharges ?? 0),
     parkingCharges: String(trip?.parkingCharges ?? 0),
     extraCharges: String(trip?.extraCharges ?? 0)
+    ,gstCharges: String(trip?.gstCharges ?? 5)
   };
 }
 
