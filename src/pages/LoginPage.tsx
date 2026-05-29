@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BarChart3, CarFront, Eye, EyeOff, FileCheck2, Route } from "lucide-react";
+import { BarChart3, Eye, EyeOff, FileCheck2, Route } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate } from "react-router-dom";
 import { z } from "zod";
+import logo from "../assets/logo.png";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { login } from "../redux/slices/authSlice";
 
@@ -24,11 +25,11 @@ export function LoginPage() {
         <section className="flex flex-col justify-between bg-slate-950 p-8 text-white">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-600">
-                <CarFront className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-white">
+                <img src={logo} alt="Unique Carz" className="h-full w-full object-contain" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Cab ERP</h1>
+                <h1 className="text-2xl font-bold">Unique Carz</h1>
                 <p className="text-sm text-slate-300">Management & Billing Automation</p>
               </div>
             </div>
@@ -59,7 +60,7 @@ export function LoginPage() {
             <div className="mb-8">
               <p className="text-sm font-semibold text-brand-600 dark:text-brand-200">Welcome back</p>
               <h2 className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">Sign in to your account</h2>
-              <p className="mt-2 text-sm text-slate-500">Use your admin credentials to access cab operations.</p>
+              <p className="mt-2 text-sm text-slate-500">Use your admin credentials to access Unique Carz operations.</p>
             </div>
             <form className="space-y-5" onSubmit={handleSubmit((values) => dispatch(login(values)))}>
               <label>

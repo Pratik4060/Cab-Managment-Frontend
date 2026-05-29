@@ -59,7 +59,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
 
       {/* <div className="hidden min-w-0 md:block">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Operations Console</p>
-        <h1 className="truncate text-lg font-semibold text-slate-950 dark:text-white">Cab Management</h1>
+        <h1 className="truncate text-lg font-semibold text-slate-950 dark:text-white">Unique Carz</h1>
       </div> */}
 
       <div className="relative order-3 w-full sm:order-none sm:ml-2 sm:max-w-2xl sm:flex-1 lg:ml-4">

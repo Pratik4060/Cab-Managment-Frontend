@@ -1,4 +1,4 @@
-import { Eye, FileText, Pencil, Plus } from "lucide-react";
+import { ClipboardCheck, Eye, FileText, Pencil, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
@@ -17,6 +17,7 @@ export function TripsPage() {
   const [completeOpen, setCompleteOpen] = useState(false);
   const [activeTrip, setActiveTrip] = useState<any>(null);
   const [viewTrip, setViewTrip] = useState<any>(null);
+  const [dutySlipTrip, setDutySlipTrip] = useState<any>(null);
   const [cancelValues, setCancelValues] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const trips = useAppSelector((s) => s.trips);
@@ -89,6 +90,7 @@ export function TripsPage() {
           actions={(row) => (
             <div className="flex justify-end gap-2">
               <button className="btn-secondary p-2" title="View trip" onClick={() => setViewTrip(row)}><Eye className="h-4 w-4" /></button>
+              <button className="btn-secondary p-2" title="Duty slip preview" onClick={() => setDutySlipTrip(row)}><ClipboardCheck className="h-4 w-4" /></button>
               <button className="btn-secondary" title="Edit trip status / billing data" disabled={row.status === "Cancelled"} onClick={() => { setActiveTrip(row); setCompleteOpen(true); }}><Pencil className="h-4 w-4" />Edit</button>
               <button className="btn-secondary p-2" title="Generate invoice" disabled={row.status !== "Completed"} onClick={async () => { await dispatch(generateInvoice(row)); }}><FileText className="h-4 w-4" /></button>
             </div>
@@ -158,6 +160,58 @@ export function TripsPage() {
       <Modal open={Boolean(viewTrip)} title={`View Trip ${viewTrip?.tripNumber || ""}`} onClose={() => setViewTrip(null)}>
         {viewTrip && <TripDetails trip={viewTrip} />}
       </Modal>
+      <Modal open={Boolean(dutySlipTrip)} title={`Duty Slip ${dutySlipTrip?.tripNumber || ""}`} onClose={() => setDutySlipTrip(null)}>
+        {dutySlipTrip && <DutySlipPreview trip={dutySlipTrip} />}
+      </Modal>
+    </div>
+  );
+}
+
+function DutySlipPreview({ trip }: { trip: any }) {
+  const rows = [
+    ["Duty Slip No", `DS-${trip.tripNumber || trip._id}`],
+    ["Trip No", trip.tripNumber],
+    ["Status", trip.status],
+    ["Client", trip.booking?.businessUnit],
+    ["Passenger", trip.booking?.passengerName],
+    ["Mobile", trip.booking?.mobileNumber],
+    ["Reporting Address", trip.booking?.reportingAddress],
+    ["Drop Address", trip.booking?.dropAddress],
+    ["Driver", trip.driver?.driverName],
+    ["Driver Contact", trip.driver?.contactNumber],
+    ["Vehicle", `${trip.vehicle?.registrationNumber || "-"} ${trip.vehicle?.vehicleModel ? `- ${trip.vehicle.vehicleModel}` : ""}`],
+    ["KM OUT", trip.kmOut],
+    ["KM IN", trip.kmIn],
+    ["Total KM", trip.totalKm],
+    ["Time OUT", formatDateTime(trip.timeOut)],
+    ["Time IN", formatDateTime(trip.timeIn)],
+    ["Toll Charges", `Rs ${Number(trip.tollCharges || 0).toLocaleString()}`],
+    ["Parking Charges", `Rs ${Number(trip.parkingCharges || 0).toLocaleString()}`],
+    ["Extra Charges", `Rs ${Number(trip.extraCharges || 0).toLocaleString()}`]
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-950 dark:text-white">Unique Carz</h3>
+            <p className="text-sm text-slate-500">Duty slip preview</p>
+          </div>
+          <div className="text-right text-sm">
+            <p className="font-semibold text-slate-900 dark:text-white">DS-{trip.tripNumber || trip._id}</p>
+            <p className="text-xs text-slate-500">{trip.createdAt ? new Date(trip.createdAt).toLocaleDateString() : "-"}</p>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
+            <p className="text-xs font-semibold uppercase text-slate-400">{label}</p>
+            <p className="mt-1 break-words text-sm text-slate-900 dark:text-white">{value ?? "-"}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -196,6 +250,11 @@ function tripDefaults(trip: any) {
 function toDatetimeLocal(value: string | Date) {
   const date = new Date(value);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function formatDateTime(value?: string | Date) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString();
 }
 
 const optionalNumber = z.preprocess((value: unknown) => {
