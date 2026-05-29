@@ -79,7 +79,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
   return (
     <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-slate-200 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-slate-800 dark:bg-slate-950/95`}>
       <div className="flex h-16 items-center gap-3 border-b border-slate-200/80 px-5 dark:border-slate-800">
-        <img
+        <img 
           src={logo}
           alt="Unique Carz"
           className="h-12 w-12 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.25)]"
