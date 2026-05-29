@@ -133,7 +133,7 @@ export function TripsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <button
           type="button"
-          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "new" ? "border-amber-400 shadow-lg dark:border-amber-700" : "border-amber-200 dark:border-amber-900/60 dark:hover:border-amber-700"}`}
+          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "new" ? "border-red-500 shadow-lg dark:border-red-400" : "border-slate-200 dark:border-slate-800"}`}
           onClick={() => setActiveTable("new")}
         >
           <div className="flex items-start justify-between gap-3">
@@ -154,7 +154,7 @@ export function TripsPage() {
 
         <button
           type="button"
-          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "assigned" ? "border-emerald-400 shadow-lg dark:border-emerald-700" : "border-emerald-200 dark:border-emerald-900/60 dark:hover:border-emerald-700"}`}
+          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "assigned" ? "border-red-500 shadow-lg dark:border-red-400" : "border-slate-200 dark:border-slate-800"}`}
           onClick={() => setActiveTable("assigned")}
         >
           <div className="flex items-start justify-between gap-3">
