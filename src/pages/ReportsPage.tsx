@@ -141,7 +141,7 @@ export function ReportsPage() {
           <p className="mb-4 text-xs text-slate-500">Filtered report movement</p>
           {trendData.length ? (
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={trendData}><CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} /><Bar dataKey="value" fill="#2388d9" radius={[6, 6, 0, 0]} maxBarSize={44} /></BarChart>
+              <BarChart data={trendData}><CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} /><Bar dataKey="value" fill="#ed1c24" radius={[6, 6, 0, 0]} maxBarSize={44} /></BarChart>
             </ResponsiveContainer>
           ) : <EmptyState />}
         </section>

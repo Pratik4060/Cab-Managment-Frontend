@@ -33,15 +33,15 @@ export function DashboardCharts({ charts = {}, period = "month" }: { charts?: Da
           <AreaChart data={revenue}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2388d9" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#2388d9" stopOpacity={0.02} />
+                <stop offset="5%" stopColor="#ed1c24" stopOpacity={0.35} />
+                <stop offset="95%" stopColor="#ed1c24" stopOpacity={0.02} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
             <XAxis dataKey="name" tickLine={false} axisLine={false} />
             <YAxis tickLine={false} axisLine={false} />
             <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
-            <Area type="monotone" dataKey="value" stroke="#2388d9" strokeWidth={3} fill="url(#revenueGradient)" />
+            <Area type="monotone" dataKey="value" stroke="#ed1c24" strokeWidth={3} fill="url(#revenueGradient)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -68,7 +68,7 @@ export function DashboardCharts({ charts = {}, period = "month" }: { charts?: Da
         <h3 className="mb-1 font-semibold text-slate-950 dark:text-white">Booking Analytics</h3>
         <p className="mb-4 text-xs text-slate-500">{copy.bookings}</p>
         <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={bookings}><CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} /><Bar dataKey="value" fill="#2388d9" radius={[6, 6, 0, 0]} maxBarSize={42} /></BarChart>
+          <BarChart data={bookings}><CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} /><Bar dataKey="value" fill="#ed1c24" radius={[6, 6, 0, 0]} maxBarSize={42} /></BarChart>
         </ResponsiveContainer>
       </div>
     </div>

@@ -77,20 +77,20 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
   }
 
   return (
-    <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-red-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-slate-800 dark:bg-zinc-950/95`}>
-      <div className="flex h-16 items-center gap-3 border-b border-red-100/80 px-4 dark:border-slate-800">
+    <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-brand-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-brand-950 dark:bg-zinc-950/95`}>
+      <div className="flex h-16 items-center border-b border-brand-100 px-2 dark:border-brand-950">
         <img
           src={logo}
           alt="Unique Carz"
-          className="h-24 w-24 object-contain"
+          className="-ml-4 mr-1 h-24 w-24 shrink-0 object-contain"
         />
 
-        <div>
+        <div className="min-w-0">
           <div className="text-lg font-bold leading-tight text-slate-950 dark:text-white">
             Unique Carz
           </div>
           <div className="text-xs font-semibold text-brand-600 dark:text-brand-100">
-            Management & Billing
+            Corporate Cabs
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
           </div>
         ))}
       </nav>
-      <div className="sticky bottom-0 border-t border-red-100 bg-white p-4 dark:border-slate-800 dark:bg-zinc-950">
+      <div className="sticky bottom-0 border-t border-brand-100 bg-white p-4 dark:border-brand-950 dark:bg-zinc-950">
         {/* <div className="mb-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-900">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{user?.name || "Admin"}</p>
           <p className="truncate text-xs text-slate-500">{user?.role || "Administrator"}</p>
