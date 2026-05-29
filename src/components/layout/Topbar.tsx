@@ -22,12 +22,12 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
     setNotifications(newBookings.filter((item: BookingNotification) => !clearedIds.includes(item._id)));
   }, [newBookings, clearedIds]);
 
-  function openInquiry(notification: BookingNotification) {
+  function openTrips(notification: BookingNotification) {
     const nextSeen = Array.from(new Set([...seenIds, notification._id]));
     setSeenIds(nextSeen);
     localStorage.setItem("seenBookingNotifications", JSON.stringify(nextSeen));
     setOpenNotifications(false);
-    navigate("/bookings/inquiries");
+    navigate("/bookings/trips");
   }
 
   function clearNotification(event: MouseEvent | KeyboardEvent, notificationId: string) {
@@ -82,7 +82,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 dark:border-slate-800">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
-                  <p className="text-xs text-slate-500">{unreadNotifications.length} new booking inquiries</p>
+                  <p className="text-xs text-slate-500">{unreadNotifications.length} new trip requests</p>
                 </div>
                 {notifications.length > 0 && (
                   <button className="rounded-md px-2 py-1 text-xs font-medium text-brand-700 outline-none hover:bg-brand-50 dark:text-brand-200 dark:hover:bg-slate-800" onClick={clearAllNotifications}>
@@ -92,16 +92,16 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
               </div>
               <div className="max-h-80 overflow-y-auto py-2">
                 {notifications.length === 0 ? (
-                  <p className="px-3 py-5 text-center text-sm text-slate-500">No new booking notifications.</p>
+                  <p className="px-3 py-5 text-center text-sm text-slate-500">No new trip notifications.</p>
                 ) : notifications.map((notification) => (
                   <button
                     key={notification._id}
                     className="w-full rounded-md px-3 py-2 text-left outline-none transition hover:bg-slate-50 dark:hover:bg-slate-800"
-                    onClick={() => openInquiry(notification)}
+                    onClick={() => openTrips(notification)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{notification.passengerName || "New booking inquiry"}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{notification.passengerName || "New trip request"}</p>
                         <p className="text-xs text-slate-500">{notification.cabRequestNumber || notification.bookingId}</p>
                         <span
                           role="button"

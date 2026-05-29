@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { AppLayout } from "../layouts/AppLayout";
 import { AdminsPage, ProfilePage } from "../pages/AdminPage";
-import { InquiriesPage } from "../pages/BookingsPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { CarsPage, DriversPage } from "../pages/InventoryPages";
 import { InvoicesPage } from "../pages/InvoicesPage";
@@ -51,8 +50,7 @@ function PageForPath({ pathname }: { pathname: string }) {
   if (path === "/" || path === "/dashboard") return <DashboardPage />;
   if (["/cab", "/cars", "/inventory/cars"].includes(path)) return <CarsPage />;
   if (["/drivers", "/inventory/drivers"].includes(path)) return <DriversPage />;
-  if (["/booking", "/bookings", "/bookings/inquiries"].includes(path)) return <InquiriesPage />;
-  if (["/trips", "/bookings/trips"].includes(path)) return <TripsPage />;
+  if (["/booking", "/bookings", "/bookings/inquiries", "/trips", "/bookings/trips"].includes(path)) return <TripsPage />;
   if (["/invoice", "/invoices"].includes(path)) return <InvoicesPage />;
   if (path === "/report" || path === "/reports" || path.startsWith("/reports/")) return <ReportsPage />;
   if (["/profile", "/admin/profile"].includes(path)) return <ProfilePage />;

@@ -51,20 +51,7 @@ listenerMiddleware.startListening({
 
 listenerMiddleware.startListening({
   actionCreator: updateTripStatus,
-  effect: (action, listenerApi) => {
-    const state = listenerApi.getState() as RootState;
-    const trip = state.trips.allItems.find((item) => item._id === action.payload.id);
-    if (!trip) return;
-    if (action.payload.payload.status === "Cancelled") {
-      listenerApi.dispatch(bookingActions.updateOne({ id: trip.bookingId, payload: { status: "Cancelled" } }));
-      listenerApi.dispatch(driverActions.updateOne({ id: trip.driverId, payload: { status: "Available" } }));
-      listenerApi.dispatch(vehicleActions.updateOne({ id: trip.vehicleId, payload: { status: "Available" } }));
-    }
-    if (action.payload.payload.status === "Completed") {
-      listenerApi.dispatch(driverActions.updateOne({ id: trip.driverId, payload: { status: "Available" } }));
-      listenerApi.dispatch(vehicleActions.updateOne({ id: trip.vehicleId, payload: { status: "Available" } }));
-    }
-  }
+  effect: () => {}
 });
 
 listenerMiddleware.startListening({

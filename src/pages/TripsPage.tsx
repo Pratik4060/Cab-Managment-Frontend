@@ -1,5 +1,5 @@
-import { ClipboardCheck, Eye, FileText, Pencil, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ClipboardCheck, Pencil, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
 import { Modal } from "../components/common/Modal";
@@ -7,298 +7,426 @@ import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { bookingActions } from "../redux/slices/bookingSlice";
 import { driverActions } from "../redux/slices/driverSlice";
-import { generateInvoice } from "../redux/slices/invoiceSlice";
+import { tripActions, updateTripStatus } from "../redux/slices/tripSlice";
 import { vehicleActions } from "../redux/slices/vehicleSlice";
-import { assignTrip, tripActions, updateTripStatus } from "../redux/slices/tripSlice";
+
+type DutySlipFormState = {
+  kmOut: string;
+  kmIn: string;
+  timeOut: string;
+  timeIn: string;
+  tollCharges: string;
+  parkingCharges: string;
+  extraCharges: string;
+};
 
 export function TripsPage() {
   const dispatch = useAppDispatch();
-  const [open, setOpen] = useState(false);
-  const [completeOpen, setCompleteOpen] = useState(false);
-  const [activeTrip, setActiveTrip] = useState<any>(null);
-  const [viewTrip, setViewTrip] = useState<any>(null);
-  const [dutySlipTrip, setDutySlipTrip] = useState<any>(null);
-  const [cancelValues, setCancelValues] = useState<any>(null);
-  const [statusFilter, setStatusFilter] = useState("");
-  const trips = useAppSelector((s) => s.trips);
-  const bookings = useAppSelector((s) => s.bookings.items);
-  const drivers = useAppSelector((s) => s.drivers.items);
-  const vehicles = useAppSelector((s) => s.vehicles.items);
+  const [addOpen, setAddOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [dutySlipOpen, setDutySlipOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedTrip, setSelectedTrip] = useState<any>(null);
+  const [activeTable, setActiveTable] = useState<"new" | "assigned">("new");
+  const bookings = useAppSelector((state) => state.bookings.allItems);
+  const trips = useAppSelector((state) => state.trips.allItems);
+  const loading = useAppSelector((state) => state.trips.loading);
+  const drivers = useAppSelector((state) => state.drivers.items);
+  const vehicles = useAppSelector((state) => state.vehicles.items);
 
   useEffect(() => {
-    dispatch(tripActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+    dispatch(tripActions.fetchAll(undefined));
     dispatch(bookingActions.fetchAll(undefined));
     dispatch(driverActions.fetchAll(undefined));
     dispatch(vehicleActions.fetchAll(undefined));
-  }, [dispatch, statusFilter]);
+  }, [dispatch]);
 
-  const availableBookings = bookings.filter((booking) => ["New", "Pending Assignment"].includes(booking.status));
+  const pendingBookings = useMemo(
+    () => bookings.filter((booking) => booking.status === "New"),
+    [bookings]
+  );
+  const assignedTrips = useMemo(
+    () => trips.filter((trip) => trip.status === "Assigned"),
+    [trips]
+  );
+
   const availableDrivers = drivers.filter((driver) => driver.status === "Available");
   const availableVehicles = vehicles.filter((vehicle) => vehicle.status === "Available");
 
-  const fields = [
+  const inquiryFields = [
     {
       name: "bookingId",
-      label: "Booking",
-      type: "select",
-      placeholder: "Select passenger / cab request",
-      options: availableBookings.map((booking) => ({ value: booking._id, label: `${booking.passengerName || "Unnamed passenger"} - ${booking.cabRequestNumber || booking.bookingId}` }))
+      label: "Booking ID",
+      placeholder: "Auto generated",
+      disabled: true
     },
+    { name: "businessUnit", label: "Business Unit", required: false },
+    { name: "passengerName", label: "Passenger Name" },
+    { name: "mobileNumber", label: "Mobile Number", required: false },
+    { name: "reportingAddress", label: "Reporting Address", full: true, required: false },
+    { name: "dropAddress", label: "Drop Address", full: true, required: false },
+    { name: "carType", label: "Car Type", required: false },
+    { name: "cabRequestNumber", label: "Cab Request No", required: false },
+    { name: "senderEmail", label: "Sender Email", required: false }
+  ];
+
+  const assignFields = [
     {
       name: "driverId",
       label: "Driver",
       type: "select",
       placeholder: "Select available driver",
-      options: availableDrivers.map((driver) => ({ value: driver._id, label: `${driver.driverName} - ${driver.contactNumber}` }))
+      options: availableDrivers.map((driver) => ({
+        value: driver._id,
+        label: `${driver.driverName} - ${driver.contactNumber}`
+      }))
     },
     {
       name: "vehicleId",
       label: "Vehicle",
       type: "select",
       placeholder: "Select available vehicle",
-      options: availableVehicles.map((vehicle) => ({ value: vehicle._id, label: `${vehicle.registrationNumber} - ${vehicle.vehicleModel} (${vehicle.cabCategory})` }))
+      options: availableVehicles.map((vehicle) => ({
+        value: vehicle._id,
+        label: `${vehicle.registrationNumber} - ${vehicle.vehicleModel} (${vehicle.cabCategory})`
+      }))
     }
+  ];
+
+  const pendingColumns = [
+    { key: "bookingId", header: "Booking ID" },
+    { key: "businessUnit", header: "Business Unit" },
+    { key: "passengerName", header: "Passenger" },
+    { key: "mobileNumber", header: "Mobile" },
+    { key: "reportingAddress", header: "Reporting Address" },
+    { key: "dropAddress", header: "Drop Address" },
+    { key: "carType", header: "Car Type" },
+    { key: "cabRequestNumber", header: "Cab Request No" },
+    { key: "senderEmail", header: "Email" },
+    { key: "status", header: "Status", render: (row: any) => <BookingStatusBadge status={row.status} /> }
+  ];
+
+  const assignedColumns = [
+    { key: "bookingId", header: "Booking ID", render: (row: any) => row.booking?.bookingId || row.bookingId || "-" },
+    { key: "businessUnit", header: "Business Unit", render: (row: any) => row.booking?.businessUnit || "-" },
+    { key: "passengerName", header: "Passenger", render: (row: any) => row.booking?.passengerName || "-" },
+    { key: "mobileNumber", header: "Mobile", render: (row: any) => row.booking?.mobileNumber || "-" },
+    { key: "reportingAddress", header: "Reporting Address", render: (row: any) => row.booking?.reportingAddress || "-" },
+    { key: "dropAddress", header: "Drop Address", render: (row: any) => row.booking?.dropAddress || "-" },
+    { key: "carType", header: "Car Type", render: (row: any) => row.booking?.carType || "-" },
+    { key: "cabRequestNumber", header: "Cab Request No", render: (row: any) => row.booking?.cabRequestNumber || "-" },
+    { key: "senderEmail", header: "Email", render: (row: any) => row.booking?.senderEmail || "-" },
+    { key: "status", header: "Trip Status", render: (row: any) => <BookingStatusBadge status={row.status || "Assigned"} /> },
+    { key: "driver", header: "Driver", render: (row: any) => row.driver?.driverName || "-" },
+    { key: "vehicle", header: "Cab", render: (row: any) => row.vehicle ? `${row.vehicle.registrationNumber}${row.vehicle.vehicleModel ? ` - ${row.vehicle.vehicleModel}` : ""}` : "-" }
   ];
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold">Trips</h1><p className="text-sm text-slate-500">Assign, complete billing data, and generate invoices.</p></div>
-        <div className="flex gap-2">
-          <select className="input w-44" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option value="">All Status</option>
-            <option value="Assigned">Assigned</option>
-            <option value="In Trip">In Trip</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-          <button className="btn-primary" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Assign Trip</button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Trips</h1>
+          <p className="text-sm text-slate-500">New enquiries on the left, assigned trips on the right.</p>
         </div>
       </div>
-      <div className="panel p-4">
-        <DataTable
-          loading={trips.loading}
-          rows={trips.items}
-          columns={[
-            { key: "tripNumber", header: "Trip" },
-            { key: "booking", header: "Passenger", render: (r) => r.booking?.passengerName },
-            { key: "driver", header: "Driver", render: (r) => r.driver?.driverName },
-            { key: "vehicle", header: "Vehicle", render: (r) => r.vehicle?.registrationNumber },
-            { key: "status", header: "Status", render: (r) => <TripStatusBadge status={r.status} /> },
-            { key: "totalKm", header: "KM" }
-          ]}
-          actions={(row) => (
-            <div className="flex justify-end gap-2">
-              <button className="btn-secondary p-2" title="View trip" onClick={() => setViewTrip(row)}><Eye className="h-4 w-4" /></button>
-              <button className="btn-secondary p-2" title="Duty slip preview" onClick={() => setDutySlipTrip(row)}><ClipboardCheck className="h-4 w-4" /></button>
-              <button className="btn-secondary" title="Edit trip status / billing data" disabled={row.status === "Cancelled"} onClick={() => { setActiveTrip(row); setCompleteOpen(true); }}><Pencil className="h-4 w-4" />Edit</button>
-              <button className="btn-secondary p-2" title="Generate invoice" disabled={row.status !== "Completed"} onClick={async () => { await dispatch(generateInvoice(row)); }}><FileText className="h-4 w-4" /></button>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <button
+          type="button"
+          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "new" ? "border-amber-400 shadow-lg dark:border-amber-700" : "border-amber-200 dark:border-amber-900/60 dark:hover:border-amber-700"}`}
+          onClick={() => setActiveTable("new")}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">New</h2>
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+                  {pendingBookings.length}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-slate-500">Click to jump to the new bookings table.</p>
             </div>
-          )}
-        />
+            <span className="rounded-full bg-amber-50 p-2 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+              <Plus className="h-5 w-5" />
+            </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "assigned" ? "border-emerald-400 shadow-lg dark:border-emerald-700" : "border-emerald-200 dark:border-emerald-900/60 dark:hover:border-emerald-700"}`}
+          onClick={() => setActiveTable("assigned")}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Assigned</h2>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-200">
+                  {assignedTrips.length}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-slate-500">Click to jump to the assigned trips table.</p>
+            </div>
+            <span className="rounded-full bg-emerald-50 p-2 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
+              <ClipboardCheck className="h-5 w-5" />
+            </span>
+          </div>
+        </button>
       </div>
-      <Modal open={open} title="Assign Trip" onClose={() => setOpen(false)}>
-        {(!availableBookings.length || !availableDrivers.length || !availableVehicles.length) && (
+
+      {activeTable === "new" ? (
+        <section className="panel p-4">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">New Table</h2>
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+                  {pendingBookings.length}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-slate-500">New booking enquiries ready to be assigned.</p>
+            </div>
+            <button
+              className="btn-primary shrink-0"
+              onClick={() => setAddOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Add Trip
+            </button>
+          </div>
+
+          <DataTable
+            loading={loading}
+            rows={pendingBookings}
+            columns={pendingColumns}
+            actions={(row) => (
+              <button
+                className="btn-secondary whitespace-nowrap"
+                onClick={() => {
+                  setSelectedBooking(row);
+                  setAssignOpen(true);
+                }}
+              >
+                Assign Trip
+              </button>
+            )}
+          />
+        </section>
+      ) : (
+        <section className="panel p-4">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Assigned Table</h2>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-200">
+                  {assignedTrips.length}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-slate-500">Trips that already have a driver and vehicle assigned.</p>
+            </div>
+          </div>
+
+          <DataTable
+            loading={loading}
+            rows={assignedTrips}
+            columns={assignedColumns}
+            actions={(row) => (
+              <div className="flex justify-end gap-2">
+                <button
+                  className="btn-secondary"
+                  title="Edit trip"
+                  onClick={() => {
+                    setSelectedTrip(row);
+                    setDutySlipOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </button>
+              </div>
+            )}
+          />
+        </section>
+      )}
+
+      <Modal open={addOpen} title="Add Trip" onClose={() => setAddOpen(false)}>
+        <EntityForm
+          fields={inquiryFields}
+          schema={z.object({
+            bookingId: z.string().optional(),
+            businessUnit: z.string().optional(),
+            passengerName: z.string().min(1, "Passenger name is required"),
+            mobileNumber: z.string().optional(),
+            reportingAddress: z.string().optional(),
+            dropAddress: z.string().optional(),
+            carType: z.string().optional(),
+            cabRequestNumber: z.string().optional(),
+            senderEmail: z.string().optional()
+          })}
+          defaults={{ bookingId: "Auto generated" }}
+          submitLabel="Save Trip"
+          onSubmit={async (values) => {
+            await dispatch(bookingActions.createOne({ ...values, status: "New" }));
+            setAddOpen(false);
+          }}
+        />
+      </Modal>
+
+      <Modal open={assignOpen} title="Assign Trip" onClose={() => setAssignOpen(false)}>
+        {selectedBooking && (
+          <div className="mb-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200">
+            <p className="text-xs font-semibold uppercase text-slate-400">Selected Booking</p>
+            <p className="mt-1 font-medium">{selectedBooking.passengerName || "Unnamed passenger"} - {selectedBooking.cabRequestNumber || selectedBooking.bookingId}</p>
+          </div>
+        )}
+        {(!pendingBookings.length || !availableDrivers.length || !availableVehicles.length) && (
           <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-            {!availableBookings.length && <p>No unassigned inquiries are available.</p>}
+            {!pendingBookings.length && <p>No new enquiries are available.</p>}
             {!availableDrivers.length && <p>No available drivers are available.</p>}
             {!availableVehicles.length && <p>No available vehicles are available.</p>}
           </div>
         )}
-        <EntityForm fields={fields} schema={z.object({ bookingId: z.string().min(1), driverId: z.string().min(1), vehicleId: z.string().min(1) })} onSubmit={async (values) => { await dispatch(assignTrip(values)); await dispatch(tripActions.fetchAll(undefined)); setOpen(false); }} />
-      </Modal>
-      <Modal open={completeOpen} title="Edit Trip Status / Billing Data" onClose={() => { setCompleteOpen(false); setActiveTrip(null); }}>
         <EntityForm
-          fields={[
-            { name: "status", label: "Trip Status", type: "select", options: ["Assigned", "In Trip", "Completed", "Cancelled"], full: true },
-            { name: "kmOut", label: "KM OUT", type: "number" },
-            { name: "kmIn", label: "KM IN", type: "number" },
-            { name: "timeOut", label: "Time OUT", type: "datetime-local" },
-            { name: "timeIn", label: "Time IN", type: "datetime-local" },
-            { name: "tollCharges", label: "Toll Charges", type: "number" },
-            { name: "parkingCharges", label: "Parking Charges", type: "number" },
-            { name: "extraCharges", label: "Extra Charges", type: "number" },
-            { name: "userClosingKm", label: "User Closing KM", type: "number" }
-          ]}
-          defaults={tripDefaults(activeTrip)}
-          schema={tripStatusSchema}
-          submitLabel="Save"
+          fields={assignFields}
+          defaults={{ driverId: "", vehicleId: "" }}
+          schema={z.object({
+            driverId: z.string().min(1),
+            vehicleId: z.string().min(1)
+          })}
+          submitLabel="Assign"
           onSubmit={async (values) => {
-            if (values.status === "Cancelled") {
-              setCancelValues(values);
-              return;
-            }
-            await dispatch(updateTripStatus({ id: activeTrip._id, payload: values }));
+            await dispatch(tripActions.assignTrip({ ...values, bookingId: selectedBooking?._id }));
             await dispatch(tripActions.fetchAll(undefined));
-            setCompleteOpen(false);
-            setActiveTrip(null);
+            setAssignOpen(false);
+            setSelectedBooking(null);
           }}
         />
       </Modal>
-      <Modal open={Boolean(cancelValues)} title="Confirm Trip Cancellation" onClose={() => setCancelValues(null)}>
-        <div className="space-y-4">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
-            Are you sure you want to cancel this trip? This will mark the trip and booking as cancelled and release the assigned driver and vehicle.
-          </div>
-          <div className="flex justify-end gap-2">
-            <button className="btn-secondary" onClick={() => setCancelValues(null)}>No</button>
-            <button
-              className="btn-primary bg-red-600 hover:bg-red-700"
-              onClick={async () => {
-                await dispatch(updateTripStatus({ id: activeTrip._id, payload: cancelValues }));
-                await dispatch(tripActions.fetchAll(undefined));
-                setCancelValues(null);
-                setCompleteOpen(false);
-                setActiveTrip(null);
-              }}
-            >
-              Yes, Cancel Trip
-            </button>
-          </div>
-        </div>
+
+      <Modal
+        open={dutySlipOpen}
+        title={`Edit Trip ${selectedTrip?.tripNumber || ""}`}
+        onClose={() => {
+          setDutySlipOpen(false);
+          setSelectedTrip(null);
+        }}
+      >
+        {selectedTrip && (
+          <DutySlipEditor
+            trip={selectedTrip}
+            onCancel={() => {
+              setDutySlipOpen(false);
+              setSelectedTrip(null);
+            }}
+            onSave={async (payload) => {
+              await dispatch(updateTripStatus({ id: selectedTrip._id, payload }));
+              await dispatch(tripActions.fetchAll(undefined));
+              setDutySlipOpen(false);
+              setSelectedTrip(null);
+            }}
+          />
+        )}
       </Modal>
-      <Modal open={Boolean(viewTrip)} title={`View Trip ${viewTrip?.tripNumber || ""}`} onClose={() => setViewTrip(null)}>
-        {viewTrip && <TripDetails trip={viewTrip} />}
-      </Modal>
-      <Modal open={Boolean(dutySlipTrip)} title={`Duty Slip ${dutySlipTrip?.tripNumber || ""}`} onClose={() => setDutySlipTrip(null)}>
-        {dutySlipTrip && <DutySlipPreview trip={dutySlipTrip} />}
-      </Modal>
+
     </div>
   );
 }
 
-function DutySlipPreview({ trip }: { trip: any }) {
-  const rows = [
-    ["Duty Slip No", `DS-${trip.tripNumber || trip._id}`],
-    ["Trip No", trip.tripNumber],
-    ["Status", trip.status],
-    ["Client", trip.booking?.businessUnit],
-    ["Passenger", trip.booking?.passengerName],
-    ["Mobile", trip.booking?.mobileNumber],
-    ["Reporting Address", trip.booking?.reportingAddress],
-    ["Drop Address", trip.booking?.dropAddress],
-    ["Driver", trip.driver?.driverName],
-    ["Driver Contact", trip.driver?.contactNumber],
-    ["Vehicle", `${trip.vehicle?.registrationNumber || "-"} ${trip.vehicle?.vehicleModel ? `- ${trip.vehicle.vehicleModel}` : ""}`],
-    ["KM OUT", trip.kmOut],
-    ["KM IN", trip.kmIn],
-    ["Total KM", trip.totalKm],
-    ["Time OUT", formatDateTime(trip.timeOut)],
-    ["Time IN", formatDateTime(trip.timeIn)],
-    ["Toll Charges", `Rs ${Number(trip.tollCharges || 0).toLocaleString()}`],
-    ["Parking Charges", `Rs ${Number(trip.parkingCharges || 0).toLocaleString()}`],
-    ["Extra Charges", `Rs ${Number(trip.extraCharges || 0).toLocaleString()}`]
-  ];
+function DutySlipEditor({ trip, onSave, onCancel }: { trip: any; onSave: (payload: any) => Promise<void> | void; onCancel: () => void }) {
+  const [form, setForm] = useState<DutySlipFormState>(() => buildDutySlipState(trip));
+
+  useEffect(() => {
+    setForm(buildDutySlipState(trip));
+  }, [trip]);
+
+  const totalKm = calculateTotalKm(form.kmOut, form.kmIn);
+
+  function updateField(field: keyof DutySlipFormState, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function handleSave() {
+    await onSave({
+      kmOut: normalizeNumber(form.kmOut),
+      kmIn: normalizeNumber(form.kmIn),
+      totalKm,
+      timeOut: form.timeOut || undefined,
+      timeIn: form.timeIn || undefined,
+      tollCharges: normalizeNumber(form.tollCharges),
+      parkingCharges: normalizeNumber(form.parkingCharges),
+      extraCharges: normalizeNumber(form.extraCharges)
+    });
+  }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-950 dark:text-white">Unique Carz</h3>
-            <p className="text-sm text-slate-500">Duty slip preview</p>
-          </div>
-          <div className="text-right text-sm">
-            <p className="font-semibold text-slate-900 dark:text-white">DS-{trip.tripNumber || trip._id}</p>
-            <p className="text-xs text-slate-500">{trip.createdAt ? new Date(trip.createdAt).toLocaleDateString() : "-"}</p>
-          </div>
-        </div>
-      </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        {rows.map(([label, value]) => (
-          <div key={label} className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
-            <p className="text-xs font-semibold uppercase text-slate-400">{label}</p>
-            <p className="mt-1 break-words text-sm text-slate-900 dark:text-white">{value ?? "-"}</p>
-          </div>
-        ))}
+        <TripCard label="Trip" value={trip.tripNumber} />
+        <TripCard label="Passenger" value={trip.booking?.passengerName || "-"} />
+        <TripCard label="Driver" value={trip.driver?.driverName || "-"} />
+        <TripCard label="Vehicle" value={trip.vehicle ? `${trip.vehicle.registrationNumber}${trip.vehicle.vehicleModel ? ` - ${trip.vehicle.vehicleModel}` : ""}` : "-"} />
+        <TripCard label="KM OUT" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
+        <TripCard label="KM IN" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
+        <TripCard label="Time OUT" value={<input className="input mt-1" type="datetime-local" value={form.timeOut} onChange={(event) => updateField("timeOut", event.target.value)} />} />
+        <TripCard label="Time IN" value={<input className="input mt-1" type="datetime-local" value={form.timeIn} onChange={(event) => updateField("timeIn", event.target.value)} />} />
+        <TripCard label="Toll" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
+        <TripCard label="Parking" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
+        <TripCard label="Extras" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
+        <TripCard label="Total KM" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{totalKm.toLocaleString()}</p>} />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn-primary" onClick={handleSave}>Save</button>
       </div>
     </div>
   );
 }
 
-function TripDetails({ trip }: { trip: any }) {
-  const rows = [
-    ["Trip", trip.tripNumber],
-    ["Status", trip.status],
-    ["Passenger", trip.booking?.passengerName],
-    ["Driver", trip.driver?.driverName],
-    ["Vehicle", trip.vehicle?.registrationNumber],
-    ["KM OUT", trip.kmOut],
-    ["KM IN", trip.kmIn],
-    ["Total KM", trip.totalKm],
-    ["Toll", trip.tollCharges],
-    ["Parking", trip.parkingCharges],
-    ["Extras", trip.extraCharges]
-  ];
-  return <div className="grid gap-3 sm:grid-cols-2">{rows.map(([label, value]) => <div key={label} className="rounded-md border border-slate-200 p-3 dark:border-slate-800"><p className="text-xs font-semibold uppercase text-slate-400">{label}</p><p className="mt-1 text-sm text-slate-900 dark:text-white">{value ?? "-"}</p></div>)}</div>;
+function BookingStatusBadge({ status }: { status: string }) {
+  const normalized = status === "New" ? "New" : "Assigned";
+  const className = normalized === "Assigned"
+    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
+    : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200";
+
+  return <span className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ${className}`}>{normalized}</span>;
 }
 
-function tripDefaults(trip: any) {
+function TripCard({ label, value }: { label: string; value?: any }) {
+  return (
+    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
+      <p className="text-xs font-semibold uppercase text-slate-400">{label}</p>
+      <div className="mt-1 break-words text-sm text-slate-900 dark:text-white">{value ?? "-"}</div>
+    </div>
+  );
+}
+
+function buildDutySlipState(trip: any): DutySlipFormState {
   return {
-    status: trip?.status || "Assigned",
-    kmOut: trip?.kmOut ?? "",
-    kmIn: trip?.kmIn ?? "",
+    kmOut: trip?.kmOut === undefined || trip?.kmOut === null ? "" : String(trip.kmOut),
+    kmIn: trip?.kmIn === undefined || trip?.kmIn === null ? "" : String(trip.kmIn),
     timeOut: trip?.timeOut ? toDatetimeLocal(trip.timeOut) : "",
     timeIn: trip?.timeIn ? toDatetimeLocal(trip.timeIn) : "",
-    tollCharges: trip?.tollCharges || 0,
-    parkingCharges: trip?.parkingCharges || 0,
-    extraCharges: trip?.extraCharges || 0,
-    userClosingKm: trip?.userClosingKm || trip?.kmIn || 0
+    tollCharges: String(trip?.tollCharges ?? 0),
+    parkingCharges: String(trip?.parkingCharges ?? 0),
+    extraCharges: String(trip?.extraCharges ?? 0)
   };
+}
+
+function calculateTotalKm(kmOut: string, kmIn: string) {
+  const out = normalizeNumber(kmOut);
+  const incoming = normalizeNumber(kmIn);
+  if (out === null || incoming === null) return 0;
+  return incoming >= out ? incoming - out : 0;
+}
+
+function normalizeNumber(value: string | number | undefined) {
+  if (value === undefined || value === null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function toDatetimeLocal(value: string | Date) {
   const date = new Date(value);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
-
-function formatDateTime(value?: string | Date) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString();
-}
-
-const optionalNumber = z.preprocess((value: unknown) => {
-  if (value === "" || value === null || Number.isNaN(value)) return undefined;
-  return value;
-}, z.coerce.number().min(0).optional());
-
-const tripStatusSchema = z.object({
-  status: z.enum(["Assigned", "In Trip", "Completed", "Cancelled"]),
-  kmOut: optionalNumber,
-  kmIn: optionalNumber,
-  timeOut: z.string().optional(),
-  timeIn: z.string().optional(),
-  tollCharges: optionalNumber.default(0),
-  parkingCharges: optionalNumber.default(0),
-  extraCharges: optionalNumber.default(0),
-  userClosingKm: optionalNumber
-}).superRefine((values, ctx) => {
-  if (values.status === "In Trip") {
-    if (values.kmOut === undefined) ctx.addIssue({ code: "custom", path: ["kmOut"], message: "KM OUT is required when trip is In Trip" });
-    if (!values.timeOut) ctx.addIssue({ code: "custom", path: ["timeOut"], message: "Time OUT is required when trip is In Trip" });
-  }
-
-  if (values.status === "Completed") {
-    if (values.kmOut === undefined) ctx.addIssue({ code: "custom", path: ["kmOut"], message: "KM OUT is required" });
-    if (values.kmIn === undefined) ctx.addIssue({ code: "custom", path: ["kmIn"], message: "KM IN is required" });
-    if (!values.timeOut) ctx.addIssue({ code: "custom", path: ["timeOut"], message: "Time OUT is required" });
-    if (!values.timeIn) ctx.addIssue({ code: "custom", path: ["timeIn"], message: "Time IN is required" });
-    if (values.kmIn !== undefined && values.kmOut !== undefined && values.kmIn < values.kmOut) ctx.addIssue({ code: "custom", path: ["kmIn"], message: "KM IN must be greater than or equal to KM OUT" });
-    if (values.timeOut && values.timeIn && new Date(values.timeIn) <= new Date(values.timeOut)) {
-      ctx.addIssue({ code: "custom", path: ["timeIn"], message: "Time IN must be after Time OUT" });
-    }
-  }
-});
-
-function TripStatusBadge({ status }: { status: string }) {
-  const className = status === "Completed"
-    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
-    : status === "Cancelled"
-      ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-200"
-    : status === "In Trip"
-      ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
-      : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200";
-
-  return <span className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ${className}`}>{status}</span>;
-}
-

@@ -74,6 +74,7 @@ const tripSlice = createSlice({
         return {
           ...trip,
           ...payload,
+          status: "Assigned",
           totalKm: calculateTotalKm({ ...trip, ...payload }),
           updatedAt: new Date().toISOString()
         };
@@ -83,7 +84,7 @@ const tripSlice = createSlice({
     completeTrip(state, action: PayloadAction<{ id: string; payload: any }>) {
       state.allItems = state.allItems.map((trip) => (
         trip._id === action.payload.id
-          ? { ...trip, ...action.payload.payload, status: "Completed", totalKm: calculateTotalKm({ ...trip, ...action.payload.payload }), updatedAt: new Date().toISOString() }
+          ? { ...trip, ...action.payload.payload, status: "Assigned", totalKm: calculateTotalKm({ ...trip, ...action.payload.payload }), updatedAt: new Date().toISOString() }
           : trip
       ));
       refresh(state);

@@ -48,16 +48,14 @@ export const seedBookings = names.map((name, index) => ({
   dropAddress: ["Pune Airport", "Magarpatta City", "Shivajinagar", "Aundh", "Hadapsar"][index % 5],
   carType: index % 3 === 0 ? "SUV" : "Sedan",
   cabRequestNumber: `CRN-${String(7300 + index)}`,
-  status: index < 15 ? "Assigned" : index < 19 ? "Pending Assignment" : index === 21 ? "Cancelled" : "New",
+  status: index < 15 ? "Assigned" : "New",
   senderEmail: `travel${index + 1}@client.local`,
   createdAt: iso(22 - index, 8 + (index % 8))
 }));
 
 export const seedTrips = Array.from({ length: 15 }, (_, index) => {
-  const completed = index < 10;
-  const inTrip = index >= 10 && index < 13;
   const kmOut = 12000 + index * 146;
-  const totalKm = completed ? 42 + index * 5 : inTrip ? 18 + index : 0;
+  const totalKm = 42 + index * 5;
   const booking = seedBookings[index]!;
   const driver = seedDrivers[index % seedDrivers.length]!;
   const vehicle = seedVehicles[index % seedVehicles.length]!;
@@ -70,15 +68,15 @@ export const seedTrips = Array.from({ length: 15 }, (_, index) => {
     booking,
     driver,
     vehicle,
-    status: completed ? "Completed" : inTrip ? "In Trip" : "Assigned",
-    kmOut: completed || inTrip ? kmOut : undefined,
-    kmIn: completed ? kmOut + totalKm : undefined,
+    status: "Assigned",
+    kmOut,
+    kmIn: kmOut + totalKm,
     totalKm,
-    timeOut: completed || inTrip ? iso(15 - index, 9) : undefined,
-    timeIn: completed ? iso(15 - index, 13) : undefined,
-    tollCharges: completed ? 80 + index * 10 : 0,
-    parkingCharges: completed ? 40 + index * 5 : 0,
-    extraCharges: completed && index % 4 === 0 ? 150 : 0,
+    timeOut: iso(15 - index, 9),
+    timeIn: iso(15 - index, 13),
+    tollCharges: 80 + index * 10,
+    parkingCharges: 40 + index * 5,
+    extraCharges: index % 4 === 0 ? 150 : 0,
     createdAt: iso(15 - index)
   };
 });

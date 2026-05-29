@@ -35,8 +35,8 @@ export function selectDashboardData(state: RootState) {
   return {
     cards: {
       totalBookings: bookings.length,
-      activeTrips: trips.filter((trip) => ["Assigned", "In Trip"].includes(trip.status)).length,
-      completedTrips: trips.filter((trip) => trip.status === "Completed").length,
+      activeTrips: trips.filter((trip) => trip.status === "Assigned").length,
+      completedTrips: 0,
       pendingInvoices: pendingInvoices.length,
       revenueSummary: payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
       pendingPayments: pendingInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceAmount || 0), 0),
@@ -91,7 +91,7 @@ export function selectReport(state: RootState, type: string) {
     payments,
     revenue: payments,
     "pending-payments": invoices.filter((invoice) => Number(invoice.balanceAmount || 0) > 0),
-    utilization: vehicles.map((vehicle) => ({ ...vehicle, utilization: vehicle.status === "In Trip" ? 100 : vehicle.status === "Available" ? 35 : 0 })),
+    utilization: vehicles.map((vehicle) => ({ ...vehicle, utilization: vehicle.status === "Available" ? 35 : 0 })),
     custom: [...bookings, ...trips].slice(0, 20)
   };
   const selectedRows = data[type] || data["daily-trips"] || [];
