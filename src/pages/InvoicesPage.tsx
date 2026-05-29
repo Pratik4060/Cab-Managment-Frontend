@@ -191,7 +191,7 @@ function invoiceEditDefaults(invoice: InvoiceLike) {
 function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   const styles = {
     Draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
-    Sent: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200",
+    Sent: "bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-100",
     Paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
     Partial: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200",
     Overdue: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-200"
@@ -204,7 +204,7 @@ function PaymentStatusBadge({ invoice }: { invoice: InvoiceLike }) {
   const styles = {
     Paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
     Partial: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200",
-    Waiting: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200",
+    Waiting: "bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-100",
     Pending: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
   };
   return <span className={`rounded-md px-2 py-1 text-xs font-semibold ${styles[status]}`}>{status}</span>;

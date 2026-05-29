@@ -76,20 +76,20 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
   }
 
   return (
-    <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-slate-200 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-slate-800 dark:bg-slate-950/95`}>
-      <div className="flex h-16 items-center gap-3 border-b border-slate-200/80 px-5 dark:border-slate-800">
-        <img  
+    <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-brand-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-brand-950 dark:bg-zinc-950/95`}>
+      <div className="flex h-16 items-center border-b border-brand-100 px-2 dark:border-brand-950">
+        <img
           src={logo}
           alt="Unique Carz"
-          className="h-12 w-12 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.25)]"
+          className="-ml-4 mr-1 h-24 w-24 shrink-0 object-contain"
         />
 
-        <div>
+        <div className="min-w-0">
           <div className="text-lg font-bold leading-tight text-slate-950 dark:text-white">
             Unique Carz
           </div>
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Management & Billing
+          <div className="text-xs font-semibold text-brand-600 dark:text-brand-100">
+            Corporate Cabs
           </div>
         </div>
       </div>
@@ -97,7 +97,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
         {sections.map((section) => (
           <div key={section.label}>
             {section.label !== "Main" && (
-              <div className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <div className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-brand-700/70 dark:text-red-200/60">
                 {section.label}
               </div>
             )}
@@ -109,7 +109,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
                     key={path}
                     type="button"
                     onClick={() => goTo(path)}
-                    className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${isActive ? "bg-gradient-to-r from-brand-600 to-cyan-500 text-white shadow-md shadow-brand-500/20 dark:from-brand-500 dark:to-cyan-400 dark:text-slate-950" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"}`}
+                    className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${isActive ? "bg-gradient-to-r from-brand-700 to-brand-500 text-white shadow-md shadow-brand-600/25 dark:from-brand-600 dark:to-red-400 dark:text-white" : "text-slate-600 hover:bg-brand-50 hover:text-brand-700 dark:text-slate-300 dark:hover:bg-red-950/25 dark:hover:text-red-100"}`}
                   >
                     <span className="flex items-center gap-3">
                       <Icon className="h-4 w-4" />
@@ -123,7 +123,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
           </div>
         ))}
       </nav>
-      <div className="sticky bottom-0 border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+      <div className="sticky bottom-0 border-t border-brand-100 bg-white p-4 dark:border-brand-950 dark:bg-zinc-950">
         {/* <div className="mb-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-900">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{user?.name || "Admin"}</p>
           <p className="truncate text-xs text-slate-500">{user?.role || "Administrator"}</p>

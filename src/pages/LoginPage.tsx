@@ -20,12 +20,12 @@ export function LoginPage() {
   });
   if (isAuthenticated) return <Navigate to="/" replace />;
   return (
-    <div className="min-h-screen bg-slate-100 p-4 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl md:grid-cols-[1.05fr_0.95fr] dark:border-slate-800 dark:bg-slate-900">
-        <section className="flex flex-col justify-between bg-slate-950 p-8 text-white">
+    <div className="min-h-screen bg-brand-50 p-4 text-slate-900 dark:bg-[#080304] dark:text-slate-100">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-xl border border-brand-100 bg-white shadow-2xl md:grid-cols-[1.05fr_0.95fr] dark:border-brand-950 dark:bg-zinc-900">
+        <section className="flex flex-col justify-between bg-gradient-to-br from-zinc-950 via-brand-950 to-zinc-950 p-8 text-white">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-white">
+              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-brand-500/30 bg-white shadow-lg shadow-brand-600/30">
                 <img src={logo} alt="Unique Carz" className="h-full w-full object-contain" />
               </div>
               <div>
@@ -34,7 +34,7 @@ export function LoginPage() {
               </div>
             </div>
             <div className="mt-16 max-w-lg">
-              <p className="text-sm font-semibold uppercase tracking-wide text-brand-200">Corporate Operations Console</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-red-200">Corporate Operations Console</p>
               <h2 className="mt-4 text-4xl font-bold leading-tight">Control bookings, trips, invoices, and payments from one workspace.</h2>
               <p className="mt-5 text-base leading-7 text-slate-300">
                 Built for dispatch teams, billing admins, and managers who need fast assignment, clean records, and dependable reporting.
@@ -48,7 +48,7 @@ export function LoginPage() {
               { label: "Analytics", icon: BarChart3 }
             ].map(({ label, icon: Icon }) => (
               <div key={label} className="rounded-lg border border-white/10 bg-white/5 p-4">
-                <Icon className="mb-3 h-5 w-5 text-brand-200" />
+                <Icon className="mb-3 h-5 w-5 text-red-200" />
                 <p className="text-sm font-medium">{label}</p>
               </div>
             ))}

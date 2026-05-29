@@ -13,7 +13,7 @@
 
 body {
   margin: 0;
-  background: #f6f8fb;
+  background: #fff1f1;
 }
 
 button {
@@ -21,12 +21,12 @@ button {
 }
 
 .dark body {
-  background: #101720;
+  background: #080304;
 }
 
 @layer components {
   .panel {
-    @apply rounded-lg border border-slate-200 bg-white shadow-soft dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-lg border border-brand-100 bg-white shadow-soft;
   }
 
   .btn {
@@ -34,15 +34,15 @@ button {
   }
 
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn bg-brand-600 text-white shadow-sm shadow-brand-600/25 hover:bg-brand-700;
   }
 
   .btn-secondary {
-    @apply btn border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+    @apply btn border border-brand-100 bg-white text-slate-700 hover:bg-brand-50 hover:text-brand-700;
   }
 
   .input {
-    @apply w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-brand-700/30;
+    @apply w-full rounded-md border border-brand-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
   }
 
   .scrollbar-hidden {
@@ -53,4 +53,31 @@ button {
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
   }
+}
+
+.dark .panel {
+  border-color: #3f0608;
+  background: #09090b;
+}
+
+.dark .btn-secondary {
+  border-color: #3f0608;
+  background: #09090b;
+  color: #e2e8f0;
+}
+
+.dark .btn-secondary:hover {
+  background: rgba(63, 6, 8, 0.4);
+  color: #ffe0e0;
+}
+
+.dark .input {
+  border-color: #3f0608;
+  background: #09090b;
+  color: #f1f5f9;
+}
+
+.dark .input:focus {
+  border-color: #d9141c;
+  box-shadow: 0 0 0 2px rgba(217, 20, 28, 0.3);
 }

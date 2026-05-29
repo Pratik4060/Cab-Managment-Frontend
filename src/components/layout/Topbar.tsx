@@ -52,7 +52,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:flex-nowrap sm:gap-3 sm:px-4 lg:px-6">
+    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-brand-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-brand-950 dark:bg-zinc-950/95 sm:flex-nowrap sm:gap-3 sm:px-4 lg:px-6">
       <button className="btn-secondary p-2 md:hidden" onClick={onMenu} aria-label="Open menu">
         <Menu className="h-4 w-4" />
       </button>
@@ -64,7 +64,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
 
       <div className="relative order-3 w-full sm:order-none sm:ml-2 sm:max-w-2xl sm:flex-1 lg:ml-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input className="input h-10 rounded-lg bg-slate-50 pl-9 dark:bg-slate-900" placeholder="Search bookings, invoices, drivers..." />
+        <input className="input h-10 rounded-lg bg-brand-50/70 pl-9 dark:bg-zinc-900" placeholder="Search bookings, invoices, drivers..." />
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -78,14 +78,14 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
             )}
           </button>
           {openNotifications && (
-            <div className="absolute right-0 top-12 z-50 w-80 rounded-lg border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 dark:border-slate-800">
+            <div className="absolute right-0 top-12 z-50 w-80 rounded-lg border border-brand-100 bg-white p-2 shadow-2xl dark:border-brand-950 dark:bg-zinc-950">
+              <div className="flex items-center justify-between gap-3 border-b border-brand-100 px-3 py-2 dark:border-brand-950">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
                   <p className="text-xs text-slate-500">{unreadNotifications.length} new trip requests</p>
                 </div>
                 {notifications.length > 0 && (
-                  <button className="rounded-md px-2 py-1 text-xs font-medium text-brand-700 outline-none hover:bg-brand-50 dark:text-brand-200 dark:hover:bg-slate-800" onClick={clearAllNotifications}>
+                  <button className="rounded-md px-2 py-1 text-xs font-medium text-brand-700 outline-none hover:bg-brand-50 dark:text-brand-200 dark:hover:bg-brand-950/40" onClick={clearAllNotifications}>
                     Clear all
                   </button>
                 )}
@@ -126,8 +126,8 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
       </div>
 
-      <div className="ml-1 flex shrink-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:min-w-[210px] sm:px-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-semibold text-white">
+      <div className="ml-1 flex shrink-0 items-center gap-3 rounded-xl border border-brand-100 bg-brand-50/80 px-2 py-1 shadow-sm dark:border-brand-950 dark:bg-zinc-900 sm:min-w-[210px] sm:px-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-semibold text-white shadow-sm shadow-brand-600/30">
           {(user?.name || "A").slice(0, 1)}
         </div>
         <div className="hidden min-w-0 text-sm sm:block">
