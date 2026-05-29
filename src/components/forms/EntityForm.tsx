@@ -6,8 +6,11 @@ type Field = {
   name: string;
   label: string;
   type?: string;
+  accept?: string;
   placeholder?: string;
   options?: FieldOption[];
+  optionsBy?: Record<string, FieldOption[]>;
+  dependsOn?: string;
   full?: boolean;
   required?: boolean;
   step?: string;
@@ -21,21 +24,43 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
   onSubmit: (values: Record<string, any>) => Promise<void> | void;
   submitLabel?: string;
 }) {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Record<string, any>>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Record<string, any>>({ resolver: zodResolver(schema), defaultValues: defaults });
+
+  async function submitWithFiles(values: Record<string, any>) {
+    const normalized = { ...values };
+    for (const field of fields) {
+      if (field.type !== "file") continue;
+      const file = values[field.name]?.[0] as File | undefined;
+      if (file) {
+        normalized[field.name] = await fileToDataUrl(file);
+      } else {
+        normalized[field.name] = defaults[field.name] || "";
+      }
+    }
+    await onSubmit(normalized);
+  }
+
   return (
-    <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
+    <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit(submitWithFiles)}>
       {fields.map((field) => (
         <label key={field.name} className={field.full ? "sm:col-span-2" : ""}>
           <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">{field.label}</span>
           {field.type === "select" ? (
             <select className="input" {...register(field.name as any)}>
               <option value="">{field.placeholder || `Select ${field.label}`}</option>
-              {(field.options || []).map((option) => {
+              {(field.optionsBy && field.dependsOn ? field.optionsBy[watch(field.dependsOn)] || [] : field.options || []).map((option) => {
                 const value = typeof option === "object" ? option.value : option;
                 const label = typeof option === "object" ? option.label : option;
                 return <option key={value} value={value}>{label}</option>;
               })}
             </select>
+          ) : field.type === "file" ? (
+            <input
+              className="input file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white"
+              type="file"
+              accept={field.accept || "image/*"}
+              {...register(field.name as any)}
+            />
           ) : (
             <input
               className="input"
@@ -56,5 +81,14 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
       </div>
     </form>
   );
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 

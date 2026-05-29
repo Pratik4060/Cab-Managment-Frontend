@@ -2,19 +2,42 @@ import { driverActions } from "../redux/slices/driverSlice";
 import { vehicleActions } from "../redux/slices/vehicleSlice";
 import { EntityPage } from "./EntityPage";
 
+const vehicleModelsByCompany = {
+  Toyota: ["Etios", "Innova", "Fortuner", "Glanza", "Rumion"],
+  "Maruti Suzuki": ["Dzire", "Ertiga", "Swift", "Brezza", "Ciaz"],
+  Honda: ["City", "Amaze", "Elevate", "WR-V"],
+  Hyundai: ["Aura", "Verna", "Creta", "Venue", "i20"],
+  Tata: ["Nexon", "Tigor", "Altroz", "Punch", "Harrier"],
+  Mahindra: ["XUV500", "XUV700", "Scorpio", "Bolero", "Marazzo"],
+  Kia: ["Carens", "Seltos", "Sonet"]
+};
+
 export function CarsPage() {
   return <EntityPage title="Cars" subtitle="Vehicle inventory, rates, compliance, and availability." stateKey="vehicles" actions={vehicleActions} columns={[
-    { key: "registrationNumber", header: "Registration" }, { key: "vehicleModel", header: "Model" }, { key: "cabCategory", header: "Category" }, { key: "seatingCapacity", header: "Seats" }, { key: "ratePerKm", header: "Rate/KM" }, { key: "status", header: "Status" }
+    { key: "registrationNumber", header: "Registration" }, { key: "vehicleType", header: "Company" }, { key: "vehicleModel", header: "Model" }, { key: "seatingCapacity", header: "Seats" }, { key: "ratePerKm", header: "Rate/KM" }, { key: "status", header: "Status" }
   ]} fields={[
-    { name: "registrationNumber", label: "Registration Number" }, { name: "vehicleType", label: "Vehicle Type" }, { name: "vehicleModel", label: "Vehicle Model" }, { name: "cabCategory", label: "Cab Category" }, { name: "seatingCapacity", label: "Seating Capacity", type: "number", min: 1 }, { name: "ratePerKm", label: "Rate Per KM", type: "number" }, { name: "insurancePolicyNumber", label: "Insurance Policy Number", required: false }, { name: "status", label: "Status", type: "select", options: ["Available", "In Trip", "Maintenance"] }
+    { name: "registrationNumber", label: "Vehicle Number" },
+    { name: "vehicleType", label: "Vehicle Company", type: "select", options: Object.keys(vehicleModelsByCompany) },
+    { name: "vehicleModel", label: "Vehicle Model", type: "select", dependsOn: "vehicleType", optionsBy: vehicleModelsByCompany, placeholder: "Select company first" },
+    { name: "seatingCapacity", label: "Seating Capacity", type: "number", min: 1 },
+    { name: "ratePerKm", label: "Rate Per KM", type: "number" }
   ]} statusOptions={["Available", "In Trip", "Maintenance"]} />;
 }
 
 export function DriversPage() {
   return <EntityPage title="Drivers" subtitle="Availability, documents, contacts, and trip history readiness." stateKey="drivers" actions={driverActions} columns={[
-    { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "licenseNumber", header: "License" }, { key: "status", header: "Status" }
+    { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "licenseNumber", header: "License" }, { key: "aadhaarNumber", header: "Aadhaar" }, { key: "panNumber", header: "PAN" }, { key: "status", header: "Status" }
   ]} fields={[
-    { name: "driverName", label: "Driver Name" }, { name: "contactNumber", label: "Contact Number" }, { name: "alternateContact", label: "Alternate Contact", required: false }, { name: "licenseNumber", label: "License Number" }, { name: "address", label: "Address", required: false, full: true }, { name: "status", label: "Status", type: "select", options: ["Available", "In Trip", "Unavailable"] }
+    { name: "driverName", label: "Driver Name" },
+    { name: "contactNumber", label: "Contact Number" },
+    { name: "alternateContact", label: "Alternate Contact", required: false },
+    { name: "aadhaarNumber", label: "Aadhaar Card Number" },
+    { name: "panNumber", label: "PAN Card Number" },
+    { name: "licenseNumber", label: "License Number" },
+    { name: "aadhaarCardPhoto", label: "Aadhaar Card Photo", type: "file", accept: "image/*", required: false },
+    { name: "panCardPhoto", label: "PAN Card Photo", type: "file", accept: "image/*", required: false },
+    { name: "licensePhoto", label: "License Photo", type: "file", accept: "image/*", required: false, full: true },
+    { name: "address", label: "Address", required: false, full: true }
   ]} statusOptions={["Available", "In Trip", "Unavailable"]} />;
 }
 

@@ -28,7 +28,14 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   const [status, setStatus] = useState("");
   const state = useAppSelector((store) => (store as any)[stateKey]);
   useEffect(() => { dispatch(actions.fetchAll(status ? { status } : {})); }, [dispatch, actions, status]);
-  const formSchema = schema || z.object(Object.fromEntries(fields.map((field) => [field.name, field.type === "number" ? z.coerce.number().min(field.min ?? 0) : z.string().min(field.required === false ? 0 : 1, "Required")])));
+  const formSchema = schema || z.object(Object.fromEntries(fields.map((field) => [
+    field.name,
+    field.type === "number"
+      ? z.coerce.number().min(field.min ?? 0)
+      : field.type === "file"
+        ? z.any().optional()
+        : z.string().min(field.required === false ? 0 : 1, "Required")
+  ])));
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -107,7 +114,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
             {Object.entries(viewRow).filter(([key]) => !["_id", "__v"].includes(key)).map(([key, value]) => (
               <div key={key} className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
                 <p className="text-xs font-semibold uppercase text-slate-400">{key}</p>
-                <p className="mt-1 break-words text-sm text-slate-900 dark:text-white">{formatValue(value)}</p>
+                <div className="mt-1 text-sm text-slate-900 dark:text-white">{formatValue(value)}</div>
               </div>
             ))}
           </div>
@@ -119,6 +126,9 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
 
 function formatValue(value: any) {
   if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "string" && value.startsWith("data:image/")) {
+    return <img src={value} alt="Uploaded document" className="max-h-36 rounded-md border border-slate-200 object-contain dark:border-slate-800" />;
+  }
   if (typeof value === "object") return value.name || value.driverName || value.registrationNumber || value.bookingId || JSON.stringify(value);
   return String(value);
 }

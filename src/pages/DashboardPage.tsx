@@ -1,4 +1,4 @@
-import { Banknote, ClipboardList } from "lucide-react";
+import { Banknote, ClipboardList, IndianRupee, Route } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { StatCard } from "../components/common/StatCard";
@@ -32,6 +32,8 @@ export function DashboardPage() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={ClipboardList} label="Total Bookings" value={cards.totalBookings} />
+        <StatCard icon={Route} label="Active Trips" value={cards.activeTrips} tone="amber" />
+        <StatCard icon={IndianRupee} label="Revenue Summary" value={`Rs ${Number(cards.revenueSummary || 0).toLocaleString()}`} tone="green" />
         <StatCard icon={Banknote} label="Pending Payments" value={`Rs ${Number(cards.pendingPayments || 0).toLocaleString()}`} tone="amber" />
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
