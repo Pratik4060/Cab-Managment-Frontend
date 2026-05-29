@@ -52,7 +52,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-brand-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-brand-950 dark:bg-zinc-950/95 sm:flex-nowrap sm:gap-3 sm:px-4 lg:px-6">
+    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-brand-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-red-950/40 dark:bg-[#0d0d0f]/95 sm:flex-nowrap sm:gap-3 sm:px-4 lg:px-6">
       <button className="btn-secondary p-2 md:hidden" onClick={onMenu} aria-label="Open menu">
         <Menu className="h-4 w-4" />
       </button>
@@ -64,7 +64,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
 
       <div className="relative order-3 w-full sm:order-none sm:ml-2 sm:max-w-2xl sm:flex-1 lg:ml-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input className="input h-10 rounded-lg bg-brand-50/70 pl-9 dark:bg-zinc-900" placeholder="Search bookings, invoices, drivers..." />
+        <input className="input h-10 rounded-lg bg-brand-50/70 pl-9 dark:bg-[#111113]" placeholder="Search bookings, invoices, drivers..." />
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -78,8 +78,8 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
             )}
           </button>
           {openNotifications && (
-            <div className="absolute right-0 top-12 z-50 w-80 rounded-lg border border-brand-100 bg-white p-2 shadow-2xl dark:border-brand-950 dark:bg-zinc-950">
-              <div className="flex items-center justify-between gap-3 border-b border-brand-100 px-3 py-2 dark:border-brand-950">
+            <div className="absolute right-0 top-12 z-50 w-80 rounded-lg border border-brand-100 bg-white p-2 shadow-2xl dark:border-red-950/40 dark:bg-[#101012]">
+              <div className="flex items-center justify-between gap-3 border-b border-brand-100 px-3 py-2 dark:border-red-950/40">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
                   <p className="text-xs text-slate-500">{unreadNotifications.length} new trip requests</p>
@@ -96,7 +96,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
                 ) : notifications.map((notification) => (
                   <button
                     key={notification._id}
-                    className="w-full rounded-md px-3 py-2 text-left outline-none transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="w-full rounded-md px-3 py-2 text-left outline-none transition hover:bg-slate-50 dark:hover:bg-red-950/20"
                     onClick={() => openTrips(notification)}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -126,8 +126,8 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
       </div>
 
-      <div className="ml-1 flex shrink-0 items-center gap-3 rounded-xl border border-brand-100 bg-brand-50/80 px-2 py-1 shadow-sm dark:border-brand-950 dark:bg-zinc-900 sm:min-w-[210px] sm:px-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-semibold text-white shadow-sm shadow-brand-600/30">
+      <div className="ml-1 flex shrink-0 items-center gap-3 rounded-xl border border-brand-100 bg-brand-50/80 px-2 py-1 shadow-sm dark:border-red-950/40 dark:bg-[#141416] sm:min-w-[210px] sm:px-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-semibold text-white shadow-sm shadow-brand-600/35">
           {(user?.name || "A").slice(0, 1)}
         </div>
         <div className="hidden min-w-0 text-sm sm:block">

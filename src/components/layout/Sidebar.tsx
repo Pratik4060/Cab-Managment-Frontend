@@ -76,8 +76,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
   }
 
   return (
-    <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-brand-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-brand-950 dark:bg-zinc-950/95`}>
-      <div className="flex h-16 items-center border-b border-brand-100 px-2 dark:border-brand-950">
+    <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-brand-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-red-950/45 dark:bg-[#09090b]/98 dark:shadow-black/50`}>
+      <div className="flex h-16 items-center border-b border-brand-100 px-2 dark:border-red-950/45 dark:bg-gradient-to-r dark:from-[#0b0b0d] dark:via-[#100708] dark:to-[#16090a]">
         <img
           src={logo}
           alt="Unique Carz"
@@ -85,19 +85,19 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
         />
 
         <div className="min-w-0">
-          <div className="text-lg font-bold leading-tight text-slate-950 dark:text-white">
+          <div className="text-lg font-bold leading-tight text-slate-950 dark:text-slate-50">
             Unique Carz
           </div>
-          <div className="text-xs font-semibold text-brand-600 dark:text-brand-100">
+          <div className="text-xs font-semibold text-brand-600 dark:text-brand-200">
             Corporate Cabs
           </div>
         </div>
       </div>
-      <nav className="scrollbar-hidden flex-1 space-y-5 overflow-y-auto p-3">
+      <nav className="scrollbar-hidden flex-1 space-y-5 overflow-y-auto p-3 dark:bg-gradient-to-b dark:from-[#09090b] dark:via-[#0b0b0d] dark:to-[#0b0506]">
         {sections.map((section) => (
           <div key={section.label}>
             {section.label !== "Main" && (
-              <div className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-brand-700/70 dark:text-red-200/60">
+              <div className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-brand-700/70 dark:text-red-200/55">
                 {section.label}
               </div>
             )}
@@ -109,7 +109,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
                     key={path}
                     type="button"
                     onClick={() => goTo(path)}
-                    className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${isActive ? "bg-gradient-to-r from-brand-700 to-brand-500 text-white shadow-md shadow-brand-600/25 dark:from-brand-600 dark:to-red-400 dark:text-white" : "text-slate-600 hover:bg-brand-50 hover:text-brand-700 dark:text-slate-300 dark:hover:bg-red-950/25 dark:hover:text-red-100"}`}
+                    className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${isActive ? "bg-gradient-to-r from-brand-700 to-brand-500 text-white shadow-md shadow-brand-600/25 dark:from-brand-700 dark:via-brand-600 dark:to-brand-500 dark:text-white dark:shadow-[0_10px_28px_rgba(237,28,36,0.22)]" : "text-slate-600 hover:bg-brand-50 hover:text-brand-700 dark:text-slate-400 dark:hover:bg-[#1a0e10] dark:hover:text-white dark:hover:shadow-[inset_3px_0_0_rgba(237,28,36,0.65)]"}`}
                   >
                     <span className="flex items-center gap-3">
                       <Icon className="h-4 w-4" />
@@ -123,7 +123,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
           </div>
         ))}
       </nav>
-      <div className="sticky bottom-0 border-t border-brand-100 bg-white p-4 dark:border-brand-950 dark:bg-zinc-950">
+      <div className="sticky bottom-0 border-t border-brand-100 bg-white p-4 dark:border-red-950/40 dark:bg-[#09090b]">
         {/* <div className="mb-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-900">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{user?.name || "Admin"}</p>
           <p className="truncate text-xs text-slate-500">{user?.role || "Administrator"}</p>

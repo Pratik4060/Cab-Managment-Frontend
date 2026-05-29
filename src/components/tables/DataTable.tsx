@@ -13,10 +13,10 @@ export function DataTable({ columns, rows = [], loading, actions }: {
   if (loading) return <LoadingSkeleton />;
   if (!rows.length) return <EmptyState />;
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+    <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-red-950/35">
       <div className="max-h-[65vh] overflow-auto">
-        <table className="min-w-[720px] divide-y divide-slate-200 text-sm dark:divide-slate-800 lg:min-w-full">
-          <thead className="sticky top-0 bg-slate-50 dark:bg-slate-900">
+        <table className="min-w-[720px] divide-y divide-slate-200 text-sm dark:divide-red-950/35 lg:min-w-full">
+          <thead className="sticky top-0 bg-slate-50 dark:bg-[#171719]">
             <tr>
               {columns.map((column) => (
                 <th key={column.key} className="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">
@@ -26,10 +26,10 @@ export function DataTable({ columns, rows = [], loading, actions }: {
               {actions && <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-950">
+          <tbody className="divide-y divide-slate-100 bg-white dark:divide-red-950/25 dark:bg-[#101012]">
             {rows.map((row) => (
-              <tr key={row._id} className="hover:bg-slate-50 dark:hover:bg-slate-900">
-                {columns.map((column) => <td key={column.key} className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-200">{column.render ? column.render(row) : row[column.key]}</td>)}
+              <tr key={row._id} className="group transition-colors hover:bg-slate-50 dark:hover:bg-[#1f1113]">
+                {columns.map((column) => <td key={column.key} className="whitespace-nowrap px-4 py-3 text-slate-700 transition-colors dark:text-slate-200 dark:group-hover:text-white">{column.render ? column.render(row) : row[column.key]}</td>)}
                 {actions && <td className="px-4 py-3 text-right align-middle">{actions(row)}</td>}
               </tr>
             ))}

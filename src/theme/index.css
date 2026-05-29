@@ -21,7 +21,7 @@ button {
 }
 
 .dark body {
-  background: #080304;
+  background: #08080a;
 }
 
 @layer components {
@@ -56,28 +56,39 @@ button {
 }
 
 .dark .panel {
-  border-color: #3f0608;
-  background: #09090b;
+  border-color: rgba(237, 28, 36, 0.16);
+  background: linear-gradient(180deg, #151517 0%, #101012 100%);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
 }
 
 .dark .btn-secondary {
-  border-color: #3f0608;
-  background: #09090b;
+  border-color: rgba(237, 28, 36, 0.18);
+  background: #111113;
   color: #e2e8f0;
 }
 
 .dark .btn-secondary:hover {
-  background: rgba(63, 6, 8, 0.4);
-  color: #ffe0e0;
+  border-color: rgba(237, 28, 36, 0.38);
+  background: rgba(237, 28, 36, 0.1);
+  color: #fff1f1;
 }
 
 .dark .input {
-  border-color: #3f0608;
-  background: #09090b;
+  border-color: rgba(237, 28, 36, 0.16);
+  background: #111113;
   color: #f1f5f9;
 }
 
 .dark .input:focus {
   border-color: #d9141c;
-  box-shadow: 0 0 0 2px rgba(217, 20, 28, 0.3);
+  box-shadow: 0 0 0 2px rgba(217, 20, 28, 0.22);
+}
+
+.dark .input::placeholder {
+  color: #74747b;
+}
+
+.dark select.input option {
+  background: #111113;
+  color: #f8fafc;
 }

@@ -20,9 +20,9 @@ export function LoginPage() {
   });
   if (isAuthenticated) return <Navigate to="/" replace />;
   return (
-    <div className="min-h-screen bg-brand-50 p-4 text-slate-900 dark:bg-[#080304] dark:text-slate-100">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-xl border border-brand-100 bg-white shadow-2xl md:grid-cols-[1.05fr_0.95fr] dark:border-brand-950 dark:bg-zinc-900">
-        <section className="flex flex-col justify-between bg-gradient-to-br from-zinc-950 via-brand-950 to-zinc-950 p-8 text-white">
+    <div className="min-h-screen bg-brand-50 p-4 text-slate-900 dark:bg-[#08080a] dark:text-slate-100">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-xl border border-brand-100 bg-white shadow-2xl md:grid-cols-[1.05fr_0.95fr] dark:border-red-950/40 dark:bg-[#101012]">
+        <section className="flex flex-col justify-between bg-gradient-to-br from-[#070708] via-[#15090a] to-[#08080a] p-8 text-white">
           <div>
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-brand-500/30 bg-white shadow-lg shadow-brand-600/30">
@@ -30,7 +30,7 @@ export function LoginPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Unique Carz</h1>
-                <p className="text-sm text-slate-300">Management & Billing Automation</p>
+                <p className="text-sm text-slate-300">Corporate Cabs and Transportation Services</p>
               </div>
             </div>
             <div className="mt-16 max-w-lg">
