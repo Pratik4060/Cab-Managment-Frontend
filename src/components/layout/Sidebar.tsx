@@ -81,7 +81,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
         <img
           src={logo}
           alt="Unique Carz"
-          className="-ml-4 mr-1 h-24 w-24 shrink-0 object-contain"
+          className="-ml-4 h-24 w-24 shrink-0 object-contain"
         />
 
         <div className="min-w-0">
