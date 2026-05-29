@@ -1,5 +1,5 @@
 import { Bell, Menu, Moon, Sun } from "lucide-react";
-import { MouseEvent, KeyboardEvent, useEffect, useState } from "react";
+import { MouseEvent, KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { toggleTheme } from "../../redux/slices/themeSlice";
@@ -10,7 +10,11 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { mode } = useAppSelector((state) => state.theme);
-  const newBookings = useAppSelector((state) => state.bookings.allItems.filter((booking) => booking.status === "New").slice(0, 5));
+  const bookings = useAppSelector((state) => state.bookings.allItems);
+  const newBookings = useMemo(
+    () => bookings.filter((booking) => booking.status === "New").slice(0, 5),
+    [bookings]
+  );
   const [openNotifications, setOpenNotifications] = useState(false);
   const [notifications, setNotifications] = useState<BookingNotification[]>([]);
   const [seenIds, setSeenIds] = useState<string[]>(() => JSON.parse(localStorage.getItem("seenBookingNotifications") || "[]"));
