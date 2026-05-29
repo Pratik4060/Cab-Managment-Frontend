@@ -1,4 +1,4 @@
-import { Columns3, Download, FileBarChart, Printer, RefreshCcw, RotateCcw } from "lucide-react";
+import { Columns3, Download, FileBarChart, Printer, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, renderPieLabelLine, renderPiePercentageLabel } from "../components/charts/PiePercentageLabel";
@@ -62,11 +62,19 @@ export function ReportsPage() {
         const createdAt = row.createdAt ? new Date(row.createdAt) : null;
         if (filters.from && createdAt && createdAt < new Date(filters.from)) return false;
         if (filters.to && createdAt && createdAt > new Date(`${filters.to}T23:59:59`)) return false;
-        if (filters.status && row.status !== filters.status) return false;
+        if (filters.status) {
+          const matchesStatus = filters.status === "Pending"
+            ? remainingAmount(row) > 0
+            : row.status === filters.status;
+          if (!matchesStatus) return false;
+        }
         return !search || Object.values(row).join(" ").toLowerCase().includes(search);
       })
       .map((row) => ({
         ...row,
+        status: row.status === "Overdue" ? "Pending" : row.status,
+        remainingAmount: remainingAmount(row),
+        balanceAmount: remainingAmount(row),
         paymentStatus: remainingAmount(row) === 0 ? "Paid" : Number(row.paidAmount || 0) > 0 ? "Partial" : "Pending"
       }));
   }, [filters.from, filters.search, filters.status, filters.to, invoices]);
@@ -84,10 +92,6 @@ export function ReportsPage() {
     const partialInvoices = rows.filter((row) => row.paymentStatus === "Partial").length;
     return { totalAmount, paidAmount, outstandingAmount, partialInvoices };
   }, [rows]);
-
-  function applyFilters() {
-    dispatch(fetchReportByType({ type: REPORT_TYPE, params: filters }));
-  }
 
   function resetFilters() {
     const empty = { from: "", to: "", search: "", status: "" };
@@ -121,7 +125,7 @@ export function ReportsPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={FileBarChart} label="Invoice Count" value={summary.records ?? rows.length ?? 0} />
         <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
-        <StatCard icon={FileBarChart} label="Outstanding" value={`Rs ${Number(stats.outstandingAmount).toLocaleString()}`} tone="amber" />
+        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(stats.outstandingAmount).toLocaleString()}`} tone="amber" />
         <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(stats.totalAmount).toLocaleString()}`} />
       </div>
 
@@ -142,13 +146,9 @@ export function ReportsPage() {
             <option value="Sent">Sent</option>
             <option value="Partial">Partial</option>
             <option value="Paid">Paid</option>
-            <option value="Overdue">Overdue</option>
+            <option value="Pending">Pending</option>
           </select>
           <input className="input md:col-span-2" placeholder="Search invoices" value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
-          <button className="btn-primary md:col-start-5" onClick={applyFilters}>
-            <RefreshCcw className="h-4 w-4" />
-            Apply
-          </button>
         </div>
       </section>
 

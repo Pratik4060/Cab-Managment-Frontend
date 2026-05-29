@@ -131,6 +131,9 @@ export function selectReport(state: RootState, type: string) {
     bookings,
     invoices: invoices.map((invoice) => ({
       ...invoice,
+      remainingAmount: invoiceRemainingAmount(invoice),
+      balanceAmount: invoiceRemainingAmount(invoice),
+      status: invoice.status === "Overdue" ? "Pending" : invoice.status,
       paymentStatus: invoiceRemainingAmount(invoice) === 0 ? "Paid" : Number(invoice.paidAmount || 0) > 0 ? "Partial" : "Pending"
     })),
     payments,
