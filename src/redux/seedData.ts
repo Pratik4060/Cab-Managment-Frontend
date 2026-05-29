@@ -103,6 +103,7 @@ export const seedInvoices = Array.from({ length: 20 }, (_, index) => {
     finalAmount,
     paidAmount,
     balanceAmount,
+    remainingAmount: balanceAmount,
     status: balanceAmount === 0 ? "Paid" : paidAmount > 0 ? "Partial" : index % 5 === 0 ? "Overdue" : "Sent",
     sentAt: index > 2 ? iso(18 - index, 10) : undefined,
     createdAt: iso(20 - index)

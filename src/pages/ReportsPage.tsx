@@ -1,13 +1,12 @@
-import { Columns3, Download, FileBarChart, Printer, RefreshCcw, RotateCcw } from "lucide-react";
+import { Columns3, Download, FileBarChart, Printer, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, renderPieLabelLine, renderPiePercentageLabel } from "../components/charts/PiePercentageLabel";
 import { EmptyState } from "../components/common/EmptyState";
 import { StatCard } from "../components/common/StatCard";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { selectReport, selectReportSummary } from "../redux/selectors";
+import { selectReport } from "../redux/selectors";
 import { fetchReportByType, fetchReports } from "../redux/slices/reportSlice";
 import { downloadFile } from "../utils/downloadFile";
 
@@ -15,58 +14,38 @@ type ReportRow = Record<string, any>;
 type ReportColumn = { key: string; header: string };
 type VisibleColumns = Record<string, boolean>;
 
-const reportLabels: Record<string, string> = {
-  "daily-trips": "Daily Trip Reports",
-  drivers: "Driver Wise Reports",
-  vehicles: "Vehicle Wise Reports",
-  bookings: "Booking Reports",
-  invoices: "Invoice Reports",
-  payments: "Payment Reports",
-  revenue: "Revenue Reports",
-  "pending-payments": "Pending Payment Reports",
-  gst: "GST Reports",
-  utilization: "Utilization Reports",
-  custom: "Custom Reports"
-};
+const REPORT_TYPE = "invoices";
 
 const tooltipStyle = { borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)" };
 const tooltipCursor = { fill: "rgba(148, 163, 184, 0.14)", stroke: "transparent" };
 
-const recordLabels: Record<string, string> = {
-  "daily-trips": "Total Trips",
-  drivers: "Total Drivers",
-  vehicles: "Total Vehicles",
-  bookings: "Total Bookings",
-  invoices: "Total Invoices",
-  payments: "Payments",
-  revenue: "Revenue Records",
-  "pending-payments": "Pending Invoices",
-  utilization: "Metrics",
-  custom: "Custom Records"
-};
+function remainingAmount(invoice: any) {
+  return Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0);
+}
 
 export function ReportsPage() {
-  const location = useLocation();
-  const { type: routeType } = useParams();
-  const pathParts = location.pathname.split("/").filter(Boolean);
-  const pathType = location.pathname.startsWith("/reports/") ? pathParts[pathParts.length - 1] : undefined;
-  const type = routeType || pathType || "daily-trips";
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const current = useAppSelector((state) => selectReport(state, type));
-  const data = useAppSelector(selectReportSummary);
+  const report = useAppSelector((state) => selectReport(state, REPORT_TYPE));
   const loading = useAppSelector((state) => state.reports.loading);
+  const invoices = useAppSelector((state) => state.invoices.allItems || state.invoices.items || []);
   const [filters, setFilters] = useState({ from: "", to: "", search: "", status: "" });
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>({});
   const [columnMenuOpen, setColumnMenuOpen] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => { dispatch(fetchReports()); }, [dispatch]);
-  useEffect(() => { dispatch(fetchReportByType({ type, params: filters })); }, [dispatch, type]);
   useEffect(() => {
-    if (current?.columns) setVisibleColumns(Object.fromEntries(current.columns.map((column: ReportColumn) => [column.key, true])));
+    dispatch(fetchReports());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchReportByType({ type: REPORT_TYPE, params: filters }));
+  }, [dispatch, filters]);
+
+  useEffect(() => {
+    if (report?.columns) setVisibleColumns(Object.fromEntries(report.columns.map((column: ReportColumn) => [column.key, true])));
     setColumnMenuOpen(false);
-  }, [current?.type]);
+  }, [report?.type]);
+
   useEffect(() => {
     if (!columnMenuOpen) return undefined;
     function closeOnOutsideClick(event: MouseEvent) {
@@ -76,107 +55,161 @@ export function ReportsPage() {
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
   }, [columnMenuOpen]);
 
-  const rows = useMemo(() => {
+  const rows = useMemo<ReportRow[]>(() => {
     const search = filters.search.toLowerCase();
-    return ((current?.rows || []) as ReportRow[]).filter((row) => !search || Object.values(row).join(" ").toLowerCase().includes(search));
-  }, [current?.rows, filters.search]);
-  const columns = ((current?.columns || []) as ReportColumn[]).filter((column) => visibleColumns[column.key] !== false);
-  const exportQuery = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([, value]) => value))).toString();
-  const summary = current?.summary || {};
-  const trendData = current?.charts?.trend || [];
-  const statusData = current?.charts?.status || [];
+    return (invoices as ReportRow[])
+      .filter((row) => {
+        const createdAt = row.createdAt ? new Date(row.createdAt) : null;
+        if (filters.from && createdAt && createdAt < new Date(filters.from)) return false;
+        if (filters.to && createdAt && createdAt > new Date(`${filters.to}T23:59:59`)) return false;
+        if (filters.status) {
+          const matchesStatus = filters.status === "Pending"
+            ? remainingAmount(row) > 0
+            : row.status === filters.status;
+          if (!matchesStatus) return false;
+        }
+        return !search || Object.values(row).join(" ").toLowerCase().includes(search);
+      })
+      .map((row) => ({
+        ...row,
+        status: row.status === "Overdue" ? "Pending" : row.status,
+        remainingAmount: remainingAmount(row),
+        balanceAmount: remainingAmount(row),
+        paymentStatus: remainingAmount(row) === 0 ? "Paid" : Number(row.paidAmount || 0) > 0 ? "Partial" : "Pending"
+      }));
+  }, [filters.from, filters.search, filters.status, filters.to, invoices]);
 
-  function applyFilters() {
-    dispatch(fetchReportByType({ type, params: filters }));
-  }
+  const columns = ((report?.columns || []) as ReportColumn[]).filter((column) => visibleColumns[column.key] !== false);
+  const exportQuery = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([, value]) => value))).toString();
+  const summary = report?.summary || {};
+  const trendData = report?.charts?.trend || [];
+  const statusData = report?.charts?.status || [];
+
+  const stats = useMemo(() => {
+    const totalAmount = rows.reduce((sum, row) => sum + Number(row.finalAmount || 0), 0);
+    const paidAmount = rows.reduce((sum, row) => sum + Number(row.paidAmount || 0), 0);
+    const outstandingAmount = rows.reduce((sum, row) => sum + remainingAmount(row), 0);
+    const partialInvoices = rows.filter((row) => row.paymentStatus === "Partial").length;
+    return { totalAmount, paidAmount, outstandingAmount, partialInvoices };
+  }, [rows]);
 
   function resetFilters() {
     const empty = { from: "", to: "", search: "", status: "" };
     setFilters(empty);
-    dispatch(fetchReportByType({ type, params: empty }));
+    dispatch(fetchReportByType({ type: REPORT_TYPE, params: empty }));
   }
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{current?.title || reportLabels[type] || "Reports"}</h1>
-          <p className="text-sm text-slate-500">Analytics, filters, exports, print support, and responsive report tables.</p>
+          <h1 className="text-2xl font-bold">Invoice Reports</h1>
+          <p className="text-sm text-slate-500">Analytics, filters, exports, print support, and invoice tables only.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <select className="input w-64" value={type} onChange={(event) => navigate(`/reports/${event.target.value}`)} aria-label="Select report type">
-            {Object.entries(reportLabels).filter(([key]) => key !== "gst").map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          <button className="btn-secondary" onClick={() => downloadFile(`/reports/${type}/export.xlsx?${exportQuery}`, `${type}.xlsx`)}><Download className="h-4 w-4" />Excel</button>
-          <button className="btn-secondary" onClick={() => downloadFile(`/reports/${type}/export.pdf?${exportQuery}`, `${type}.pdf`)}><Download className="h-4 w-4" />PDF</button>
-          <button className="btn-secondary" onClick={() => window.print()}><Printer className="h-4 w-4" />Print</button>
+          <button className="btn-secondary" onClick={() => downloadFile(`/reports/invoices/export.xlsx?${exportQuery}`, "invoice-reports.xlsx")}>
+            <Download className="h-4 w-4" />
+            Excel
+          </button>
+          <button className="btn-secondary" onClick={() => downloadFile(`/reports/invoices/export.pdf?${exportQuery}`, "invoice-reports.pdf")}>
+            <Download className="h-4 w-4" />
+            PDF
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()}>
+            <Printer className="h-4 w-4" />
+            Print
+          </button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={FileBarChart} label={recordLabels[type] || "Records"} value={summary.records ?? data?.invoiceCount ?? 0} />
-        <StatCard icon={FileBarChart} label="Total KM" value={summary.totalKm ?? 0} />
-        <StatCard icon={FileBarChart} label="Revenue" value={`Rs ${Number(summary.totalRevenue ?? data?.revenue ?? 0).toLocaleString()}`} tone="green" />
-        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(summary.pendingAmount ?? data?.outstanding ?? 0).toLocaleString()}`} tone="amber" />
+        <StatCard icon={FileBarChart} label="Invoice Count" value={summary.records ?? rows.length ?? 0} />
+        <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
+        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(stats.outstandingAmount).toLocaleString()}`} tone="amber" />
+        <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(stats.totalAmount).toLocaleString()}`} />
       </div>
 
       <section className="panel p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold">Advanced Filters</h2>
-          <button className="btn-secondary" onClick={resetFilters}><RotateCcw className="h-4 w-4" />Reset</button>
+          <button className="btn-secondary" onClick={resetFilters}>
+            <RotateCcw className="h-4 w-4" />
+            Reset
+          </button>
         </div>
         <div className="grid gap-3 md:grid-cols-5">
           <input className="input" type="date" value={filters.from} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))} />
           <input className="input" type="date" value={filters.to} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))} />
-          <input className="input md:col-span-2" placeholder="Global search" value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
-          <button className="btn-primary" onClick={applyFilters}><RefreshCcw className="h-4 w-4" />Apply</button>
+          <select className="input" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
+            <option value="">All Status</option>
+            <option value="Draft">Draft</option>
+            <option value="Sent">Sent</option>
+            <option value="Partial">Partial</option>
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <input className="input md:col-span-2" placeholder="Search invoices" value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
         </div>
       </section>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <section className="panel p-4 xl:col-span-2">
-          <h2 className="mb-1 font-semibold">Trend Analytics</h2>
-          <p className="mb-4 text-xs text-slate-500">Filtered report movement</p>
+          <h2 className="mb-1 font-semibold">Invoice Trend</h2>
+          <p className="mb-4 text-xs text-slate-500">Filtered invoice movement by amount</p>
           {trendData.length ? (
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={trendData}><CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} /><Bar dataKey="value" fill="#ed1c24" radius={[6, 6, 0, 0]} maxBarSize={44} /></BarChart>
+              <BarChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} />
+                <XAxis dataKey="_id" tickLine={false} axisLine={false} />
+                <YAxis tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
+                <Bar dataKey="value" fill="#ed1c24" radius={[6, 6, 0, 0]} maxBarSize={44} />
+              </BarChart>
             </ResponsiveContainer>
-          ) : <EmptyState />}
+          ) : (
+            <EmptyState />
+          )}
         </section>
         <section className="panel p-4">
-          <h2 className="mb-1 font-semibold">Status Split</h2>
-          <p className="mb-4 text-xs text-slate-500">Current filtered distribution</p>
+          <h2 className="mb-1 font-semibold">Payment Status Split</h2>
+          <p className="mb-4 text-xs text-slate-500">Invoice payment status distribution</p>
           {statusData.length ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart margin={{ top: 18, right: 34, bottom: 18, left: 34 }}>
-                <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={48} outerRadius={76} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine}>
+                <Pie data={statusData} dataKey="value" nameKey="_id" innerRadius={48} outerRadius={76} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine}>
                   {statusData.map((_: unknown, index: number) => <Cell key={index} fill={chartColors[index % chartColors.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} cursor={false} />
               </PieChart>
             </ResponsiveContainer>
-          ) : <EmptyState />}
+          ) : (
+            <EmptyState />
+          )}
         </section>
       </div>
 
       <section className="panel p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold">Report Table</h2>
+          <h2 className="font-semibold">Invoice Report Table</h2>
           <div className="relative" ref={columnMenuRef}>
             <button className="btn-secondary" type="button" onClick={() => setColumnMenuOpen((open) => !open)}>
               <Columns3 className="h-4 w-4" />
               Columns
             </button>
             {columnMenuOpen && (
-              <div className="absolute right-0 z-20 mt-2 w-[160px] rounded-lg border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-950">
+              <div className="absolute right-0 z-20 mt-2 w-[180px] rounded-lg border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-950">
                 <div className="mb-2 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
                   <span className="text-sm font-semibold text-slate-900 dark:text-white">Visible Columns</span>
-                  <button className="text-xs font-semibold text-brand-600" type="button" onClick={() => setVisibleColumns(Object.fromEntries(((current?.columns || []) as ReportColumn[]).map((column) => [column.key, true])))}>All</button>
+                  <button
+                    className="text-xs font-semibold text-brand-600"
+                    type="button"
+                    onClick={() => setVisibleColumns(Object.fromEntries(((report?.columns || []) as ReportColumn[]).map((column) => [column.key, true])))}
+                  >
+                    All
+                  </button>
                 </div>
                 <div className="max-h-72 space-y-1 overflow-y-auto">
-                  {((current?.columns || []) as ReportColumn[]).map((column) => (
+                  {((report?.columns || []) as ReportColumn[]).map((column) => (
                     <label key={column.key} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-900">
                       <input type="checkbox" checked={visibleColumns[column.key] !== false} onChange={(e) => setVisibleColumns((v) => ({ ...v, [column.key]: e.target.checked }))} />
                       <span className="text-slate-700 dark:text-slate-200">{column.header}</span>
@@ -187,9 +220,8 @@ export function ReportsPage() {
             )}
           </div>
         </div>
-        <DataTable loading={loading} rows={rows.map((row: ReportRow, index: number) => ({ _id: row._id || `${type}-${index}`, ...row }))} columns={columns} />
+        <DataTable loading={loading} rows={rows.map((row: ReportRow, index: number) => ({ _id: row._id || `${REPORT_TYPE}-${index}`, ...row }))} columns={columns} />
       </section>
     </div>
   );
 }
-

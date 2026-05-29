@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = { data: null as any, current: null as any, loading: false, error: null as string | null, type: "daily-trips", params: {} as any };
+const initialState = { data: null as any, current: null as any, loading: false, error: null as string | null, type: "invoices", params: {} as any };
 
 const reportSlice = createSlice({
   name: "reports",

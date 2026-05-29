@@ -41,7 +41,8 @@ function nextInvoiceNumber(items: any[]) {
 
 function invoiceFromTrip(trip: any, items: any[]) {
   const subtotal = Math.round(Number(trip.totalKm || 40) * Number(trip.vehicle?.ratePerKm || 22) + Number(trip.tollCharges || 0) + Number(trip.parkingCharges || 0) + Number(trip.extraCharges || 0));
-  const gstAmount = Math.round(subtotal * 0.05);
+  const gstPercent = Number(trip.gstCharges ?? trip.gstPercent ?? 5);
+  const gstAmount = Math.round(subtotal * (gstPercent / 100));
   const finalAmount = subtotal + gstAmount;
   return {
     _id: `inv-${Date.now()}`,
@@ -52,11 +53,13 @@ function invoiceFromTrip(trip: any, items: any[]) {
     booking: trip.booking,
     clientName: trip.booking?.businessUnit || "Client",
     clientEmail: trip.booking?.senderEmail || "",
+    tripFare: Math.round(Number(trip.totalKm || 40) * Number(trip.vehicle?.ratePerKm || 22)),
     subtotal,
-    gstPercent: 5,
+    gstPercent,
     gstAmount,
     finalAmount,
     paidAmount: 0,
+    remainingAmount: finalAmount,
     balanceAmount: finalAmount,
     status: "Draft",
     createdAt: new Date().toISOString()
@@ -101,7 +104,12 @@ const invoiceSlice = createSlice({
     sendInvoice(state, action: PayloadAction<{ id: string; payload?: any }>) {
       state.allItems = state.allItems.map((invoice) => (
         invoice._id === action.payload.id
-          ? { ...invoice, clientEmail: action.payload.payload?.clientEmail || invoice.clientEmail, status: invoice.balanceAmount > 0 ? "Sent" : "Paid", sentAt: new Date().toISOString() }
+          ? {
+              ...invoice,
+              clientEmail: action.payload.payload?.clientEmail || invoice.clientEmail,
+              status: Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) > 0 ? "Sent" : "Paid",
+              sentAt: new Date().toISOString()
+            }
           : invoice
       ));
       refresh(state);
@@ -110,12 +118,13 @@ const invoiceSlice = createSlice({
       state.allItems = state.allItems.map((invoice) => {
         if (invoice._id !== action.payload.invoiceId) return invoice;
         const paidAmount = Math.min(Number(invoice.finalAmount || 0), Number(invoice.paidAmount || 0) + Number(action.payload.amount || 0));
-        const balanceAmount = Math.max(0, Number(invoice.finalAmount || 0) - paidAmount);
+        const remainingAmount = Math.max(0, Number(invoice.finalAmount || 0) - paidAmount);
         return {
           ...invoice,
           paidAmount,
-          balanceAmount,
-          status: balanceAmount === 0 ? "Paid" : paidAmount > 0 ? "Partial" : invoice.status,
+          remainingAmount,
+          balanceAmount: remainingAmount,
+          status: remainingAmount === 0 ? "Paid" : paidAmount > 0 ? "Partial" : invoice.status,
           updatedAt: new Date().toISOString()
         };
       });
