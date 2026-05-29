@@ -14,22 +14,59 @@ function monthName(value: string) {
   return new Date(value).toLocaleString("en-IN", { month: "short" });
 }
 
-function trend(items: any[], valuePicker: (item: any) => number): { _id: string; value: number }[] {
+type DashboardPeriod = "day" | "week" | "month" | "year";
+
+function itemDate(item: any) {
+  return new Date(item.paidAt || item.createdAt || item.updatedAt || Date.now());
+}
+
+function isInPeriod(item: any, period: DashboardPeriod) {
+  const date = itemDate(item);
+  const now = new Date();
+  if (Number.isNaN(date.getTime())) return false;
+
+  if (period === "day") {
+    return date.toDateString() === now.toDateString();
+  }
+
+  if (period === "week") {
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 6);
+    weekStart.setHours(0, 0, 0, 0);
+    return date >= weekStart && date <= now;
+  }
+
+  if (period === "month") {
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }
+
+  return date.getFullYear() === now.getFullYear();
+}
+
+function periodLabel(value: string, period: DashboardPeriod) {
+  const date = new Date(value);
+  if (period === "day") return date.toLocaleTimeString("en-IN", { hour: "2-digit", hour12: true });
+  if (period === "year") return monthName(value);
+  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+}
+
+function trend(items: any[], valuePicker: (item: any) => number, period: DashboardPeriod = "month"): { _id: string; value: number }[] {
   const grouped = items.reduce((acc, item) => {
-    const label = item.createdAt ? monthName(item.createdAt) : "Current";
+    const sourceDate = item.paidAt || item.createdAt || item.updatedAt;
+    const label = sourceDate ? periodLabel(sourceDate, period) : "Current";
     acc[label] = (acc[label] || 0) + valuePicker(item);
     return acc;
   }, {} as Record<string, number>);
   return Object.entries(grouped).map(([_id, value]) => ({ _id, value: Number(value) }));
 }
 
-export function selectDashboardData(state: RootState) {
-  const bookings = rows(state, "bookings");
-  const trips = rows(state, "trips");
-  const drivers = rows(state, "drivers");
-  const vehicles = rows(state, "vehicles");
-  const invoices = rows(state, "invoices");
-  const payments = state.payments.items || [];
+export function selectDashboardData(state: RootState, period: DashboardPeriod = "month") {
+  const bookings = rows(state, "bookings").filter((item) => isInPeriod(item, period));
+  const trips = rows(state, "trips").filter((item) => isInPeriod(item, period));
+  const drivers = rows(state, "drivers").filter((item) => isInPeriod(item, period));
+  const vehicles = rows(state, "vehicles").filter((item) => isInPeriod(item, period));
+  const invoices = rows(state, "invoices").filter((item) => isInPeriod(item, period));
+  const payments = (state.payments.items || []).filter((item) => isInPeriod(item, period));
   const pendingInvoices = invoices.filter((invoice) => Number(invoice.balanceAmount || 0) > 0);
 
   return {
@@ -44,9 +81,10 @@ export function selectDashboardData(state: RootState) {
       availableCars: vehicles.filter((vehicle) => vehicle.status === "Available").length
     },
     charts: {
-      revenue: trend(payments, (payment) => Number(payment.amount || 0)),
-      trips: trend(trips, () => 1),
-      bookings: trend(bookings, () => 1),
+      revenue: trend(payments, (payment) => Number(payment.amount || 0), period),
+      trips: trend(trips, () => 1, period),
+      bookings: trend(bookings, () => 1, period),
+      vehicleCompany: groupCount(vehicles, "vehicleType"),
       invoiceStatus: groupCount(invoices, "status")
     },
     recentBookings: bookings.slice(0, 5),
