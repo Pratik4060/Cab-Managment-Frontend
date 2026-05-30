@@ -23,6 +23,8 @@ export function DashboardPage() {
   const periodLabel = periodOptions.find((option) => option.value === period)?.label || "Month";
   const tooltipStyle = { borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)" };
   const tooltipCursor = { fill: "rgba(237, 28, 36, 0.08)" };
+  const hasBookingChartData = bookingsPerDayChart.some((row) => Number(row.value) > 0);
+  const hasVehicleChartData = vehicleCompanyChart.some((row) => Number(row.value) > 0);
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -44,29 +46,35 @@ export function DashboardPage() {
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="panel p-4">
-          <h2 className="mb-1 font-semibold">Bookings Per Day</h2>
+          <h2 className="mb-1 font-semibold">Bookings Per {periodLabel.toLowerCase()}</h2>
           <p className="mb-4 text-xs text-slate-500">Daily booking count for selected {periodLabel.toLowerCase()} filter</p>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={bookingsPerDayChart} margin={{ top: 12, right: 12, bottom: 72, left: -8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0} angle={-90} textAnchor="end" height={82} tick={{ fill: "#64748b", fontSize: 12 }} />
-              <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
-              <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
-              <Bar dataKey="value" name="Bookings" fill="#ed1c24" radius={[8, 8, 0, 0]} maxBarSize={34} />
-            </BarChart>
-          </ResponsiveContainer>
+          {hasBookingChartData ? (
+            <ResponsiveContainer width="100%" height={238}>
+              <BarChart data={bookingsPerDayChart} margin={{ top: 8, right: 12, bottom: 46, left: -8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0} angle={-90} textAnchor="end" height={54} tick={{ fill: "#64748b", fontSize: 12 }} />
+                <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+                <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
+                <Bar dataKey="value" name="Bookings" radius={[8, 8, 0, 0]} maxBarSize={34}>
+                  {bookingsPerDayChart.map((_, index) => <Cell key={index} fill={barColors[index % barColors.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <ChartEmptyState />}
         </section>
         <section className="panel p-4">
           <h2 className="mb-1 font-semibold">Vehicle Company Split</h2>
           <p className="mb-4 text-xs text-slate-500">Fleet count by vehicle company</p>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart margin={{ top: 18, right: 34, bottom: 18, left: 34 }}>
-              <Pie data={vehicleCompanyChart} dataKey="value" nameKey="name" innerRadius={55} outerRadius={84} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine}>
-                {vehicleCompanyChart.map((_, index) => <Cell key={index} fill={chartColors[index % chartColors.length]} />)}
-              </Pie>
-              <Tooltip contentStyle={tooltipStyle} cursor={false} />
-            </PieChart>
-          </ResponsiveContainer>
+          {hasVehicleChartData ? (
+            <ResponsiveContainer width="100%" height={238}>
+              <PieChart margin={{ top: 12, right: 34, bottom: 12, left: 34 }}>
+                <Pie data={vehicleCompanyChart} dataKey="value" nameKey="name" innerRadius={50} outerRadius={78} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine}>
+                  {vehicleCompanyChart.map((_, index) => <Cell key={index} fill={chartColors[index % chartColors.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} cursor={false} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : <ChartEmptyState />}
         </section>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
@@ -89,3 +97,13 @@ const periodOptions: { label: string; value: Period }[] = [
   { label: "Month", value: "month" },
   { label: "Year", value: "year" }
 ];
+
+const barColors = ["#ed1c24", "#111827", "#b50f16", "#64748b", "#ff5f63", "#8f1116"];
+
+function ChartEmptyState() {
+  return (
+    <div className="flex h-[238px] items-center justify-center rounded-lg border border-dashed border-brand-100 bg-brand-50/40 text-sm font-medium text-slate-500 dark:border-red-950/40 dark:bg-[#101012] dark:text-slate-400">
+      Data not available
+    </div>
+  );
+}
