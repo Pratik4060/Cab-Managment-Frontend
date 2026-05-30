@@ -98,7 +98,7 @@ const periodOptions: { label: string; value: Period }[] = [
   { label: "Year", value: "year" }
 ];
 
-const barColors = ["#ed1c24", "#111827", "#b50f16", "#64748b", "#ff5f63", "#8f1116"];
+const barColors = ["#ed1c24", "#111827", "#f59e0b", "#64748b", "#b50f16", "#14b8a6"];
 
 function ChartEmptyState() {
   return (

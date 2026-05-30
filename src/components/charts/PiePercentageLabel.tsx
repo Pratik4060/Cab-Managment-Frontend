@@ -1,4 +1,4 @@
-export const chartColors = ["#ed1c24", "#b50f16", "#741418", "#111827", "#ff5f63", "#8f1116", "#64748b", "#3f0608"];
+export const chartColors = ["#ed1c24", "#111827", "#f59e0b", "#64748b", "#b50f16", "#14b8a6", "#7f1d1d", "#475569"];
 
 const RADIAN = Math.PI / 180;
 

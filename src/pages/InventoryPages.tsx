@@ -11,22 +11,24 @@ const vehicleModelsByCompany = {
   Mahindra: ["XUV500", "XUV700", "Scorpio", "Bolero", "Marazzo"],
   Kia: ["Carens", "Seltos", "Sonet"]
 };
+const cabTypes = ["Hatchback", "Sedan", "SUV", "MUV/MPV"];
 
 export function CarsPage() {
   return <EntityPage title="Cars" subtitle="Vehicle inventory, rates, compliance, and availability." stateKey="vehicles" actions={vehicleActions} columns={[
-    { key: "registrationNumber", header: "Registration" }, { key: "vehicleType", header: "Company" }, { key: "vehicleModel", header: "Model" }, { key: "seatingCapacity", header: "Seats" }, { key: "ratePerKm", header: "Rate/KM" }, { key: "status", header: "Status" }
+    { key: "registrationNumber", header: "Registration" }, { key: "vehicleType", header: "Company" }, { key: "vehicleModel", header: "Model" }, { key: "cabType", header: "Cab Type" }, { key: "seatingCapacity", header: "Seats" }, { key: "ratePerKm", header: "Rate/KM" }
   ]} fields={[
     { name: "registrationNumber", label: "Vehicle Number", required: true },
     { name: "vehicleType", label: "Vehicle Company", type: "select", options: Object.keys(vehicleModelsByCompany), required: true },
     { name: "vehicleModel", label: "Vehicle Model", type: "select", dependsOn: "vehicleType", optionsBy: vehicleModelsByCompany, placeholder: "Select company first", required: true },
+    { name: "cabType", label: "Cab Type", type: "select", options: cabTypes, required: true },
     { name: "seatingCapacity", label: "Seating Capacity", type: "number", min: 1, required: true },
     { name: "ratePerKm", label: "Rate Per KM", type: "number", required: true }
-  ]} statusOptions={["Available", "In Trip", "Maintenance"]} />;
+  ]} statusOptions={cabTypes} filterKey="cabType" filterLabel="Cab Type" hiddenViewKeys={["status", "cabCategory", "insurancePolicyNumber"]} />;
 }
 
 export function DriversPage() {
   return <EntityPage title="Drivers" subtitle="Availability, documents, contacts, and trip history readiness." stateKey="drivers" actions={driverActions} columns={[
-    { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "licenseNumber", header: "License" }, { key: "aadhaarNumber", header: "Aadhaar" }, { key: "status", header: "Status" }
+    { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "licenseNumber", header: "License" }, { key: "aadhaarNumber", header: "Aadhaar" }
   ]} fields={[
     { name: "driverName", label: "Driver Name", required: true },
     { name: "contactNumber", label: "Contact Number", required: true },
@@ -38,6 +40,6 @@ export function DriversPage() {
     { name: "panCardPhoto", label: "PAN Card Photo", type: "file", accept: "image/*", required: false },
     { name: "licensePhoto", label: "License Photo", type: "file", accept: "image/*", required: false, full: true },
     { name: "address", label: "Address", required: true, full: true }
-  ]} statusOptions={["Available", "In Trip", "Unavailable"]} />;
+  ]} hiddenViewKeys={["status"]} />;
 }
 
