@@ -62,6 +62,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           loading={state.loading}
           rows={state.items}
           columns={columns}
+          actionCount={3}
           actions={(row) => {
             const canEdit = canEditRow(row);
             if (!canEdit) {
