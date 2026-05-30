@@ -202,25 +202,25 @@ export function TripsPage() {
             loading={loading}
             rows={pendingBookings}
             columns={pendingColumns}
-            actions={(row) => (
-              <div className="flex justify-end gap-2">
-                <button
-                  className="btn-secondary"
+          actions={(row) => (
+            <div className="flex min-w-44 flex-col gap-2">
+              <button
+                  className="btn-secondary w-full justify-start"
                   onClick={() => {
                     setSelectedBooking(row);
                     setEditOpen(true);
                   }}
-                >
+              >
                   <Pencil className="h-4 w-4" />
                   Edit
                 </button>
-                <button
-                  className="btn-secondary whitespace-nowrap"
+              <button
+                  className="btn-secondary w-full justify-start whitespace-nowrap"
                   onClick={() => {
                     setSelectedBooking(row);
                     setAssignOpen(true);
                   }}
-                >
+              >
                   Assign Trip
                 </button>
               </div>
@@ -245,10 +245,10 @@ export function TripsPage() {
             loading={loading}
             rows={assignedTrips}
             columns={assignedColumns}
-            actions={(row) => (
-              <div className="flex justify-end gap-2">
-                <button
-                  className="btn-secondary p-2"
+          actions={(row) => (
+            <div className="flex min-w-44 flex-col gap-2">
+              <button
+                  className="btn-secondary w-full justify-start p-2"
                   title="Generate duty slip"
                   onClick={() => {
                     setSelectedTrip(row);
