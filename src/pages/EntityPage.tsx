@@ -7,7 +7,7 @@ import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 
-export function EntityPage({ title, subtitle, stateKey, actions, columns, fields, schema, defaults, extraActions, canEditRow = () => true, lockedLabel = "Locked", statusOptions = [] }: {
+export function EntityPage({ title, subtitle, stateKey, actions, columns, fields, schema, defaults, extraActions, canEditRow = () => true, lockedLabel = "Locked", statusOptions = [], filterKey = "status", filterLabel = "Status", hiddenViewKeys = [] }: {
   title: string;
   subtitle: string;
   stateKey: string;
@@ -20,6 +20,9 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   canEditRow?: (row: any) => boolean;
   lockedLabel?: string;
   statusOptions?: string[];
+  filterKey?: string;
+  filterLabel?: string;
+  hiddenViewKeys?: string[];
 }) {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
@@ -27,7 +30,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   const [viewRow, setViewRow] = useState<any>(null);
   const [status, setStatus] = useState("");
   const state = useAppSelector((store) => (store as any)[stateKey]);
-  useEffect(() => { dispatch(actions.fetchAll(status ? { status } : {})); }, [dispatch, actions, status]);
+  useEffect(() => { dispatch(actions.fetchAll(status ? { [filterKey]: status } : {})); }, [dispatch, actions, filterKey, status]);
   const formSchema = schema || z.object(Object.fromEntries(fields.map((field) => [
     field.name,
     field.type === "number"
@@ -46,7 +49,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
         <div className="flex flex-wrap items-center gap-2">
           {statusOptions.length > 0 && (
             <select className="input w-48" value={status} onChange={(event) => setStatus(event.target.value)}>
-              <option value="">All Status</option>
+              <option value="">All {filterLabel}</option>
               {statusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           )}
@@ -54,7 +57,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           <button className="btn-primary" onClick={() => { setEditingRow(null); setOpen(true); }}><Plus className="h-4 w-4" />Add</button>
         </div>
       </div>
-      <div className="panel p-4">
+      <div className="panel p-2">
         <DataTable
           loading={state.loading}
           rows={state.items}
@@ -115,7 +118,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
       <Modal open={Boolean(viewRow)} title={`View ${title}`} onClose={() => setViewRow(null)}>
         {viewRow && (
           <div className="grid gap-3 sm:grid-cols-2">
-            {Object.entries(viewRow).filter(([key]) => !["_id", "__v"].includes(key)).map(([key, value]) => (
+            {Object.entries(viewRow).filter(([key]) => !["_id", "__v", ...hiddenViewKeys].includes(key)).map(([key, value]) => (
               <div key={key} className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
                 <p className="text-xs font-semibold uppercase text-slate-400">{key}</p>
                 <div className="mt-1 text-sm text-slate-900 dark:text-white">{formatValue(value)}</div>

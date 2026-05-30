@@ -25,15 +25,18 @@ export const seedDrivers = Array.from({ length: 12 }, (_, index) => ({
   createdAt: iso(40 - index)
 }));
 
+const vehicleCompanies = ["Toyota", "Maruti Suzuki", "Honda", "Toyota", "Hyundai", "Maruti Suzuki", "Tata", "Mahindra", "Kia", "Honda", "Hyundai", "Toyota"];
+const vehicleModels = ["Etios", "Dzire", "City", "Innova", "Aura", "Ertiga", "Nexon", "XUV700", "Carens", "Amaze", "Creta", "Rumion"];
+const cabTypes = ["Sedan", "Sedan", "Sedan", "MUV/MPV", "Sedan", "MUV/MPV", "SUV", "SUV", "MUV/MPV", "Sedan", "SUV", "MUV/MPV"];
+
 export const seedVehicles = Array.from({ length: 12 }, (_, index) => ({
   _id: `veh-${String(index + 1).padStart(3, "0")}`,
   registrationNumber: `MH 12 ${["AB", "CD", "EF", "GH", "JK", "LM", "NP", "QR", "ST", "UV", "WX", "YZ"][index]} ${String(2100 + index * 137)}`,
-  vehicleType: index % 3 === 0 ? "SUV" : "Sedan",
-  vehicleModel: ["Toyota Etios", "Maruti Dzire", "Honda City", "Toyota Innova", "Hyundai Aura", "Maruti Ertiga"][index % 6],
-  cabCategory: index % 3 === 0 ? "Premium" : index % 3 === 1 ? "Executive" : "Standard",
-  seatingCapacity: index % 3 === 0 ? 6 : 4,
-  ratePerKm: index % 3 === 0 ? 26 : index % 3 === 1 ? 22 : 18,
-  insurancePolicyNumber: `POL-CAB-${2026}-${String(index + 101).padStart(4, "0")}`,
+  vehicleType: vehicleCompanies[index],
+  vehicleModel: vehicleModels[index],
+  cabType: cabTypes[index],
+  seatingCapacity: cabTypes[index] === "Hatchback" ? 4 : cabTypes[index] === "Sedan" ? 4 : 6,
+  ratePerKm: cabTypes[index] === "Hatchback" ? 16 : cabTypes[index] === "Sedan" ? 20 : cabTypes[index] === "SUV" ? 28 : 26,
   status: index < 3 ? "In Trip" : index === 10 ? "Maintenance" : "Available",
   createdAt: iso(35 - index)
 }));
@@ -46,7 +49,7 @@ export const seedBookings = names.map((name, index) => ({
   mobileNumber: `9${String(100000000 + index * 51937).padStart(9, "0")}`,
   reportingAddress: ["Hinjewadi Phase 1", "Koregaon Park", "Baner", "Kharadi", "Viman Nagar"][index % 5],
   dropAddress: ["Pune Airport", "Magarpatta City", "Shivajinagar", "Aundh", "Hadapsar"][index % 5],
-  carType: index % 3 === 0 ? "SUV" : "Sedan",
+  carType: ["Sedan", "SUV", "MUV/MPV", "Hatchback"][index % 4],
   cabRequestNumber: `CRN-${String(7300 + index)}`,
   status: index < 15 ? "Assigned" : "New",
   senderEmail: `travel${index + 1}@client.local`,

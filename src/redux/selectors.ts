@@ -112,7 +112,7 @@ const reportColumns: Record<string, { key: string; header: string }[]> = {
     { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "status", header: "Status" }, { key: "licenseNumber", header: "License" }
   ],
   vehicles: [
-    { key: "registrationNumber", header: "Registration" }, { key: "vehicleModel", header: "Model" }, { key: "cabCategory", header: "Category" }, { key: "status", header: "Status" }
+    { key: "registrationNumber", header: "Registration" }, { key: "vehicleType", header: "Company" }, { key: "vehicleModel", header: "Model" }, { key: "cabType", header: "Cab Type" }
   ],
   bookings: [
     { key: "bookingId", header: "Booking" }, { key: "passengerName", header: "Passenger" }, { key: "businessUnit", header: "Client" }, { key: "status", header: "Status" }

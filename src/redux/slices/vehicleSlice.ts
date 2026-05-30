@@ -3,7 +3,7 @@ import { seedVehicles } from "../seedData";
 
 const slice = createEntitySlice("vehicles", {
   seed: seedVehicles,
-  createDefaults: () => ({ status: "Available" })
+  createDefaults: () => ({ status: "Available", cabType: "Sedan" })
 });
 export const vehicleActions = slice.actions;
 export const { createOne: addVehicle, updateOne: updateVehicle, deleteOne: deleteVehicle, changeStatus: changeVehicleStatus, setItems: setVehicles } = slice.actions;

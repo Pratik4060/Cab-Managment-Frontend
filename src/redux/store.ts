@@ -33,6 +33,22 @@ export type RootState = ReturnType<typeof rootReducer>;
 
 const entityState = (items: any[]) => ({ items, allItems: items, total: items.length, page: 1, pages: 1, loading: false, error: null, filter: {} });
 const listenerMiddleware = createListenerMiddleware();
+const cabTypeOptions = ["Hatchback", "Sedan", "SUV", "MUV/MPV"];
+const companyFallbacks = ["Toyota", "Maruti Suzuki", "Honda", "Hyundai", "Tata", "Mahindra", "Kia"];
+const modelFallbacks = ["Etios", "Dzire", "City", "Aura", "Nexon", "XUV700", "Carens"];
+
+function normalizeVehicles(items: any[]) {
+  return items.map((vehicle, index) => {
+    const legacyType = ["SUV", "Sedan", "Hatchback", "MUV/MPV"].includes(vehicle.vehicleType);
+    const cabType = vehicle.cabType || (legacyType ? vehicle.vehicleType : cabTypeOptions[index % cabTypeOptions.length]);
+    return {
+      ...vehicle,
+      vehicleType: legacyType || !vehicle.vehicleType ? companyFallbacks[index % companyFallbacks.length] : vehicle.vehicleType,
+      vehicleModel: legacyType || !vehicle.vehicleModel ? modelFallbacks[index % modelFallbacks.length] : String(vehicle.vehicleModel).replace(/^(Toyota|Maruti|Maruti Suzuki|Honda|Hyundai|Tata|Mahindra|Kia)\s+/i, ""),
+      cabType
+    };
+  });
+}
 
 listenerMiddleware.startListening({
   actionCreator: assignTrip,
@@ -66,7 +82,7 @@ export const store = configureStore({
   preloadedState: {
     bookings: entityState(readStorage(storageKeys.bookings, seedBookings)),
     trips: entityState(readStorage(storageKeys.trips, seedTrips)),
-    vehicles: entityState(readStorage(storageKeys.vehicles, seedVehicles)),
+    vehicles: entityState(normalizeVehicles(readStorage(storageKeys.vehicles, seedVehicles))),
     drivers: entityState(readStorage(storageKeys.drivers, seedDrivers)),
     invoices: entityState(readStorage(storageKeys.invoices, seedInvoices)),
     payments: { items: readStorage(storageKeys.payments, seedPayments), loading: false, error: null },
