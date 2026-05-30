@@ -51,7 +51,7 @@ export function InvoicesPage() {
           <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
         <div className="flex gap-2">
-          <select className="input w-44" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+          <select className="input w-32" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Partial">Partial</option>
             <option value="Paid">Paid</option>
@@ -73,12 +73,12 @@ export function InvoicesPage() {
             { key: "clientName", header: "Client" },
             { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
             { key: "paymentStatus", header: "Payment Status", render: (r) => <PaymentStatusBadge invoice={r} /> },
-            { key: "finalAmount", header: "Total", render: (r) => `Rs ${Number(r.finalAmount || 0).toLocaleString()}` },
-            { key: "remainingAmount", header: "Balance", render: (r) => `Rs ${Number(remainingAmount(r)).toLocaleString()}` }
+            { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
+            { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
           actionCount={5}
           actions={(row) => (
-            <div className="flex min-w-44 flex-col gap-2">
+            <div className="flex min-w-36 flex-col gap-1.5">
               <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={() => setPreviewInvoice(row)}>
                 <Eye className="h-4 w-4" />
                 <span>Preview</span>
@@ -183,7 +183,7 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Extra Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
         <InfoCard label="GST (%)" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
         <InfoCard label="Payment Status" value={<PaymentStatusBadge invoice={buildPreviewInvoice(invoice, form)} />} />
-        <InfoCard label="Remaining Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.remainingAmount.toLocaleString()}</p>} />
+        <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
         <InfoCard label="Total KM" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{computed.totalKm.toLocaleString()}</p>} />
       </div>
 
@@ -225,9 +225,9 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         {(form.paymentStatus === "Pending" || form.paymentStatus === "Partial") && (
           <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
         )}
-        <InfoCard label="Remaining Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.remainingAmount.toLocaleString()}</p>} />
-        <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.paidAmount.toLocaleString()}</p>} />
-        <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
+        <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
+        <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
+        <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
       </div>
 
       <div className="flex justify-end gap-2">
@@ -389,15 +389,15 @@ function InvoicePreview({ invoice }: { invoice: any }) {
     ["Booking ID", invoice.booking?.bookingId || "-"],
     ["Trip", invoice.trip?.tripNumber || "-"],
     ["Total KM", invoice.trip?.totalKm || 0],
-    ["Trip Fare", `Rs ${Number(invoice.tripFare || 0).toLocaleString()}`],
-    ["Toll Charges", `Rs ${Number(invoice.trip?.tollCharges || 0).toLocaleString()}`],
-    ["Parking Charges", `Rs ${Number(invoice.trip?.parkingCharges || 0).toLocaleString()}`],
-    ["Extra Charges", `Rs ${Number(invoice.trip?.extraCharges || 0).toLocaleString()}`],
-    ["Subtotal", `Rs ${Number(invoice.subtotal || 0).toLocaleString()}`],
-    [`GST (${invoice.gstPercent || 0}%)`, `Rs ${Number(invoice.gstAmount || 0).toLocaleString()}`],
-    ["Final Amount", `Rs ${Number(invoice.finalAmount || 0).toLocaleString()}`],
-    ["Paid Amount", `Rs ${Number(invoice.paidAmount || 0).toLocaleString()}`],
-    ["Remaining Amount", `Rs ${Number(remainingAmount(invoice)).toLocaleString()}`],
+    ["Trip Fare", `₹ ${Number(invoice.tripFare || 0).toLocaleString()}`],
+    ["Toll Charges", `₹ ${Number(invoice.trip?.tollCharges || 0).toLocaleString()}`],
+    ["Parking Charges", `₹ ${Number(invoice.trip?.parkingCharges || 0).toLocaleString()}`],
+    ["Extra Charges", `₹ ${Number(invoice.trip?.extraCharges || 0).toLocaleString()}`],
+    ["Subtotal", `₹ ${Number(invoice.subtotal || 0).toLocaleString()}`],
+    [`GST (${invoice.gstPercent || 0}%)`, `₹ ${Number(invoice.gstAmount || 0).toLocaleString()}`],
+    ["Final Amount", `₹ ${Number(invoice.finalAmount || 0).toLocaleString()}`],
+    ["Paid Amount", `₹ ${Number(invoice.paidAmount || 0).toLocaleString()}`],
+    ["Balance", `₹ ${Number(remainingAmount(invoice)).toLocaleString()}`],
     ["Status", invoice.status]
   ];
 

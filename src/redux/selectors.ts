@@ -118,7 +118,7 @@ const reportColumns: Record<string, { key: string; header: string }[]> = {
     { key: "bookingId", header: "Booking" }, { key: "passengerName", header: "Passenger" }, { key: "businessUnit", header: "Client" }, { key: "status", header: "Status" }
   ],
   invoices: [
-    { key: "invoiceNumber", header: "Invoice" }, { key: "clientName", header: "Client" }, { key: "status", header: "Status" }, { key: "paymentStatus", header: "Payment Status" }, { key: "finalAmount", header: "Total" }, { key: "remainingAmount", header: "Remaining Amount" }
+    { key: "invoiceNumber", header: "Invoice" }, { key: "clientName", header: "Client" }, { key: "status", header: "Status" }, { key: "paymentStatus", header: "Payment Status" }, { key: "finalAmount", header: "Total" }, { key: "remainingAmount", header: "Balance" }
   ],
   payments: [
     { key: "invoiceNumber", header: "Invoice" }, { key: "amount", header: "Amount" }, { key: "method", header: "Method" }, { key: "referenceNumber", header: "Reference" }

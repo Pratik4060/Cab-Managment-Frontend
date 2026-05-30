@@ -7,7 +7,7 @@ import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 
-export function EntityPage({ title, subtitle, stateKey, actions, columns, fields, schema, defaults, extraActions, canEditRow = () => true, lockedLabel = "Locked", statusOptions = [], filterKey = "status", filterLabel = "Status", hiddenViewKeys = [] }: {
+export function EntityPage({ title, subtitle, stateKey, actions, columns, fields, schema, defaults, extraActions, canEditRow = () => true, lockedLabel = "Locked", statusOptions = [], filterKey = "status", filterLabel = "Status", hiddenViewKeys = [], searchable = false, searchPlaceholder = "Search" }: {
   title: string;
   subtitle: string;
   stateKey: string;
@@ -23,14 +23,20 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   filterKey?: string;
   filterLabel?: string;
   hiddenViewKeys?: string[];
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }) {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<any>(null);
   const [viewRow, setViewRow] = useState<any>(null);
   const [status, setStatus] = useState("");
+  const [search, setSearch] = useState("");
   const state = useAppSelector((store) => (store as any)[stateKey]);
   useEffect(() => { dispatch(actions.fetchAll(status ? { [filterKey]: status } : {})); }, [dispatch, actions, filterKey, status]);
+  const visibleRows = search
+    ? state.items.filter((row: any) => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
+    : state.items;
   const formSchema = schema || z.object(Object.fromEntries(fields.map((field) => [
     field.name,
     field.type === "number"
@@ -47,8 +53,11 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {searchable && (
+            <input className="input w-40" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={searchPlaceholder} />
+          )}
           {statusOptions.length > 0 && (
-            <select className="input w-48" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <select className="input w-36" value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="">All {filterLabel}</option>
               {statusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
@@ -60,7 +69,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
       <div className="panel p-2">
         <DataTable
           loading={state.loading}
-          rows={state.items}
+          rows={visibleRows}
           columns={columns}
           actionCount={3}
           actions={(row) => {

@@ -1,7 +1,7 @@
 import { createEntitySlice } from "./createEntitySlice";
 import { seedBookings } from "../seedData";
 
-const nextBookingId = (items: any[]) => `BKG-2026-${String(items.length + 1).padStart(4, "0")}`;
+const nextBookingId = (items: any[]) => `TRP-2026-${String(items.length + 1).padStart(4, "0")}`;
 const slice = createEntitySlice("bookings", {
   seed: seedBookings,
   createDefaults: (payload, items) => ({ bookingId: payload.bookingId || nextBookingId(items), status: payload.status || "New" })

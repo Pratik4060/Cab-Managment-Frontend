@@ -50,6 +50,21 @@ function normalizeVehicles(items: any[]) {
   });
 }
 
+function normalizeBookings(items: any[]) {
+  return items.map((booking, index) => ({
+    ...booking,
+    bookingId: String(booking.bookingId || `TRP-2026-${String(index + 1).padStart(4, "0")}`).replace(/^BKG-/i, "TRP-"),
+    travelStartDate: booking.travelStartDate || "",
+    travelEndDate: booking.travelEndDate || "",
+    departmentName: booking.departmentName || "",
+    projectExpenses: booking.projectExpenses || "No",
+    costCenterOfProject: booking.costCenterOfProject || "",
+    bookedBy: booking.bookedBy || booking.passengerName || "",
+    purposeOfCabBooking: booking.purposeOfCabBooking || "",
+    employeeCount: booking.employeeCount || 1
+  }));
+}
+
 listenerMiddleware.startListening({
   actionCreator: assignTrip,
   effect: (action, listenerApi) => {
@@ -80,7 +95,7 @@ listenerMiddleware.startListening({
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState: {
-    bookings: entityState(readStorage(storageKeys.bookings, seedBookings)),
+    bookings: entityState(normalizeBookings(readStorage(storageKeys.bookings, seedBookings))),
     trips: entityState(readStorage(storageKeys.trips, seedTrips)),
     vehicles: entityState(normalizeVehicles(readStorage(storageKeys.vehicles, seedVehicles))),
     drivers: entityState(readStorage(storageKeys.drivers, seedDrivers)),

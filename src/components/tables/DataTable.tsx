@@ -68,7 +68,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount }:
   if (!rows.length) return <EmptyState />;
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-red-950/35">
-      <div ref={scrollRef} className="max-h-[65vh] overflow-auto">
+      <div ref={scrollRef} className="scrollbar-hidden max-h-[65vh] overflow-auto">
         <table className="min-w-[640px] divide-y divide-slate-200 text-sm dark:divide-red-950/35 lg:min-w-full">
           <thead className="sticky top-0 z-30 bg-slate-50 dark:bg-[#171719]">
             <tr>
