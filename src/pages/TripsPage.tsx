@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileText, Pencil, Plus, RefreshCcw } from "lucide-react";
+import { ClipboardCheck, Eye, FileText, Pencil, Plus, RefreshCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
@@ -31,6 +31,7 @@ export function TripsPage() {
   const [dutySlipOpen, setDutySlipOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [selectedTrip, setSelectedTrip] = useState<any>(null);
+  const [viewDetails, setViewDetails] = useState<any>(null);
   const [activeTable, setActiveTable] = useState<"new" | "assigned">("new");
   const bookings = useAppSelector((state) => state.bookings.items);
   const trips = useAppSelector((state) => state.trips.allItems);
@@ -64,13 +65,21 @@ export function TripsPage() {
       placeholder: "Auto generated",
       disabled: true
     },
+    { name: "cabRequestNumber", label: "Cab Request No", required: false },
     { name: "businessUnit", label: "Business Unit", required: false },
-    { name: "passengerName", label: "Passenger Name" },
+    { name: "passengerName", label: "Name of Passenger" },
     { name: "mobileNumber", label: "Mobile Number", required: false },
+    { name: "travelStartDate", label: "Travel Start Date", placeholder: "22-05-2026 07:00 AM", required: false },
+    { name: "travelEndDate", label: "Travel End Date", placeholder: "22-05-2026 18:00 PM", required: false },
+    { name: "departmentName", label: "Department Name", required: false },
     { name: "reportingAddress", label: "Reporting Address", full: true, required: false },
     { name: "dropAddress", label: "Drop Address", full: true, required: false },
     { name: "carType", label: "Car Type", required: false },
-    { name: "cabRequestNumber", label: "Cab Request No", required: false },
+    { name: "projectExpenses", label: "Project Expenses", type: "select", options: ["Yes", "No"], required: false },
+    { name: "costCenterOfProject", label: "Cost Center Of Project", required: false },
+    { name: "bookedBy", label: "Booked By", required: false },
+    { name: "employeeCount", label: "Employee Count", type: "number", min: 1, required: false },
+    { name: "purposeOfCabBooking", label: "Purpose of Cab Booking", full: true, required: false },
     { name: "senderEmail", label: "Sender Email", required: false }
   ];
 
@@ -102,12 +111,8 @@ export function TripsPage() {
     { key: "businessUnit", header: "Business Unit" },
     { key: "passengerName", header: "Passenger" },
     { key: "mobileNumber", header: "Mobile" },
-    { key: "reportingAddress", header: "Reporting Address" },
-    { key: "dropAddress", header: "Drop Address" },
     { key: "carType", header: "Car Type" },
-    { key: "cabRequestNumber", header: "Cab Request No" },
-    { key: "senderEmail", header: "Email" },
-    { key: "status", header: "Status", render: (row: any) => <BookingStatusBadge status={row.status} /> }
+    { key: "cabRequestNumber", header: "Cab Request No" }
   ];
 
   const assignedColumns = [
@@ -115,12 +120,8 @@ export function TripsPage() {
     { key: "businessUnit", header: "Business Unit", render: (row: any) => row.booking?.businessUnit || "-" },
     { key: "passengerName", header: "Passenger", render: (row: any) => row.booking?.passengerName || "-" },
     { key: "mobileNumber", header: "Mobile", render: (row: any) => row.booking?.mobileNumber || "-" },
-    { key: "reportingAddress", header: "Reporting Address", render: (row: any) => row.booking?.reportingAddress || "-" },
-    { key: "dropAddress", header: "Drop Address", render: (row: any) => row.booking?.dropAddress || "-" },
     { key: "carType", header: "Car Type", render: (row: any) => row.booking?.carType || "-" },
     { key: "cabRequestNumber", header: "Cab Request No", render: (row: any) => row.booking?.cabRequestNumber || "-" },
-    { key: "senderEmail", header: "Email", render: (row: any) => row.booking?.senderEmail || "-" },
-    { key: "status", header: "Trip Status", render: (row: any) => <BookingStatusBadge status={row.status || "Assigned"} /> },
     { key: "driver", header: "Driver", render: (row: any) => row.driver?.driverName || "-" },
     { key: "vehicle", header: "Cab", render: (row: any) => row.vehicle ? `${row.vehicle.registrationNumber}${row.vehicle.vehicleModel ? ` - ${row.vehicle.vehicleModel}` : ""}` : "-" }
   ];
@@ -137,20 +138,20 @@ export function TripsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <button
           type="button"
-          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "new" ? "border-red-500 shadow-lg dark:border-red-400" : "border-slate-200 dark:border-slate-800"}`}
+          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "new" ? "border-brand-500 shadow-lg shadow-brand-600/20 dark:border-brand-500" : "border-brand-100 dark:border-red-950/35"}`}
           onClick={() => setActiveTable("new")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-slate-950 dark:text-white">New</h2>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
               <p className="mt-2 text-sm text-slate-500">Click to jump to the new bookings table.</p>
             </div>
-            <span className="rounded-full bg-amber-50 p-2 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+            <span className="rounded-full bg-brand-50 p-2 text-brand-700 dark:bg-brand-950/40 dark:text-brand-200">
               <Plus className="h-5 w-5" />
             </span>
           </div>
@@ -158,20 +159,20 @@ export function TripsPage() {
 
         <button
           type="button"
-          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "assigned" ? "border-red-500 shadow-lg dark:border-red-400" : "border-slate-200 dark:border-slate-800"}`}
+          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "assigned" ? "border-brand-500 shadow-lg shadow-brand-600/20 dark:border-brand-500" : "border-brand-100 dark:border-red-950/35"}`}
           onClick={() => setActiveTable("assigned")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Assigned</h2>
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-200">
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
               <p className="mt-2 text-sm text-slate-500">Click to jump to the assigned trips table.</p>
             </div>
-            <span className="rounded-full bg-emerald-50 p-2 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
+            <span className="rounded-full bg-zinc-100 p-2 text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
               <ClipboardCheck className="h-5 w-5" />
             </span>
           </div>
@@ -184,7 +185,7 @@ export function TripsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Trips</h2>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
@@ -213,7 +214,11 @@ export function TripsPage() {
             rows={pendingBookings}
             columns={pendingColumns}
           actions={(row) => (
-            <div className="flex min-w-44 items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-1.5">
+              <button className="btn-secondary" onClick={() => setViewDetails({ type: "booking", data: row })}>
+                <Eye className="h-4 w-4" />
+                View
+              </button>
               <button
                   className="btn-secondary"
                   onClick={() => {
@@ -243,7 +248,7 @@ export function TripsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Assigned Trips</h2>
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-200">
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}   
                 </span>   
               </div>
@@ -256,9 +261,12 @@ export function TripsPage() {
             rows={assignedTrips}
             columns={assignedColumns}
           actions={(row) => (
-            <div className="flex min-w-44 items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-1.5">
+              <button className="btn-secondary p-1.5" title="View details" onClick={() => setViewDetails({ type: "trip", data: row })}>
+                <Eye className="h-4 w-4" />
+              </button>
               <button
-                  className="btn-secondary p-2"
+                  className="btn-secondary p-1.5"
                   title="Generate duty slip"
                   onClick={() => {
                     setSelectedTrip(row);
@@ -278,13 +286,21 @@ export function TripsPage() {
           fields={inquiryFields}
           schema={z.object({
             bookingId: z.string().optional(),
+            cabRequestNumber: z.string().optional(),
             businessUnit: z.string().optional(),
             passengerName: z.string().min(1, "Passenger name is required"),
             mobileNumber: z.string().optional(),
+            travelStartDate: z.string().optional(),
+            travelEndDate: z.string().optional(),
+            departmentName: z.string().optional(),
             reportingAddress: z.string().optional(),
             dropAddress: z.string().optional(),
             carType: z.string().optional(),
-            cabRequestNumber: z.string().optional(),
+            projectExpenses: z.string().optional(),
+            costCenterOfProject: z.string().optional(),
+            bookedBy: z.string().optional(),
+            employeeCount: optionalNumber(),
+            purposeOfCabBooking: z.string().optional(),
             senderEmail: z.string().optional()
           })}
           defaults={{ bookingId: "Auto generated" }}
@@ -318,24 +334,40 @@ export function TripsPage() {
             fields={inquiryFields}
             schema={z.object({
               bookingId: z.string().optional(),
+              cabRequestNumber: z.string().optional(),
               businessUnit: z.string().optional(),
               passengerName: z.string().min(1, "Passenger name is required"),
               mobileNumber: z.string().optional(),
+              travelStartDate: z.string().optional(),
+              travelEndDate: z.string().optional(),
+              departmentName: z.string().optional(),
               reportingAddress: z.string().optional(),
               dropAddress: z.string().optional(),
               carType: z.string().optional(),
-              cabRequestNumber: z.string().optional(),
+              projectExpenses: z.string().optional(),
+              costCenterOfProject: z.string().optional(),
+              bookedBy: z.string().optional(),
+              employeeCount: optionalNumber(),
+              purposeOfCabBooking: z.string().optional(),
               senderEmail: z.string().optional()
             })}
             defaults={{
               bookingId: selectedBooking.bookingId,
+              cabRequestNumber: selectedBooking.cabRequestNumber,
               businessUnit: selectedBooking.businessUnit,
               passengerName: selectedBooking.passengerName,
               mobileNumber: selectedBooking.mobileNumber,
+              travelStartDate: selectedBooking.travelStartDate,
+              travelEndDate: selectedBooking.travelEndDate,
+              departmentName: selectedBooking.departmentName,
               reportingAddress: selectedBooking.reportingAddress,
               dropAddress: selectedBooking.dropAddress,
               carType: selectedBooking.carType,
-              cabRequestNumber: selectedBooking.cabRequestNumber,
+              projectExpenses: selectedBooking.projectExpenses,
+              costCenterOfProject: selectedBooking.costCenterOfProject,
+              bookedBy: selectedBooking.bookedBy,
+              employeeCount: selectedBooking.employeeCount,
+              purposeOfCabBooking: selectedBooking.purposeOfCabBooking,
               senderEmail: selectedBooking.senderEmail
             }}
             submitLabel="Update Trip"
@@ -377,6 +409,10 @@ export function TripsPage() {
             setSelectedBooking(null);
           }}
         />
+      </Modal>
+
+      <Modal open={Boolean(viewDetails)} title="Trip Details" onClose={() => setViewDetails(null)}>
+        {viewDetails && <TripDetails data={viewDetails.data} />}
       </Modal>
 
       <Modal
@@ -476,6 +512,47 @@ function TripCard({ label, value }: { label: string; value?: any }) {
       <p className="text-xs font-semibold uppercase text-slate-400">{label}</p>
       <div className="mt-1 break-words text-sm text-slate-900 dark:text-white">{value ?? "-"}</div>
     </div>
+  );
+}
+
+function TripDetails({ data }: { data: any }) {
+  const booking = data.booking || data;
+  const rows = [
+    ["Booking ID", booking.bookingId || data.bookingId],
+    ["Cab Request No", booking.cabRequestNumber],
+    ["Business Unit", booking.businessUnit],
+    ["Name of Passenger", booking.passengerName],
+    ["Mobile", booking.mobileNumber],
+    ["Travel Start Date", booking.travelStartDate],
+    ["Travel End Date", booking.travelEndDate],
+    ["Department Name", booking.departmentName],
+    ["Reporting Address", booking.reportingAddress],
+    ["Drop Address", booking.dropAddress],
+    ["Car Type", booking.carType],
+    ["Project Expenses", booking.projectExpenses],
+    ["Cost Center Of Project", booking.costCenterOfProject],
+    ["Booked By", booking.bookedBy],
+    ["Purpose of Cab Booking", booking.purposeOfCabBooking],
+    ["Employee Count", booking.employeeCount],
+    ["Email", booking.senderEmail],
+    ["Trip Status", data.status || booking.status],
+    ["Driver", data.driver?.driverName],
+    ["Vehicle", data.vehicle ? `${data.vehicle.registrationNumber}${data.vehicle.vehicleModel ? ` - ${data.vehicle.vehicleModel}` : ""}` : undefined]
+  ];
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {rows.map(([label, value]) => (
+        <TripCard key={label} label={String(label)} value={value || "-"} />
+      ))}
+    </div>
+  );
+}
+
+function optionalNumber() {
+  return z.preprocess(
+    (value) => value === "" || (typeof value === "number" && Number.isNaN(value)) ? undefined : value,
+    z.coerce.number().min(1).optional()
   );
 }
 

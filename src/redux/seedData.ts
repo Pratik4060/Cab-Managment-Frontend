@@ -42,15 +42,23 @@ export const seedVehicles = Array.from({ length: 12 }, (_, index) => ({
 }));
 
 export const seedBookings = names.map((name, index) => ({
-  _id: `bkg-${String(index + 1).padStart(3, "0")}`,
-  bookingId: `BKG-2026-${String(index + 1).padStart(4, "0")}`,
+  _id: `trp-req-${String(index + 1).padStart(3, "0")}`,
+  bookingId: `TRP-2026-${String(index + 1).padStart(4, "0")}`,
   businessUnit: ["Zonixtec", "Acme Finance", "Northstar Labs", "Metro Health"][index % 4],
   passengerName: name,
   mobileNumber: `9${String(100000000 + index * 51937).padStart(9, "0")}`,
+  travelStartDate: ["22-05-2026 07:00 AM", "23-05-2026 09:30 AM", "24-05-2026 06:45 AM", "25-05-2026 10:00 AM"][index % 4],
+  travelEndDate: ["22-05-2026 18:00 PM", "23-05-2026 15:30 PM", "24-05-2026 20:00 PM", "25-05-2026 17:30 PM"][index % 4],
+  departmentName: ["Systems/Project Engineering", "Finance Operations", "Customer Success", "Plant Maintenance"][index % 4],
   reportingAddress: ["Hinjewadi Phase 1", "Koregaon Park", "Baner", "Kharadi", "Viman Nagar"][index % 5],
   dropAddress: ["Pune Airport", "Magarpatta City", "Shivajinagar", "Aundh", "Hadapsar"][index % 5],
   carType: ["Sedan", "SUV", "MUV/MPV", "Hatchback"][index % 4],
   cabRequestNumber: `CRN-${String(7300 + index)}`,
+  projectExpenses: index % 2 === 0 ? "Yes" : "No",
+  costCenterOfProject: index % 2 === 0 ? String(3348019 + index) : "",
+  bookedBy: name,
+  purposeOfCabBooking: ["Client visit", "Project review", "Integration progress check", "Airport transfer"][index % 4],
+  employeeCount: 1 + (index % 3),
   status: index < 15 ? "Assigned" : "New",
   senderEmail: `travel${index + 1}@client.local`,
   createdAt: iso(22 - index, 8 + (index % 8))

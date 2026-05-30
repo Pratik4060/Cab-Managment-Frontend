@@ -40,6 +40,6 @@ export function DriversPage() {
     { name: "panCardPhoto", label: "PAN Card Photo", type: "file", accept: "image/*", required: false },
     { name: "licensePhoto", label: "License Photo", type: "file", accept: "image/*", required: false, full: true },
     { name: "address", label: "Address", required: true, full: true }
-  ]} hiddenViewKeys={["status"]} />;
+  ]} hiddenViewKeys={["status"]} searchable searchPlaceholder="Search drivers" />;
 }
 

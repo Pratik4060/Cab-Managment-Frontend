@@ -139,9 +139,9 @@ export function ReportsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={FileBarChart} label="Invoice Count" value={summary.records ?? rows.length ?? 0} />
-        <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
-        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(stats.outstandingAmount).toLocaleString()}`} tone="amber" />
-        <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(stats.totalAmount).toLocaleString()}`} />
+        <StatCard icon={FileBarChart} label="Paid Amount" value={`₹ ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
+        <StatCard icon={FileBarChart} label="Pending" value={`₹ ${Number(stats.outstandingAmount).toLocaleString()}`} tone="amber" />
+        <StatCard icon={FileBarChart} label="Total Amount" value={`₹ ${Number(stats.totalAmount).toLocaleString()}`} />
       </div>
 
       <section className="panel p-4">
@@ -152,10 +152,10 @@ export function ReportsPage() {
             Reset
           </button>
         </div>
-        <div className="grid gap-3 md:grid-cols-5">
-          <input className="input" type="date" value={filters.from} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))} />
-          <input className="input" type="date" value={filters.to} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))} />
-          <select className="input" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
+        <div className="flex flex-wrap gap-3">
+          <input className="input w-36" type="date" value={filters.from} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))} />
+          <input className="input w-36" type="date" value={filters.to} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))} />
+          <select className="input w-32" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
             <option value="">All Status</option>
             <option value="Draft">Draft</option>
             <option value="Sent">Sent</option>
@@ -163,7 +163,7 @@ export function ReportsPage() {
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
-          <input className="input md:col-span-2" placeholder="Search invoices" value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
+          <input className="input w-44" placeholder="Search invoices" value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
         </div>
       </section>
 
