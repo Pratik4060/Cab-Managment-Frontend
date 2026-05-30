@@ -52,7 +52,7 @@ export function DashboardPage() {
             <ResponsiveContainer width="100%" height={238}>
               <BarChart data={bookingsPerDayChart} margin={{ top: 8, right: 12, bottom: 46, left: -8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0} angle={-90} textAnchor="end" height={54} tick={{ fill: "#64748b", fontSize: 12 }} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0} angle={-93} textAnchor="end" height={54} tick={{ fill: "#64748b", fontSize: 12 }} />
                 <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
                 <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
                 <Bar dataKey="value" name="Bookings" radius={[8, 8, 0, 0]} maxBarSize={34}>
