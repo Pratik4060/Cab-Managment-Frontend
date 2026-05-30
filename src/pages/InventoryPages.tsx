@@ -8,7 +8,7 @@ const vehicleModelsByCompany = {
   Honda: ["City", "Amaze", "Elevate", "WR-V"],
   Hyundai: ["Aura", "Verna", "Creta", "Venue", "i20"],
   Tata: ["Nexon", "Tigor", "Altroz", "Punch", "Harrier"],
-  Mahindra: ["XUV500", "XUV700", "Scorpio", "Bolero", "Marazzo"],
+  Mahindra: ["XUV500", "XUV700", "Scorpio", "Bolero", "Marazzo"],  
   Kia: ["Carens", "Seltos", "Sonet"]
 };
 
