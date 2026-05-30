@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileText, Pencil, Plus } from "lucide-react";
+import { ClipboardCheck, FileText, Pencil, Plus, RefreshCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
@@ -24,6 +24,7 @@ type DutySlipFormState = {
 
 export function TripsPage() {
   const dispatch = useAppDispatch();
+  const [syncOpen, setSyncOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -31,7 +32,7 @@ export function TripsPage() {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [selectedTrip, setSelectedTrip] = useState<any>(null);
   const [activeTable, setActiveTable] = useState<"new" | "assigned">("new");
-  const bookings = useAppSelector((state) => state.bookings.allItems);
+  const bookings = useAppSelector((state) => state.bookings.items);
   const trips = useAppSelector((state) => state.trips.allItems);
   const loading = useAppSelector((state) => state.trips.loading);
   const drivers = useAppSelector((state) => state.drivers.items);
@@ -189,13 +190,22 @@ export function TripsPage() {
               </div>
               <p className="mt-1 text-sm text-slate-500">New booking enquiries ready to be assigned.</p>
             </div>
-            <button
-              className="btn-primary shrink-0"
-              onClick={() => setAddOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Add Trip
-            </button>
+            <div className="flex shrink-0 gap-2">
+              <button
+                className="btn-secondary"
+                // onClick={() => setSyncOpen(true)}
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Sync with Email
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => setAddOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Add Trip
+              </button>
+            </div>
           </div>
 
           <DataTable
@@ -282,6 +292,22 @@ export function TripsPage() {
           onSubmit={async (values) => {
             await dispatch(bookingActions.createOne({ ...values, status: "New" }));
             setAddOpen(false);
+          }}
+        />
+      </Modal>
+
+      <Modal open={syncOpen} title="Sync with Email" onClose={() => setSyncOpen(false)}>
+        <EntityForm
+          fields={[
+            { name: "senderEmail", label: "Sender Email", type: "email", full: true }
+          ]}
+          schema={z.object({
+            senderEmail: z.string().email("Valid email is required")
+          })}
+          submitLabel="Sync"
+          onSubmit={async (values) => {
+            dispatch(bookingActions.fetchAll({ senderEmail: values.senderEmail }));
+            setSyncOpen(false);
           }}
         />
       </Modal>
