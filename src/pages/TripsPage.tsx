@@ -182,7 +182,7 @@ export function TripsPage() {
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">New Table</h2>
+                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Trips</h2>
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
                   {pendingBookings.length}
                 </span>
@@ -232,7 +232,7 @@ export function TripsPage() {
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Assigned Table</h2>
+                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Assigned Trips</h2>
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-200">
                   {assignedTrips.length}
                 </span>
