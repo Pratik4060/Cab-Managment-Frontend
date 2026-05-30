@@ -68,7 +68,7 @@ export function InvoicesPage() {
             { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
             { key: "paymentStatus", header: "Payment Status", render: (r) => <PaymentStatusBadge invoice={r} /> },
             { key: "finalAmount", header: "Total", render: (r) => `Rs ${Number(r.finalAmount || 0).toLocaleString()}` },
-            { key: "remainingAmount", header: "Remaining Amount", render: (r) => `Rs ${Number(remainingAmount(r)).toLocaleString()}` }
+            { key: "remainingAmount", header: "Balance", render: (r) => `Rs ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
           actions={(row) => (
             <div className="flex justify-end gap-1.5">

@@ -1,4 +1,4 @@
-import { BarChart3, Car, ChevronRight, FileText, Gauge, LogOut, Shield, UserCircle, Users, Route } from "lucide-react";
+import { BarChart3, Car, ChevronRight, FileText, Monitor, LogOut, Shield, UserCircle, Users, Route } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo2.png";
@@ -8,7 +8,7 @@ import { logout } from "../../redux/slices/authSlice";
 const sections = [
   {
     label: "Main",
-    items: [{ label: "Dashboard", path: "/", icon: Gauge }]
+    items: [{ label: "Dashboard", path: "/", icon: Monitor  }]
   },
   {
     label: "Inventory",
