@@ -1,7 +1,7 @@
 import { BarChart3, Car, ChevronRight, FileText, Gauge, LogOut, Shield, UserCircle, Users, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/logo2.png";
 import { useAppDispatch } from "../../redux/hooks";
 import { logout } from "../../redux/slices/authSlice";
 
@@ -81,16 +81,16 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
         <img
           src={logo}
           alt="Unique Carz"
-          className="-ml-4 h-24 w-24 shrink-0 object-contain"
+          className="-ml-` h-12 w-12 shrink-0 object-contain"
         />
 
         <div className="min-w-0">
-          <div className="text-lg font-bold leading-tight text-slate-950 dark:text-slate-50">
+          <div className="ml-2 text-lg font-semibold text-brand-600 dark:text-brand-200">
             Unique Carz
           </div>
-          <div className="text-xs font-semibold text-brand-600 dark:text-brand-200">
+          {/* <div className="text-xs font-semibold text-brand-600 dark:text-brand-200">
             Corporate Cabs
-          </div>
+          </div> */}
         </div>
       </div>
       <nav className="scrollbar-hidden flex-1 space-y-5 overflow-y-auto p-3 dark:bg-gradient-to-b dark:from-[#09090b] dark:via-[#0b0b0d] dark:to-[#0b0506]">
