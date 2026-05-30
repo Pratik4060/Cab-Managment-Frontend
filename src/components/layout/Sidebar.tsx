@@ -1,4 +1,4 @@
-import { BarChart3, Car, ChevronRight, FileText, Gauge, LogOut, Shield, UserCircle, Users, Wrench } from "lucide-react";
+import { BarChart3, Car, ChevronRight, FileText, Gauge, LogOut, Shield, UserCircle, Users, Route } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo2.png";
@@ -20,7 +20,7 @@ const sections = [
   {
     label: "Bookings",
     items: [
-      { label: "Trips", path: "/bookings/trips", icon: Wrench }
+      { label: "Trips", path: "/bookings/trips", icon: Route }
     ]
   },
   {

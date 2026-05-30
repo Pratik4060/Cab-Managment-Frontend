@@ -15,6 +15,7 @@ type Field = {
   required?: boolean;
   step?: string;
   disabled?: boolean;
+  valueType?: "boolean";
 };
 
 export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabel = "Save" }: {
@@ -24,17 +25,25 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
   onSubmit: (values: Record<string, any>) => Promise<void> | void;
   submitLabel?: string;
 }) {
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Record<string, any>>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const formDefaults = {
+    ...defaults,
+    ...Object.fromEntries(fields.filter((field) => field.valueType === "boolean" && defaults[field.name] !== undefined).map((field) => [field.name, String(defaults[field.name])]))
+  };
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Record<string, any>>({ resolver: zodResolver(schema), defaultValues: formDefaults });
 
   async function submitWithFiles(values: Record<string, any>) {
     const normalized = { ...values };
     for (const field of fields) {
-      if (field.type !== "file") continue;
-      const file = values[field.name]?.[0] as File | undefined;
-      if (file) {
-        normalized[field.name] = await fileToDataUrl(file);
-      } else {
-        normalized[field.name] = defaults[field.name] || "";
+      if (field.type === "file") {
+        const file = values[field.name]?.[0] as File | undefined;
+        if (file) {
+          normalized[field.name] = await fileToDataUrl(file);
+        } else {
+          normalized[field.name] = defaults[field.name] || "";
+        }
+      }
+      if (field.valueType === "boolean") {
+        normalized[field.name] = values[field.name] === true || values[field.name] === "true";
       }
     }
     await onSubmit(normalized);

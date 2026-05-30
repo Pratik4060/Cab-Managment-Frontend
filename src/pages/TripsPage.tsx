@@ -91,7 +91,7 @@ export function TripsPage() {
       placeholder: "Select available vehicle",
       options: availableVehicles.map((vehicle) => ({
         value: vehicle._id,
-        label: `${vehicle.registrationNumber} - ${vehicle.vehicleModel} (${vehicle.cabCategory})`
+        label: `${vehicle.registrationNumber} - ${vehicle.vehicleModel} (${vehicle.cabType || vehicle.cabCategory || "Cab"})`
       }))
     }
   ];
@@ -203,7 +203,7 @@ export function TripsPage() {
             rows={pendingBookings}
             columns={pendingColumns}
             actions={(row) => (
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-1.5">
                 <button
                   className="btn-secondary"
                   onClick={() => {
@@ -246,9 +246,9 @@ export function TripsPage() {
             rows={assignedTrips}
             columns={assignedColumns}
             actions={(row) => (
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-1.5">
                 <button
-                  className="btn-secondary p-2"
+                  className="btn-secondary p-1.5"
                   title="Generate duty slip"
                   onClick={() => {
                     setSelectedTrip(row);

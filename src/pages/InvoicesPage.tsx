@@ -58,7 +58,7 @@ export function InvoicesPage() {
         </div>
       </div>
 
-      <div className="panel p-4">
+      <div className="panel p-2">
         <DataTable
           loading={invoices.loading}
           rows={rows}
@@ -71,17 +71,17 @@ export function InvoicesPage() {
             { key: "remainingAmount", header: "Remaining Amount", render: (r) => `Rs ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
           actions={(row) => (
-            <div className="flex justify-end gap-2">
-              <button className="btn-secondary p-2" title="Preview invoice" onClick={() => setPreviewInvoice(row)}>
+            <div className="flex justify-end gap-1.5">
+              <button className="btn-secondary p-1.5" title="Preview invoice" onClick={() => setPreviewInvoice(row)}>
                 <Eye className="h-4 w-4" />
               </button>
-              <button className="btn-secondary p-2" title="Edit invoice" onClick={() => setEditTarget(row)}>
+              <button className="btn-secondary p-1.5" title="Edit invoice" onClick={() => setEditTarget(row)}>
                 <Pencil className="h-4 w-4" />
               </button>
-              <button className="btn-secondary p-2" title="Send invoice to client" onClick={() => setSendTarget(row)}>
+              <button className="btn-secondary p-1.5" title="Send invoice to client" onClick={() => setSendTarget(row)}>
                 <Mail className="h-4 w-4" />
               </button>
-              <button className="btn-secondary p-2" title="Download PDF" onClick={() => downloadFile(`/invoices/${row._id}/pdf`, `${row.invoiceNumber}.pdf`)}>
+              <button className="btn-secondary p-1.5" title="Download PDF" onClick={() => downloadFile(`/invoices/${row._id}/pdf`, `${row.invoiceNumber}.pdf`)}>
                 <FileDown className="h-4 w-4" />
               </button>
             </div>
