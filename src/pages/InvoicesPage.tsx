@@ -1,4 +1,4 @@
-import { Download, Eye, FileDown, Mail, Pencil } from "lucide-react";
+import { Banknote, Download, Eye, FileDown, Mail, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
@@ -9,6 +9,7 @@ import { invoiceActions, sendInvoice } from "../redux/slices/invoiceSlice";
 import { downloadFile } from "../utils/downloadFile";
 
 type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
+type InvoicePaymentStatus = "Paid" | "Partial" | "Pending";
 
 type InvoiceDutySlipState = {
   kmOut: string;
@@ -19,7 +20,10 @@ type InvoiceDutySlipState = {
   parkingCharges: string;
   extraCharges: string;
   gstCharges: string;
-  status: InvoiceStatus;
+};
+
+type InvoicePaymentState = {
+  paymentStatus: InvoicePaymentStatus;
   addAmount: string;
 };
 
@@ -27,6 +31,7 @@ export function InvoicesPage() {
   const dispatch = useAppDispatch();
   const [previewInvoice, setPreviewInvoice] = useState<any>(null);
   const [editTarget, setEditTarget] = useState<any>(null);
+  const [paymentTarget, setPaymentTarget] = useState<any>(null);
   const [sendTarget, setSendTarget] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const invoices = useAppSelector((s) => s.invoices);
@@ -71,18 +76,26 @@ export function InvoicesPage() {
             { key: "remainingAmount", header: "Balance", render: (r) => `Rs ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
           actions={(row) => (
-            <div className="flex justify-end gap-1.5">
-              <button className="btn-secondary p-1.5" title="Preview invoice" onClick={() => setPreviewInvoice(row)}>
+            <div className="flex min-w-44 flex-col gap-2">
+              <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={() => setPreviewInvoice(row)}>
                 <Eye className="h-4 w-4" />
+                <span>Preview</span>
               </button>
-              <button className="btn-secondary p-1.5" title="Edit invoice" onClick={() => setEditTarget(row)}>
+              <button className="btn-secondary w-full justify-start p-2" title="Edit invoice" onClick={() => setEditTarget(row)}>
                 <Pencil className="h-4 w-4" />
+                <span>Edit</span>
               </button>
-              <button className="btn-secondary p-1.5" title="Send invoice to client" onClick={() => setSendTarget(row)}>
+              <button className="btn-secondary w-full justify-start p-2" title="Update payment status" onClick={() => setPaymentTarget(row)}>
+                <Banknote className="h-4 w-4" />
+                <span>Payment Status</span>
+              </button>
+              <button className="btn-secondary w-full justify-start p-2" title="Send invoice to client" onClick={() => setSendTarget(row)}>
                 <Mail className="h-4 w-4" />
+                <span>Send</span>
               </button>
-              <button className="btn-secondary p-1.5" title="Download PDF" onClick={() => downloadFile(`/invoices/${row._id}/pdf`, `${row.invoiceNumber}.pdf`)}>
+              <button className="btn-secondary w-full justify-start p-2" title="Download PDF" onClick={() => downloadFile(`/invoices/${row._id}/pdf`, `${row.invoiceNumber}.pdf`)}>
                 <FileDown className="h-4 w-4" />
+                <span>Download PDF</span>
               </button>
             </div>
           )}
@@ -100,6 +113,18 @@ export function InvoicesPage() {
             onSubmit={async (payload) => {
               await dispatch(invoiceActions.updateOne({ id: editTarget._id, payload }));
               setEditTarget(null);
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal open={Boolean(paymentTarget)} title={`Payment Status ${paymentTarget?.invoiceNumber || ""}`} onClose={() => setPaymentTarget(null)}>
+        {paymentTarget && (
+          <InvoicePaymentStatusEditor
+            invoice={paymentTarget}
+            onSubmit={async (payload) => {
+              await dispatch(invoiceActions.updateOne({ id: paymentTarget._id, payload }));
+              setPaymentTarget(null);
             }}
           />
         )}
@@ -130,7 +155,6 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
   }, [invoice]);
 
   const computed = useMemo(() => calculateInvoiceTotals(invoice, form), [invoice, form]);
-  const showPartialAmount = form.status === "Partial";
 
   function updateField(field: keyof InvoiceDutySlipState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -148,8 +172,6 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Passenger" value={invoice.booking?.passengerName || "-"} />
         <InfoCard label="Trip" value={invoice.trip?.tripNumber || "-"} />
-        <InfoCard label="Status" value={<select className="input mt-1" value={form.status} onChange={(event) => updateField("status", event.target.value as InvoiceStatus)}>{["Partial", "Paid", "Pending"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
-        <InfoCard label="Payment Status" value={<PaymentStatusBadge invoice={buildPreviewInvoice(invoice, form)} />} />
         <InfoCard label="KM OUT" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
         <InfoCard label="KM IN" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
         <InfoCard label="Time OUT" value={<input className="input mt-1" type="datetime-local" value={form.timeOut} onChange={(event) => updateField("timeOut", event.target.value)} />} />
@@ -158,9 +180,7 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Parking Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
         <InfoCard label="Extra Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
         <InfoCard label="GST (%)" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
-        {showPartialAmount && (
-          <InfoCard label="Add Amount" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.addAmount} onChange={(event) => updateField("addAmount", event.target.value)} />} />
-        )}
+        <InfoCard label="Payment Status" value={<PaymentStatusBadge invoice={buildPreviewInvoice(invoice, form)} />} />
         <InfoCard label="Remaining Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.remainingAmount.toLocaleString()}</p>} />
         <InfoCard label="Total KM" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{computed.totalKm.toLocaleString()}</p>} />
       </div>
@@ -173,10 +193,49 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
   );
 }
 
+function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSubmit: (payload: any) => Promise<void> | void }) {
+  const [form, setForm] = useState<InvoicePaymentState>(() => invoicePaymentDefaults(invoice));
+
+  useEffect(() => {
+    setForm(invoicePaymentDefaults(invoice));
+  }, [invoice]);
+
+  const computed = useMemo(() => calculatePaymentTotals(invoice, form), [invoice, form]);
+
+  function updateField(field: keyof InvoicePaymentState, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function submit() {
+    await onSubmit(buildPaymentUpdatePayload(invoice, form));
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <InfoCard label="Invoice" value={invoice.invoiceNumber} />
+        <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
+        <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
+        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentStatus)}>{["Pending", "Partial", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
+        {form.paymentStatus === "Partial" && (
+          <InfoCard label="Add Amount" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.addAmount} onChange={(event) => updateField("addAmount", event.target.value)} />} />
+        )}
+        <InfoCard label="Remaining Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.remainingAmount.toLocaleString()}</p>} />
+        <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.paidAmount.toLocaleString()}</p>} />
+        <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <button type="button" className="btn-secondary" onClick={() => setForm(invoicePaymentDefaults(invoice))}>Reset</button>
+        <button type="button" className="btn-primary" onClick={submit}>Update Payment Status</button>
+      </div>
+    </div>
+  );
+}
+
 function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
   const computed = calculateInvoiceTotals(invoice, form);
   return {
-    status: computed.status,
     tripFare: computed.tripFare,
     kmOut: computed.kmOut,
     kmIn: computed.kmIn,
@@ -189,7 +248,6 @@ function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
     gstPercent: computed.gstPercent,
     gstAmount: computed.gstAmount,
     finalAmount: computed.finalAmount,
-    paidAmount: computed.paidAmount,
     remainingAmount: computed.remainingAmount,
     balanceAmount: computed.remainingAmount,
     trip: {
@@ -207,6 +265,16 @@ function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
   };
 }
 
+function buildPaymentUpdatePayload(invoice: any, form: InvoicePaymentState) {
+  const computed = calculatePaymentTotals(invoice, form);
+  return {
+    paymentStatus: computed.paymentStatus,
+    paidAmount: computed.paidAmount,
+    remainingAmount: computed.remainingAmount,
+    balanceAmount: computed.remainingAmount
+  };
+}
+
 function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
   const kmOut = normalizeNumber(form.kmOut);
   const kmIn = normalizeNumber(form.kmIn);
@@ -221,29 +289,49 @@ function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
   const gstAmount = Math.round(subtotal * (gstPercent / 100));
   const finalAmount = subtotal + gstAmount;
   const existingPaid = Number(invoice.paidAmount || 0);
-  const addAmount = form.status === "Partial" ? Math.max(0, normalizeNumber(form.addAmount) || 0) : 0;
-  const paidAmount = form.status === "Paid"
+  const remainingAmount = Math.max(0, finalAmount - existingPaid);
+
+  return { kmOut, kmIn, totalKm, ratePerKm, tripFare, tollCharges, parkingCharges, extraCharges, gstPercent, gstAmount, subtotal, finalAmount, remainingAmount };
+}
+
+function calculatePaymentTotals(invoice: any, form: InvoicePaymentState) {
+  const finalAmount = Number(invoice.finalAmount || 0);
+  const existingPaid = Number(invoice.paidAmount || 0);
+  const addAmount = form.paymentStatus === "Partial" ? Math.max(0, normalizeNumber(form.addAmount) || 0) : 0;
+  const paidAmount = form.paymentStatus === "Paid"
     ? finalAmount
-    : form.status === "Partial"
+    : form.paymentStatus === "Partial"
       ? Math.min(finalAmount, existingPaid + addAmount)
       : existingPaid;
   const remainingAmount = Math.max(0, finalAmount - paidAmount);
-  const status = remainingAmount === 0 ? "Paid" : form.status;
-  const paymentStatus = status === "Paid" ? "Paid" : status === "Partial" ? "Partial" : paidAmount > 0 ? "Partial" : "Pending";
 
-  return { kmOut, kmIn, totalKm, ratePerKm, tripFare, tollCharges, parkingCharges, extraCharges, gstPercent, gstAmount, subtotal, finalAmount, paidAmount, remainingAmount, status, paymentStatus };
+  return {
+    paymentStatus: remainingAmount === 0 ? "Paid" : form.paymentStatus,
+    paidAmount,
+    remainingAmount
+  } satisfies { paymentStatus: InvoicePaymentStatus; paidAmount: number; remainingAmount: number };
 }
 
 function buildPreviewInvoice(invoice: any, form: InvoiceDutySlipState) {
   const computed = calculateInvoiceTotals(invoice, form);
   return {
     ...invoice,
-    status: computed.status,
-    paymentStatus: computed.paymentStatus,
     finalAmount: computed.finalAmount,
-    paidAmount: computed.paidAmount,
     remainingAmount: computed.remainingAmount,
     balanceAmount: computed.remainingAmount
+  };
+}
+
+function invoicePaymentDefaults(invoice: any): InvoicePaymentState {
+  const currentStatus = invoice.paymentStatus || (Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) === 0
+    ? "Paid"
+    : Number(invoice.paidAmount || 0) > 0
+      ? "Partial"
+      : "Pending");
+
+  return {
+    paymentStatus: currentStatus === "Paid" || currentStatus === "Partial" ? currentStatus : "Pending",
+    addAmount: ""
   };
 }
 
@@ -256,9 +344,7 @@ function invoiceDutySlipDefaults(invoice: any): InvoiceDutySlipState {
     tollCharges: String(invoice.trip?.tollCharges ?? 0),
     parkingCharges: String(invoice.trip?.parkingCharges ?? 0),
     extraCharges: String(invoice.trip?.extraCharges ?? 0),
-    gstCharges: String(invoice.trip?.gstCharges ?? invoice.gstPercent ?? 5),
-    status: invoice.status || "Draft",
-    addAmount: ""
+    gstCharges: String(invoice.trip?.gstCharges ?? invoice.gstPercent ?? 5)
   };
 }
 

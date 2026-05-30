@@ -66,9 +66,10 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
             const canEdit = canEditRow(row);
             if (!canEdit) {
               return (
-                <div className="flex justify-end gap-1.5">
-                  <button className="btn-secondary p-1.5" onClick={() => setViewRow(row)} aria-label="View">
+                <div className="flex min-w-40 flex-col gap-2">
+                  <button className="btn-secondary w-full justify-start p-2" onClick={() => setViewRow(row)} aria-label="View">
                     <Eye className="h-4 w-4" />
+                    <span>View</span>
                   </button>
                   <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                     <Lock className="h-3 w-3" />
@@ -79,15 +80,18 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
             }
 
             return (
-              <div className="flex justify-end gap-1.5">
-                <button className="btn-secondary p-1.5" onClick={() => setViewRow(row)} aria-label="View">
+              <div className="flex min-w-40 flex-col gap-2">
+                <button className="btn-secondary w-full justify-start p-2" onClick={() => setViewRow(row)} aria-label="View">
                   <Eye className="h-4 w-4" />
+                  <span>View</span>
                 </button>
-                <button className="btn-secondary p-1.5" onClick={() => { setEditingRow(row); setOpen(true); }} aria-label="Edit">
+                <button className="btn-secondary w-full justify-start p-2" onClick={() => { setEditingRow(row); setOpen(true); }} aria-label="Edit">
                   <Pencil className="h-4 w-4" />
+                  <span>Edit</span>
                 </button>
-                <button className="btn-secondary p-1.5 text-red-600 hover:text-red-700" onClick={() => dispatch(actions.deleteOne(row._id))} aria-label="Delete">
+                <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700" onClick={() => dispatch(actions.deleteOne(row._id))} aria-label="Delete">
                   <Trash2 className="h-4 w-4" />
+                  <span>Delete</span>
                 </button>
               </div>
             );
