@@ -25,6 +25,7 @@ type InvoiceDutySlipState = {
 type InvoicePaymentState = {
   paymentStatus: InvoicePaymentStatus;
   addAmount: string;
+  remark: string;
 };
 
 export function InvoicesPage() {
@@ -75,6 +76,7 @@ export function InvoicesPage() {
             { key: "finalAmount", header: "Total", render: (r) => `Rs ${Number(r.finalAmount || 0).toLocaleString()}` },
             { key: "remainingAmount", header: "Balance", render: (r) => `Rs ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
+          actionCount={5}
           actions={(row) => (
             <div className="flex min-w-44 flex-col gap-2">
               <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={() => setPreviewInvoice(row)}>
@@ -220,6 +222,9 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         {form.paymentStatus === "Partial" && (
           <InfoCard label="Add Amount" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.addAmount} onChange={(event) => updateField("addAmount", event.target.value)} />} />
         )}
+        {(form.paymentStatus === "Pending" || form.paymentStatus === "Partial") && (
+          <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
+        )}
         <InfoCard label="Remaining Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.remainingAmount.toLocaleString()}</p>} />
         <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {computed.paidAmount.toLocaleString()}</p>} />
         <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Rs {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
@@ -271,7 +276,8 @@ function buildPaymentUpdatePayload(invoice: any, form: InvoicePaymentState) {
     paymentStatus: computed.paymentStatus,
     paidAmount: computed.paidAmount,
     remainingAmount: computed.remainingAmount,
-    balanceAmount: computed.remainingAmount
+    balanceAmount: computed.remainingAmount,
+    paymentRemark: form.remark.trim() || undefined
   };
 }
 
@@ -331,7 +337,8 @@ function invoicePaymentDefaults(invoice: any): InvoicePaymentState {
 
   return {
     paymentStatus: currentStatus === "Paid" || currentStatus === "Partial" ? currentStatus : "Pending",
-    addAmount: ""
+    addAmount: "",
+    remark: String(invoice.paymentRemark || invoice.paymentRemarks || "")
   };
 }
 
