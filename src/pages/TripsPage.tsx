@@ -234,8 +234,8 @@ export function TripsPage() {
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Assigned Trips</h2>
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-200">
-                  {assignedTrips.length}
-                </span>
+                  {assignedTrips.length}   
+                </span>   
               </div>
               <p className="mt-1 text-sm text-slate-500">Trips that already have a driver and vehicle assigned.</p>
             </div>
