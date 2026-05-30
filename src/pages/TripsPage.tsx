@@ -91,7 +91,7 @@ export function TripsPage() {
       placeholder: "Select available vehicle",
       options: availableVehicles.map((vehicle) => ({
         value: vehicle._id,
-        label: `${vehicle.registrationNumber} - ${vehicle.vehicleModel} (${vehicle.cabCategory})`
+        label: `${vehicle.registrationNumber} - ${vehicle.vehicleModel} (${vehicle.cabType || vehicle.cabCategory || "Cab"})`
       }))
     }
   ];
