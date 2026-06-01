@@ -26,28 +26,28 @@ export function DashboardPage() {
   const hasBookingChartData = bookingsPerDayChart.some((row) => Number(row.value) > 0);
   const hasVehicleChartData = vehicleCompanyChart.some((row) => Number(row.value) > 0);
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-950 dark:text-white">Dashboard</h1>
+          <h1 className="text-xl font-bold text-slate-950 dark:text-white">Dashboard</h1>
           <p className="text-sm text-slate-500">Unique Carz operations, billing, availability, and recent activity for this {periodLabel.toLowerCase()}.</p>
         </div>
-        <select className="input w-36" value={period} onChange={(event) => setPeriod(event.target.value as Period)} aria-label="Dashboard time filter">
+        <select className="input w-32" value={period} onChange={(event) => setPeriod(event.target.value as Period)} aria-label="Dashboard time filter">
           {periodOptions.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={ClipboardList} label="Total Bookings" value={cards.totalBookings} />
         <StatCard icon={Route} label="Active Trips" value={cards.activeTrips} tone="amber" />
         <StatCard icon={IndianRupee} label="Revenue Summary" value={`₹ ${Number(cards.revenueSummary || 0).toLocaleString()}`} tone="green" />
         <StatCard icon={Banknote} label="Pending Payments" value={`₹ ${Number(cards.pendingPayments || 0).toLocaleString()}`} tone="amber" />
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <section className="panel p-4">
-          <h2 className="mb-1 font-semibold">Bookings Per {periodLabel.toLowerCase()}</h2>
-          <p className="mb-4 text-xs text-slate-500">Daily booking count for selected {periodLabel.toLowerCase()} filter</p>
+      <div className="grid gap-3 xl:grid-cols-2">
+        <section className="panel p-3">
+          <h2 className="mb-1 text-[15px] font-semibold">Bookings Per {periodLabel.toLowerCase()}</h2>
+          <p className="mb-3 text-xs text-slate-500">Daily booking count for selected {periodLabel.toLowerCase()} filter</p>
           {hasBookingChartData ? (
             <ResponsiveContainer width="100%" height={238}>
               <BarChart data={bookingsPerDayChart} margin={{ top: 8, right: 12, bottom: 46, left: -8 }}>
@@ -62,9 +62,9 @@ export function DashboardPage() {
             </ResponsiveContainer>
           ) : <ChartEmptyState />}
         </section>
-        <section className="panel p-4">
-          <h2 className="mb-1 font-semibold">Vehicle Company Split</h2>
-          <p className="mb-4 text-xs text-slate-500">Fleet count by vehicle company</p>
+        <section className="panel p-3">
+          <h2 className="mb-1 text-[15px] font-semibold">Vehicle Company Split</h2>
+          <p className="mb-3 text-xs text-slate-500">Fleet count by vehicle company</p>
           {hasVehicleChartData ? (
             <ResponsiveContainer width="100%" height={238}>
               <PieChart margin={{ top: 12, right: 34, bottom: 12, left: 34 }}>
@@ -77,13 +77,13 @@ export function DashboardPage() {
           ) : <ChartEmptyState />}
         </section>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <section className="panel p-4">
-          <h2 className="mb-3 font-semibold">Recent Bookings</h2>
+      <div className="grid gap-3 xl:grid-cols-2">
+        <section className="panel p-3">
+          <h2 className="mb-2 text-[15px] font-semibold">Recent Bookings</h2>
           <DataTable rows={data?.recentBookings || []} columns={[{ key: "bookingId", header: "Booking" }, { key: "passengerName", header: "Passenger" }, { key: "status", header: "Status" }]} />
         </section>
-        <section className="panel p-4">
-          <h2 className="mb-3 font-semibold">Recent Invoices</h2>
+        <section className="panel p-3">
+          <h2 className="mb-2 text-[15px] font-semibold">Recent Invoices</h2>
           <DataTable rows={data?.recentInvoices || []} columns={[{ key: "invoiceNumber", header: "Invoice" }, { key: "status", header: "Status" }, { key: "finalAmount", header: "Amount", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` }]} />
         </section>
       </div>

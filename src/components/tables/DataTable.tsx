@@ -4,7 +4,7 @@ import { EmptyState } from "../common/EmptyState";
 import { LoadingSkeleton } from "../common/LoadingSkeleton";
 
 type Column = { key: string; header: string; render?: (row: any) => ReactNode };
-const MENU_ROW_HEIGHT = 62;
+const MENU_ROW_HEIGHT = 54;
 
 export function DataTable({ columns, rows = [], loading, actions, actionCount, selectable, selectedIds, onToggleRow, onToggleAll }: {
   columns: Column[];
@@ -76,13 +76,13 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
   const allSelected = rowIds.length > 0 && rowIds.every((id) => selectedSet.has(id));
   const menuSpace = actionCount ? Math.max(190, actionCount * MENU_ROW_HEIGHT + 42) : 190;
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-red-950/35">
+    <div className="overflow-hidden rounded-md border border-slate-200 dark:border-red-950/35">
       <div ref={scrollRef} style={{ paddingBottom: openMenuId && menuDirection === "down" ? menuSpace : undefined }} className="scrollbar-hidden max-h-[65vh] overflow-auto">
-        <table className="min-w-[640px] divide-y divide-slate-200 text-sm dark:divide-red-950/35 lg:min-w-full">
+        <table className="min-w-[640px] divide-y divide-slate-200 text-[13px] dark:divide-red-950/35 lg:min-w-full">
           <thead className="sticky top-0 z-30 bg-slate-50 dark:bg-[#171719]">
             <tr>
               {selectable && (
-                <th className="w-10 whitespace-nowrap px-2 py-2 text-left">
+                <th className="w-10 whitespace-nowrap px-2 py-1.5 text-left">
                   <input
                     type="checkbox"
                     aria-label="Select all rows"
@@ -92,11 +92,11 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
                 </th>
               )}
               {columns.map((column) => (
-                <th key={column.key} className="relative whitespace-nowrap px-2.5 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                <th key={column.key} className="relative whitespace-nowrap px-2 py-1.5 text-left font-semibold text-slate-600 dark:text-slate-300">
                   {column.header}
                 </th>
               ))}
-              {actions && <th className="relative z-30 w-24 whitespace-nowrap px-2 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>}
+              {actions && <th className="relative z-30 w-20 whitespace-nowrap px-2 py-1.5 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white dark:divide-red-950/25 dark:bg-[#101012]">
@@ -106,7 +106,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
               return (
               <tr key={rowKey} className="group transition-colors hover:bg-slate-50 dark:hover:bg-[#1f1113]">
                 {selectable && (
-                  <td className="w-10 whitespace-nowrap px-2 py-2.5">
+                  <td className="w-10 whitespace-nowrap px-2 py-1.5">
                     <input
                       type="checkbox"
                       aria-label="Select row"
@@ -115,9 +115,9 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
                     />
                   </td>
                 )}
-                {columns.map((column) => <td key={column.key} className="whitespace-nowrap px-2.5 py-2.5 text-slate-700 transition-colors dark:text-slate-200 dark:group-hover:text-white">{column.render ? column.render(row) : row[column.key]}</td>)}
+                {columns.map((column) => <td key={column.key} className="whitespace-nowrap px-2 py-1.5 text-slate-700 transition-colors dark:text-slate-200 dark:group-hover:text-white">{column.render ? column.render(row) : row[column.key]}</td>)}
                 {actions && (
-                  <td className="relative whitespace-nowrap px-2 py-2 text-right align-middle">
+                  <td className="relative whitespace-nowrap px-2 py-1.5 text-right align-middle">
                     {actionCount !== undefined && actionCount >= 2 ? (
                       <div className="relative inline-flex justify-end" ref={(node) => {
                         if (openMenuId === rowKey) {
@@ -131,7 +131,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
                             }
                           }}
                           type="button"
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-[#111114] dark:text-slate-300 dark:hover:bg-[#1b1b1f] dark:hover:text-white"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-[#111114] dark:text-slate-300 dark:hover:bg-[#1b1b1f] dark:hover:text-white"
                           aria-label="Open row actions"
                           aria-haspopup="menu"
                           aria-expanded={openMenuId === rowKey}
@@ -147,7 +147,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
                               }
                             }}
                             onClick={(event) => event.stopPropagation()}
-                            className={`absolute right-0 z-50 w-[180px] rounded-xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/70 dark:border-red-950/45 dark:bg-[#111114] dark:shadow-black/40 ${menuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}
+                            className={`absolute right-0 z-50 w-[176px] rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl shadow-slate-200/70 dark:border-red-950/45 dark:bg-[#111114] dark:shadow-black/40 ${menuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}
                           >
                             <div className="flex flex-col gap-2">
                               {actions(row)}

@@ -60,8 +60,23 @@ function periodLabel(value: string, period: DashboardPeriod) {
   return date.getFullYear().toString();
 }
 
+function weekBucketLabels(reference: Date = dashboardNow) {
+  const weekStart = new Date(reference);
+  const dayOffset = (reference.getDay() + 6) % 7;
+  weekStart.setDate(reference.getDate() - dayOffset);
+  weekStart.setHours(0, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + index);
+    return day.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit" });
+  });
+}
+
 function trend(items: any[], valuePicker: (item: any) => number, period: DashboardPeriod = "month"): { _id: string; value: number }[] {
-  const grouped = items.reduce((acc, item) => {
+  const grouped = period === "week"
+    ? Object.fromEntries(weekBucketLabels().map((label, index) => [label, { value: 0, sortKey: index }]))
+    : {} as Record<string, { value: number; sortKey: number }>;
+  const reduced = items.reduce((acc, item) => {
     const sourceDate = item.paidAt || item.createdAt || item.updatedAt;
     const label = sourceDate ? periodLabel(sourceDate, period) : "Current";
     const sortKey = sourceDate ? new Date(sourceDate).getTime() : Date.now();
@@ -69,8 +84,8 @@ function trend(items: any[], valuePicker: (item: any) => number, period: Dashboa
     acc[label].value += valuePicker(item);
     acc[label].sortKey = Math.min(acc[label].sortKey, sortKey);
     return acc;
-  }, {} as Record<string, { value: number; sortKey: number }>);
-  return (Object.entries(grouped) as [string, { value: number; sortKey: number }][])
+  }, grouped as Record<string, { value: number; sortKey: number }>);
+  return (Object.entries(reduced) as [string, { value: number; sortKey: number }][])
     .sort(([, a], [, b]) => a.sortKey - b.sortKey)
     .map(([_id, entry]) => ({ _id, value: Number(entry.value) }));
 }

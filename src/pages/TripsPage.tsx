@@ -245,10 +245,10 @@ export function TripsPage() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Trips</h1>
+          <h1 className="text-xl font-bold">Trips</h1>
           <p className="text-sm text-slate-500">
             New enquiries on the left, assigned trips on the right.
           </p>
@@ -258,70 +258,70 @@ export function TripsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <button
           type="button"
-          className={`group relative overflow-hidden rounded-[22px] border border-l-[5px] p-6 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "new" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
+          className={`group relative overflow-hidden rounded-xl border border-l-[4px] p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "new" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
           onClick={() => setActiveTable("new")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-slate-100">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-slate-100">
                 New
               </p>
-              <div className="mt-3 flex items-center gap-2">
-                <h2 className="text-2xl font-bold text-slate-950 dark:text-white">
+              <div className="mt-2.5 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
-                <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
+                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
-              <p className="mt-4 text-sm text-slate-500">
+              <p className="mt-2.5 text-sm text-slate-500">
                 Click to jump to the new bookings table.
               </p>
             </div>
-            <span className="rounded-full bg-brand-50 p-3 text-brand-700 transition group-hover:scale-105 dark:bg-brand-950/40 dark:text-brand-200">
-              <ClipboardList className="h-5 w-5" />
+            <span className="rounded-full bg-brand-50 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-brand-950/40 dark:text-brand-200">
+              <ClipboardList className="h-4 w-4" />
             </span>
           </div>
         </button>
 
         <button
           type="button"
-          className={`group relative overflow-hidden rounded-[22px] border border-l-[5px] p-6 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "assigned" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
+          className={`group relative overflow-hidden rounded-xl border border-l-[4px] p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "assigned" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
           onClick={() => setActiveTable("assigned")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-slate-100">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-slate-100">
                 Assigned
               </p>
-              <div className="mt-3 flex items-center gap-2">
-                <h2 className="text-2xl font-bold text-slate-950 dark:text-white">
+              <div className="mt-2.5 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
                   Assigned
                 </h2>
-                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
-              <p className="mt-4 text-sm text-slate-500">
+              <p className="mt-2.5 text-sm text-slate-500">
                 Click to jump to the assigned trips table.
               </p>
             </div>
-            <span className="rounded-full bg-zinc-100 p-3 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
-              <Route className="h-5 w-5" />
+            <span className="rounded-full bg-zinc-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
+              <Route className="h-4 w-4" />
             </span>
           </div>
         </button>
       </div>
 
       {activeTable === "new" ? (
-        <section className="panel p-4">
-          <div className="mb-4 flex items-start justify-between gap-3">
+        <section className="panel p-3">
+          <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">
+                <h2 className="text-base font-semibold text-slate-950 dark:text-white">
                   Trips
                 </h2>
-                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
+                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
@@ -390,14 +390,14 @@ export function TripsPage() {
           />
         </section>
       ) : (
-        <section className="panel p-4">
-          <div className="mb-4 flex items-start justify-between gap-3">
+        <section className="panel p-3">
+          <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">
+                <h2 className="text-base font-semibold text-slate-950 dark:text-white">
                   Assigned Trips
                 </h2>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
@@ -910,9 +910,9 @@ function BookingStatusBadge({ status }: { status: string }) {
 
 function TripCard({ label, value }: { label: string; value?: any }) {
   return (
-    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
-      <p className="text-xs font-semibold uppercase text-slate-400">{label}</p>
-      <div className="mt-1 break-words text-sm text-slate-900 dark:text-white">
+    <div className="rounded-md border border-slate-200 p-2.5 dark:border-slate-800">
+      <p className="text-[11px] font-semibold uppercase text-slate-400">{label}</p>
+      <div className="mt-1 break-words text-[13px] text-slate-900 dark:text-white">
         {value ?? "-"}
       </div>
     </div>

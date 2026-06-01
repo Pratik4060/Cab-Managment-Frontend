@@ -20,9 +20,9 @@ export function LoginPage() {
   });
   if (isAuthenticated) return <Navigate to="/" replace />;
   return (
-    <div className="min-h-screen bg-brand-50 p-4 text-slate-900 dark:bg-[#08080a] dark:text-slate-100">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-xl border border-brand-100 bg-white shadow-2xl md:grid-cols-[1.05fr_0.95fr] dark:border-red-950/40 dark:bg-[#101012]">
-        <section className="flex flex-col justify-between bg-gradient-to-br from-[#070708] via-[#15090a] to-[#08080a] p-8 text-white">
+    <div className="min-h-screen bg-brand-50 p-3 text-slate-900 dark:bg-[#08080a] dark:text-slate-100">
+      <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-6xl overflow-hidden rounded-xl border border-brand-100 bg-white shadow-2xl md:grid-cols-[1.05fr_0.95fr] dark:border-red-950/40 dark:bg-[#101012]">
+        <section className="flex flex-col justify-between bg-gradient-to-br from-[#070708] via-[#15090a] to-[#08080a] p-6 text-white">
           <div>
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-brand-500/30 bg-white shadow-lg shadow-brand-600/30">
@@ -33,10 +33,10 @@ export function LoginPage() {
                 <p className="text-sm text-slate-300">Corporate Cabs and Transportation Services</p>
               </div>
             </div>
-            <div className="mt-16 max-w-lg">
+            <div className="mt-12 max-w-lg">
               <p className="text-sm font-semibold uppercase tracking-wide text-red-200">Corporate Operations Console</p>
-              <h2 className="mt-4 text-4xl font-bold leading-tight">Control bookings, trips, invoices, and payments from one workspace.</h2>
-              <p className="mt-5 text-base leading-7 text-slate-300">
+              <h2 className="mt-3 text-3xl font-bold leading-tight">Control bookings, trips, invoices, and payments from one workspace.</h2>
+              <p className="mt-4 text-sm leading-6 text-slate-300">
                 Built for dispatch teams, billing admins, and managers who need fast assignment, clean records, and dependable reporting.
               </p>
             </div>
@@ -55,14 +55,14 @@ export function LoginPage() {
           </div>
         </section>
 
-        <section className="flex items-center justify-center p-6 sm:p-10">
+        <section className="flex items-center justify-center p-5 sm:p-8">
           <div className="w-full max-w-md">
-            <div className="mb-8">
+            <div className="mb-6">
               <p className="text-sm font-semibold text-brand-600 dark:text-brand-200">Welcome back</p>
-              <h2 className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">Sign in to your account</h2>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">Sign in to your account</h2>
               <p className="mt-2 text-sm text-slate-500">Use your admin credentials to access Unique Carz operations.</p>
             </div>
-            <form className="space-y-5" onSubmit={handleSubmit((values) => dispatch(login(values)))}>
+            <form className="space-y-4" onSubmit={handleSubmit((values) => dispatch(login(values)))}>
               <label>
                 <span className="mb-1.5 block text-sm font-medium">Email</span>
                 <input className="input h-11" {...register("email")} />

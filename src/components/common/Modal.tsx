@@ -26,24 +26,24 @@ export function Modal({ open, title, children, onClose }: ModalProps) {
       onMouseDown={onClose}
     >
       <div
-        className="flex h-full w-full max-w-[760px] translate-x-0 flex-col border-l border-brand-100 bg-white shadow-2xl shadow-black/25 transition-transform duration-300 dark:border-red-950/45 dark:bg-[#101012] dark:shadow-black/60"
+        className="flex h-full w-full max-w-[700px] translate-x-0 flex-col border-l border-brand-100 bg-white shadow-2xl shadow-black/25 transition-transform duration-300 dark:border-red-950/45 dark:bg-[#101012] dark:shadow-black/60"
         onMouseDown={(event: MouseEvent<HTMLDivElement>) =>
           event.stopPropagation()
         }
       >
-        <div className="sticky top-0 z-10 flex min-h-16 items-center justify-between border-b border-slate-200 bg-white px-5 py-4 dark:border-red-950/35 dark:bg-[#101012]">
-          <h2 className="font-semibold text-slate-950 dark:text-white">
+        <div className="sticky top-0 z-10 flex min-h-14 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-red-950/35 dark:bg-[#101012]">
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
             {title}
           </h2>
           <button
-            className="btn-secondary p-2"
+            className="btn-secondary p-1.5"
             onClick={onClose}
             aria-label="Close"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="scrollbar-hidden flex-1 overflow-y-auto p-5">{children}</div>
+        <div className="scrollbar-hidden flex-1 overflow-y-auto p-4">{children}</div>
       </div>
     </div>,
     document.body,

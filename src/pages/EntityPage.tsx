@@ -46,10 +46,10 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
         : z.string().min(field.required === false ? 0 : 1, "Required")
   ])));
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
+          <h1 className="text-xl font-bold">{title}</h1>
           <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -127,11 +127,11 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
       </Modal>
       <Modal open={Boolean(viewRow)} title={`View ${title}`} onClose={() => setViewRow(null)}>
         {viewRow && (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {Object.entries(viewRow).filter(([key]) => !["_id", "__v", ...hiddenViewKeys].includes(key)).map(([key, value]) => (
-              <div key={key} className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
-                <p className="text-xs font-semibold uppercase text-slate-400">{key}</p>
-                <div className="mt-1 text-sm text-slate-900 dark:text-white">{formatValue(value)}</div>
+              <div key={key} className="rounded-md border border-slate-200 p-2.5 dark:border-slate-800">
+                <p className="text-[11px] font-semibold uppercase text-slate-400">{key}</p>
+                <div className="mt-1 text-[13px] text-slate-900 dark:text-white">{formatValue(value)}</div>
               </div>
             ))}
           </div>
