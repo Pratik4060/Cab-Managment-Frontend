@@ -1,10 +1,13 @@
 import {
+  Ban,
   ClipboardCheck,
   Eye,
   FileText,
   Pencil,
   Plus,
   RefreshCcw,
+  Route,
+  ClipboardList,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -69,6 +72,45 @@ export function TripsPage() {
   const availableVehicles = vehicles.filter(
     (vehicle) => vehicle.status === "Available",
   );
+
+  async function handleCancelNewTrip(booking: any) {
+    if (!booking?._id) return;
+    await dispatch(bookingActions.deleteOne(booking._id));
+  }
+
+  async function handleCancelAssignedTrip(trip: any) {
+    if (!trip?._id) return;
+    const bookingId = trip.booking?._id || trip.bookingId;
+    await dispatch(tripActions.deleteOne(trip._id));
+    if (bookingId) {
+      await dispatch(
+        bookingActions.updateOne({
+          id: bookingId,
+          payload: { status: "New" },
+        }),
+      );
+    }
+    if (trip.driverId) {
+      await dispatch(
+        driverActions.updateOne({
+          id: trip.driverId,
+          payload: { status: "Available" },
+        }),
+      );
+    }
+    if (trip.vehicleId) {
+      await dispatch(
+        vehicleActions.updateOne({
+          id: trip.vehicleId,
+          payload: { status: "Available" },
+        }),
+      );
+    }
+    await dispatch(tripActions.fetchAll(undefined));
+    await dispatch(bookingActions.fetchAll(undefined));
+    await dispatch(driverActions.fetchAll(undefined));
+    await dispatch(vehicleActions.fetchAll(undefined));
+  }
 
   const inquiryFields = [
     {
@@ -216,50 +258,56 @@ export function TripsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <button
           type="button"
-          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "new" ? "border-brand-500 shadow-lg shadow-brand-600/20 dark:border-brand-500" : "border-brand-100 dark:border-red-950/35"}`}
+          className={`group relative overflow-hidden rounded-[22px] border border-l-[5px] p-6 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "new" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
           onClick={() => setActiveTable("new")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-slate-100">
+                New
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
-                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
+                <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-4 text-sm text-slate-500">
                 Click to jump to the new bookings table.
               </p>
             </div>
-            <span className="rounded-full bg-brand-50 p-2 text-brand-700 dark:bg-brand-950/40 dark:text-brand-200">
-              <Plus className="h-5 w-5" />
+            <span className="rounded-full bg-brand-50 p-3 text-brand-700 transition group-hover:scale-105 dark:bg-brand-950/40 dark:text-brand-200">
+              <ClipboardList className="h-5 w-5" />
             </span>
           </div>
         </button>
 
         <button
           type="button"
-          className={`panel border-2 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${activeTable === "assigned" ? "border-brand-500 shadow-lg shadow-brand-600/20 dark:border-brand-500" : "border-brand-100 dark:border-red-950/35"}`}
+          className={`group relative overflow-hidden rounded-[22px] border border-l-[5px] p-6 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "assigned" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
           onClick={() => setActiveTable("assigned")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-slate-100">
+                Assigned
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-slate-950 dark:text-white">
                   Assigned
                 </h2>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-4 text-sm text-slate-500">
                 Click to jump to the assigned trips table.
               </p>
             </div>
-            <span className="rounded-full bg-zinc-100 p-2 text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
-              <ClipboardCheck className="h-5 w-5" />
+            <span className="rounded-full bg-zinc-100 p-3 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
+              <Route className="h-5 w-5" />
             </span>
           </div>
         </button>
@@ -300,7 +348,7 @@ export function TripsPage() {
             loading={loading}
             rows={pendingBookings}
             columns={pendingColumns}
-            actionCount={3}
+            actionCount={4}
             actions={(row) => (
               <div className="flex min-w-40 flex-col gap-2">
                 <button
@@ -330,6 +378,13 @@ export function TripsPage() {
                   <ClipboardCheck className="h-4 w-4" />
                   <span>Assign Trip</span>
                 </button>
+                <button
+                  className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
+                  onClick={() => handleCancelNewTrip(row)}
+                >
+                  <Ban className="h-4 w-4" />
+                  <span>Cancel Trip</span>
+                </button>
               </div>
             )}
           />
@@ -356,7 +411,7 @@ export function TripsPage() {
             loading={loading}
             rows={assignedTrips}
             columns={assignedColumns}
-            actionCount={2}
+            actionCount={3}
             actions={(row) => (
               <div className="flex min-w-40 flex-col gap-2">
                 <button
@@ -377,6 +432,14 @@ export function TripsPage() {
                 >
                   <FileText className="h-4 w-4" />
                   <span>Duty Slip</span>
+                </button>
+                <button
+                  className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
+                  title="Cancel trip"
+                  onClick={() => handleCancelAssignedTrip(row)}
+                >
+                  <Ban className="h-4 w-4" />
+                  <span>Cancel Trip</span>
                 </button>
               </div>
             )}

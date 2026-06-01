@@ -18,7 +18,7 @@ export function DashboardPage() {
   useEffect(() => { dispatch(fetchDashboard({ period })); }, [dispatch, period]);
   if (loading && !data) return <LoadingSkeleton rows={8} />;
   const cards = data?.cards || {};
-  const bookingsPerDayChart = (data?.charts?.bookings || []).slice(-6).map((row) => ({ name: row._id, value: row.value }));
+  const bookingsPerDayChart = (data?.charts?.bookings || []).map((row) => ({ name: row._id, value: row.value }));
   const vehicleCompanyChart = (data?.charts?.vehicleCompany || []).map((row) => ({ name: row._id, value: row.value }));
   const periodLabel = periodOptions.find((option) => option.value === period)?.label || "Month";
   const tooltipStyle = { borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)" };
