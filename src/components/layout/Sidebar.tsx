@@ -8,7 +8,7 @@ import { logout } from "../../redux/slices/authSlice";
 const sections = [
   {
     label: "Main",
-    items: [{ label: "Dashboard", path: "/", icon: Monitor  }]
+    items: [{ label: "Dashboard", path: "/", icon: Monitor }]
   },
   {
     label: "Inventory",
@@ -77,7 +77,9 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
 
   return (
     <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-62 flex-col border-r border-brand-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-red-950/45 dark:bg-[#09090b]/98 dark:shadow-black/50`}>
-      <div className="flex h-16 items-center border-b border-brand-100 px-2 dark:border-red-950/45 dark:bg-gradient-to-r dark:from-[#0b0b0d] dark:via-[#100708] dark:to-[#16090a]">
+      <div
+        onClick={() => goTo("/")}
+        className="hover:cursor-pointer flex h-16 items-center border-b border-brand-100 px-2 dark:border-red-950/45 dark:bg-gradient-to-r dark:from-[#0b0b0d] dark:via-[#100708] dark:to-[#16090a]">
         <img
           src={logo}
           alt="Unique Carz"
