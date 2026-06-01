@@ -50,10 +50,10 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
   }
 
   return (
-    <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit(submitWithFiles)}>
+    <form className="grid gap-3 sm:grid-cols-2" onSubmit={handleSubmit(submitWithFiles)}>
       {fields.map((field) => (
         <label key={field.name} className={field.full ? "sm:col-span-2" : ""}>
-          <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">{field.label}</span>
+          <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{field.label}</span>
           {field.type === "select" ? (
             <select className="input" {...register(field.name as any)}>
               <option value="">{field.placeholder || `Select ${field.label}`}</option>

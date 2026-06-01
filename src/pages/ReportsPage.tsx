@@ -93,10 +93,10 @@ export function ReportsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Invoice Reports</h1>
+          <h1 className="text-xl font-bold">Invoice Reports</h1>
           <p className="text-sm text-slate-500">Analytics, period filters, exports, print support, and invoice tables only.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -115,29 +115,29 @@ export function ReportsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={FileBarChart} label="Invoice Count" value={summary.records ?? rows.length ?? 0} />
         <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
         <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(stats.pendingAmount).toLocaleString()}`} tone="amber" />
         <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(stats.totalAmount).toLocaleString()}`} />
       </div>
 
-      <section className="panel p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">Period Filters</h2>
+      <section className="panel p-3">
+        <div className="mb-2.5 flex items-center justify-between">
+          <h2 className="text-[15px] font-semibold">Period Filters</h2>
           <button className="btn-secondary" onClick={resetFilters}>
             <RotateCcw className="h-4 w-4" />
             Reset
           </button>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <select className="input w-36" value={filters.period} onChange={(e) => setFilters((f) => ({ ...f, period: e.target.value as ReportPeriod }))}>
+        <div className="flex flex-wrap gap-2.5">
+          <select className="input w-32" value={filters.period} onChange={(e) => setFilters((f) => ({ ...f, period: e.target.value as ReportPeriod }))}>
             <option value="day">Day</option>
             <option value="week">Week</option>
             <option value="month">Month</option>
             <option value="year">Year</option>
           </select>
-          <select className="input w-32" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
+          <select className="input w-28" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
             <option value="">All Status</option>
             <option value="Draft">Draft</option>
             <option value="Sent">Sent</option>
@@ -145,14 +145,14 @@ export function ReportsPage() {
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
-          <input className="input w-44" placeholder="Search invoices" value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
+          <input className="input w-40" placeholder="Search invoices" value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
         </div>
       </section>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <section className="panel p-4 xl:col-span-2">
-          <h2 className="mb-1 font-semibold">Invoice Trend</h2>
-          <p className="mb-4 text-xs text-slate-500">Period-wise invoice movement by amount</p>
+        <section className="panel p-3 xl:col-span-2">
+          <h2 className="mb-1 text-[15px] font-semibold">Invoice Trend</h2>
+          <p className="mb-3 text-xs text-slate-500">Period-wise invoice movement by amount</p>
           {trendData.length ? (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={trendData}>
@@ -169,9 +169,9 @@ export function ReportsPage() {
             <EmptyState />
           )}
         </section>
-        <section className="panel p-4">
-          <h2 className="mb-1 font-semibold">Payment Status Split</h2>
-          <p className="mb-4 text-xs text-slate-500">Invoice payment status distribution</p>
+        <section className="panel p-3">
+          <h2 className="mb-1 text-[15px] font-semibold">Payment Status Split</h2>
+          <p className="mb-3 text-xs text-slate-500">Invoice payment status distribution</p>
           {statusData.length ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart margin={{ top: 18, right: 34, bottom: 18, left: 34 }}>
@@ -187,9 +187,9 @@ export function ReportsPage() {
         </section>
       </div>
 
-      <section className="panel p-4">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold">Invoice Report Table</h2>
+      <section className="panel p-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-[15px] font-semibold">Invoice Report Table</h2>
           <div className="relative" ref={columnMenuRef}>
             <button className="btn-secondary" type="button" onClick={() => setColumnMenuOpen((open) => !open)}>
               <Columns3 className="h-4 w-4" />

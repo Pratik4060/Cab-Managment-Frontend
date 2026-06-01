@@ -36,32 +36,32 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Profile</h1>
+        <h1 className="text-xl font-bold">Profile</h1>
         <p className="text-sm text-slate-500">Manage your admin profile, password, and theme preference.</p>
       </div>
-      {message && <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{message}</div>}
-      <div className="grid gap-5 xl:grid-cols-2">
-        <form className="panel p-5" onSubmit={saveProfile}>
-          <h2 className="mb-4 font-semibold">Profile Details</h2>
-          <div className="space-y-4">
+      {message && <div className="rounded-md bg-emerald-50 p-2.5 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{message}</div>}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <form className="panel p-4" onSubmit={saveProfile}>
+          <h2 className="mb-3 text-[15px] font-semibold">Profile Details</h2>
+          <div className="space-y-3">
             <label><span className="mb-1 block text-sm font-medium">Name</span><input className="input" value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} /></label>
             <label><span className="mb-1 block text-sm font-medium">Phone</span><input className="input" value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} /></label>
             <button className="btn-primary"><Save className="h-4 w-4" />Save Profile</button>
           </div>
         </form>
-        <div className="space-y-5">
-          <form className="panel p-5" onSubmit={savePassword}>
-            <h2 className="mb-4 font-semibold">Change Password</h2>
-            <div className="space-y-4">
+        <div className="space-y-4">
+          <form className="panel p-4" onSubmit={savePassword}>
+            <h2 className="mb-3 text-[15px] font-semibold">Change Password</h2>
+            <div className="space-y-3">
               <input className="input" type="password" placeholder="Current password" value={passwords.currentPassword} onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))} />
               <input className="input" type="password" placeholder="New password" value={passwords.newPassword} onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))} />
               <button className="btn-secondary"><Save className="h-4 w-4" />Change Password</button>
             </div>
           </form>
-          <section className="panel p-5">
-            <h2 className="mb-4 font-semibold">Theme</h2>
+          <section className="panel p-4">
+            <h2 className="mb-3 text-[15px] font-semibold">Theme</h2>
             <button className="btn-secondary" onClick={() => dispatch(toggleTheme())}>{mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}{mode === "dark" ? "Light Mode" : "Dark Mode"}</button>
           </section>
         </div>

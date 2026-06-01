@@ -10,6 +10,7 @@ import { downloadFile } from "../utils/downloadFile";
 
 type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
 type InvoicePaymentStatus = "Paid" | "Partial" | "Pending";
+type InvoicePaymentType = "UPI" | "Cash" | "Check";
 
 type InvoiceDutySlipState = {
   kmOut: string;
@@ -24,6 +25,7 @@ type InvoiceDutySlipState = {
 
 type InvoicePaymentState = {
   paymentStatus: InvoicePaymentStatus;
+  paymentType: InvoicePaymentType | "";
   addAmount: string;
   remark: string;
 };
@@ -80,21 +82,21 @@ export function InvoicesPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3.5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Invoices</h1>
+          <h1 className="text-xl font-bold">Invoices</h1>
           <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <select className="input w-32" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+          <select className="input w-28" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Partial">Partial</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
-          <input className="input w-36" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
-          <input className="input w-36" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
+          <input className="input w-32" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
+          <input className="input w-32" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
           <button className="btn-secondary" onClick={() => exportInvoices("xlsx")}>
             <Download className="h-4 w-4" />
             Excel
@@ -273,6 +275,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
         <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentStatus)}>{["Pending", "Partial", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
+        <InfoCard label="Payment Type" value={<select className="input mt-1" value={form.paymentType} onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentType)}><option value="">Select type</option>{["UPI", "Cash", "Check"].map((type) => <option key={type} value={type}>{type}</option>)}</select>} />
         {form.paymentStatus === "Partial" && (
           <InfoCard label="Add Amount" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.addAmount} onChange={(event) => updateField("addAmount", event.target.value)} />} />
         )}
@@ -328,6 +331,7 @@ function buildPaymentUpdatePayload(invoice: any, form: InvoicePaymentState) {
   const computed = calculatePaymentTotals(invoice, form);
   return {
     paymentStatus: computed.paymentStatus,
+    paymentType: form.paymentType || undefined,
     paidAmount: computed.paidAmount,
     remainingAmount: computed.remainingAmount,
     balanceAmount: computed.remainingAmount,
@@ -391,6 +395,7 @@ function invoicePaymentDefaults(invoice: any): InvoicePaymentState {
 
   return {
     paymentStatus: currentStatus === "Paid" || currentStatus === "Partial" ? currentStatus : "Pending",
+    paymentType: invoice.paymentType || invoice.paymentMethod || "",
     addAmount: "",
     remark: String(invoice.paymentRemark || invoice.paymentRemarks || "")
   };
