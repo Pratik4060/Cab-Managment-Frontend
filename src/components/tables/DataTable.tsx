@@ -4,6 +4,7 @@ import { EmptyState } from "../common/EmptyState";
 import { LoadingSkeleton } from "../common/LoadingSkeleton";
 
 type Column = { key: string; header: string; render?: (row: any) => ReactNode };
+const MENU_ROW_HEIGHT = 62;
 
 export function DataTable({ columns, rows = [], loading, actions, actionCount, selectable, selectedIds, onToggleRow, onToggleAll }: {
   columns: Column[];
@@ -26,8 +27,8 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
     if (!openMenuId) return;
 
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!menuRef.current?.contains(target) && !triggerRef.current?.contains(target)) {
         setOpenMenuId(null);
       }
     };
@@ -53,7 +54,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
       const spaceAbove = triggerRect.top - scrollRect.top;
       const openRowIndex = rows.findIndex((row, index) => String(row._id ?? row.id ?? index) === openMenuId);
       const nearBottomRow = openRowIndex >= Math.max(0, rows.length - 3);
-      const openUp = nearBottomRow || (spaceBelow < menuRect.height + 24 && spaceAbove > menuRect.height + 24);
+      const openUp = rows.length > 3 && (nearBottomRow || (spaceBelow < menuRect.height + 24 && spaceAbove > menuRect.height + 24));
       setMenuDirection(openUp ? "up" : "down");
     };
 
@@ -73,9 +74,10 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
   const rowIds = rows.map((row, index) => String(row._id ?? row.id ?? index));
   const selectedSet = new Set(selectedIds || []);
   const allSelected = rowIds.length > 0 && rowIds.every((id) => selectedSet.has(id));
+  const menuSpace = actionCount ? Math.max(190, actionCount * MENU_ROW_HEIGHT + 42) : 190;
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-red-950/35">
-      <div ref={scrollRef} className="scrollbar-hidden max-h-[65vh] overflow-auto">
+      <div ref={scrollRef} style={{ paddingBottom: openMenuId && menuDirection === "down" ? menuSpace : undefined }} className="scrollbar-hidden max-h-[65vh] overflow-auto">
         <table className="min-w-[640px] divide-y divide-slate-200 text-sm dark:divide-red-950/35 lg:min-w-full">
           <thead className="sticky top-0 z-30 bg-slate-50 dark:bg-[#171719]">
             <tr>
@@ -145,7 +147,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
                               }
                             }}
                             onClick={(event) => event.stopPropagation()}
-                            className={`absolute right-0 z-50 w-52 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/70 dark:border-red-950/45 dark:bg-[#111114] dark:shadow-black/40 ${menuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}
+                            className={`absolute right-0 z-50 w-[180px] rounded-xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/70 dark:border-red-950/45 dark:bg-[#111114] dark:shadow-black/40 ${menuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}
                           >
                             <div className="flex flex-col gap-2">
                               {actions(row)}
