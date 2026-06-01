@@ -37,39 +37,42 @@ function isInPeriod(item: any, period: DashboardPeriod) {
 
   if (period === "week") {
     const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - 6);
+    const dayOffset = (now.getDay() + 6) % 7;
+    weekStart.setDate(now.getDate() - dayOffset);
     weekStart.setHours(0, 0, 0, 0);
-    return date >= weekStart && date <= now;
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+    return date >= weekStart && date < weekEnd;
   }
 
   if (period === "month") {
-    const monthStart = new Date(now);
-    monthStart.setDate(now.getDate() - 29);
-    monthStart.setHours(0, 0, 0, 0);
-    return date >= monthStart && date <= now;
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
   }
 
-  const yearStart = new Date(now);
-  yearStart.setDate(now.getDate() - 364);
-  yearStart.setHours(0, 0, 0, 0);
-  return date >= yearStart && date <= now;
+  return date.getFullYear() === now.getFullYear();
 }
 
 function periodLabel(value: string, period: DashboardPeriod) {
   const date = new Date(value);
   if (period === "day") return date.toLocaleTimeString("en-IN", { hour: "2-digit", hour12: true });
-  if (period === "year") return monthName(value);
-  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+  if (period === "week") return date.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit" });
+  if (period === "month") return date.toLocaleString("en-IN", { month: "short", year: "numeric" });
+  return date.getFullYear().toString();
 }
 
 function trend(items: any[], valuePicker: (item: any) => number, period: DashboardPeriod = "month"): { _id: string; value: number }[] {
   const grouped = items.reduce((acc, item) => {
     const sourceDate = item.paidAt || item.createdAt || item.updatedAt;
     const label = sourceDate ? periodLabel(sourceDate, period) : "Current";
-    acc[label] = (acc[label] || 0) + valuePicker(item);
+    const sortKey = sourceDate ? new Date(sourceDate).getTime() : Date.now();
+    if (!acc[label]) acc[label] = { value: 0, sortKey };
+    acc[label].value += valuePicker(item);
+    acc[label].sortKey = Math.min(acc[label].sortKey, sortKey);
     return acc;
-  }, {} as Record<string, number>);
-  return Object.entries(grouped).map(([_id, value]) => ({ _id, value: Number(value) }));
+  }, {} as Record<string, { value: number; sortKey: number }>);
+  return (Object.entries(grouped) as [string, { value: number; sortKey: number }][])
+    .sort(([, a], [, b]) => a.sortKey - b.sortKey)
+    .map(([_id, entry]) => ({ _id, value: Number(entry.value) }));
 }
 
 function invoiceRemainingAmount(invoice: any) {
@@ -197,7 +200,7 @@ export function selectReport(state: RootState, type: string, params: Record<stri
       pendingAmount
     },
     charts: {
-      trend: trend(selectedRows, (item) => Number(item.amount || item.finalAmount || 1)),
+      trend: trend(selectedRows, (item) => Number(item.amount || item.finalAmount || 1), period || "month"),
       status: groupCount(selectedRows, "status")
     }
   };
