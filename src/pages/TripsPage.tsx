@@ -123,7 +123,7 @@ export function TripsPage() {
     { key: "carType", header: "Car Type", render: (row: any) => row.booking?.carType || "-" },
     { key: "cabRequestNumber", header: "Cab Request No", render: (row: any) => row.booking?.cabRequestNumber || "-" },
     { key: "driver", header: "Driver", render: (row: any) => row.driver?.driverName || "-" },
-    { key: "vehicle", header: "Cab", render: (row: any) => row.vehicle ? `${row.vehicle.registrationNumber}${row.vehicle.vehicleModel ? ` - ${row.vehicle.vehicleModel}` : ""}` : "-" }
+    // { key: "vehicle", header: "Cab", render: (row: any) => row.vehicle ? `${row.vehicle.registrationNumber}${row.vehicle.vehicleModel ? ` - ${row.vehicle.vehicleModel}` : ""}` : "-" }
   ];
 
   return (
@@ -213,30 +213,32 @@ export function TripsPage() {
             loading={loading}
             rows={pendingBookings}
             columns={pendingColumns}
-          actions={(row) => (
-            <div className="flex items-center justify-end gap-1.5">
-              <button className="btn-secondary" onClick={() => setViewDetails({ type: "booking", data: row })}>
-                <Eye className="h-4 w-4" />
-                View
-              </button>
-              <button
-                  className="btn-secondary"
+            actionCount={3}
+            actions={(row) => (
+              <div className="flex min-w-40 flex-col gap-2">
+                <button className="btn-secondary w-full justify-start p-2" onClick={() => setViewDetails({ type: "booking", data: row })}>
+                  <Eye className="h-4 w-4" />
+                  <span>View</span>
+                </button>
+                <button
+                  className="btn-secondary w-full justify-start p-2"
                   onClick={() => {
                     setSelectedBooking(row);
                     setEditOpen(true);
                   }}
-              >
+                >
                   <Pencil className="h-4 w-4" />
-                  Edit
+                  <span>Edit</span>
                 </button>
-              <button
-                  className="btn-secondary whitespace-nowrap"
+                <button
+                  className="btn-secondary w-full justify-start p-2 whitespace-nowrap"
                   onClick={() => {
                     setSelectedBooking(row);
                     setAssignOpen(true);
                   }}
-              >
-                  Assign Trip
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                  <span>Assign Trip</span>
                 </button>
               </div>
             )}
@@ -260,13 +262,15 @@ export function TripsPage() {
             loading={loading}
             rows={assignedTrips}
             columns={assignedColumns}
-          actions={(row) => (
-            <div className="flex items-center justify-end gap-1.5">
-              <button className="btn-secondary p-1.5" title="View details" onClick={() => setViewDetails({ type: "trip", data: row })}>
-                <Eye className="h-4 w-4" />
-              </button>
-              <button
-                  className="btn-secondary p-1.5"
+            actionCount={2}
+            actions={(row) => (
+              <div className="flex min-w-40 flex-col gap-2">
+                <button className="btn-secondary w-full justify-start p-2" title="View details" onClick={() => setViewDetails({ type: "trip", data: row })}>
+                  <Eye className="h-4 w-4" />
+                  <span>View</span>
+                </button>
+                <button
+                  className="btn-secondary w-full justify-start p-2"
                   title="Generate duty slip"
                   onClick={() => {
                     setSelectedTrip(row);
@@ -274,6 +278,7 @@ export function TripsPage() {
                   }}
                 >
                   <FileText className="h-4 w-4" />
+                  <span>Duty Slip</span>
                 </button>
               </div>
             )}

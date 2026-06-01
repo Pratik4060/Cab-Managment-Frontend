@@ -35,13 +35,49 @@ export function InvoicesPage() {
   const [paymentTarget, setPaymentTarget] = useState<any>(null);
   const [sendTarget, setSendTarget] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [dateFilters, setDateFilters] = useState({ from: "", to: "" });
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const invoices = useAppSelector((s) => s.invoices);
 
   useEffect(() => {
     dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
   }, [dispatch, statusFilter]);
 
-  const rows = useMemo(() => invoices.items || [], [invoices.items]);
+  const rows = useMemo(() => {
+    return (invoices.items || []).filter((invoice) => {
+      if (!dateFilters.from && !dateFilters.to) return true;
+      const createdAt = invoice.createdAt ? new Date(invoice.createdAt) : null;
+      if (!createdAt || Number.isNaN(createdAt.getTime())) return false;
+      if (dateFilters.from && createdAt < new Date(dateFilters.from)) return false;
+      if (dateFilters.to && createdAt > new Date(`${dateFilters.to}T23:59:59`)) return false;
+      return true;
+    });
+  }, [dateFilters.from, dateFilters.to, invoices.items]);
+  const selectedInvoices = rows.filter((invoice) => selectedInvoiceIds.includes(String(invoice._id)));
+  const exportQuery = new URLSearchParams({
+    ...(dateFilters.from ? { from: dateFilters.from } : {}),
+    ...(dateFilters.to ? { to: dateFilters.to } : {}),
+    ...(statusFilter ? { status: statusFilter } : {}),
+    ...(selectedInvoiceIds.length ? { selected: selectedInvoiceIds.join(",") } : {})
+  }).toString();
+
+  useEffect(() => {
+    const visibleIds = new Set(rows.map((invoice) => String(invoice._id)));
+    setSelectedInvoiceIds((current) => current.filter((id) => visibleIds.has(id)));
+  }, [rows]);
+
+  function toggleInvoiceSelection(id: string) {
+    setSelectedInvoiceIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }
+
+  function exportInvoices(format: "xlsx" | "pdf") {
+    const exportRows = selectedInvoices.length ? selectedInvoices : rows;
+    downloadFile(
+      `/reports/invoices/export.${format}${exportQuery ? `?${exportQuery}` : ""}`,
+      `invoices.${format}`,
+      buildInvoiceExport(exportRows)
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -50,16 +86,30 @@ export function InvoicesPage() {
           <h1 className="text-2xl font-bold">Invoices</h1>
           <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <select className="input w-32" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Partial">Partial</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
-          <button className="btn-secondary" onClick={() => downloadFile("/reports/invoices/export.xlsx", "invoices.xlsx")}>
+          <input className="input w-36" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
+          <input className="input w-36" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
+          <button className="btn-secondary" onClick={() => exportInvoices("xlsx")}>
             <Download className="h-4 w-4" />
             Excel
+          </button>
+          {/* <button className="btn-secondary" onClick={() => exportInvoices("pdf")}>
+            <Download className="h-4 w-4" />
+            PDF
+
+          </button> */}
+          <button
+            className="btn-secondary"
+          // onClick={() => exportInvoices("pdf")}
+          >
+            <Mail className="h-4 w-4" />
+            Email
           </button>
         </div>
       </div>
@@ -68,6 +118,10 @@ export function InvoicesPage() {
         <DataTable
           loading={invoices.loading}
           rows={rows}
+          selectable
+          selectedIds={selectedInvoiceIds}
+          onToggleRow={toggleInvoiceSelection}
+          onToggleAll={setSelectedInvoiceIds}
           columns={[
             { key: "invoiceNumber", header: "Invoice" },
             { key: "clientName", header: "Client" },
@@ -440,6 +494,25 @@ function InfoCard({ label, value }: { label: string; value: any }) {
       <div className="mt-1 break-words text-sm text-slate-900 dark:text-white">{value ?? "-"}</div>
     </div>
   );
+}
+
+function buildInvoiceExport(rows: any[]) {
+  const headers = ["Invoice", "Client", "Invoice Status", "Payment Status", "Total", "Balance", "Created At"];
+  const lines = rows.map((invoice) => [
+    invoice.invoiceNumber || "",
+    invoice.clientName || "",
+    invoice.status || "",
+    invoice.paymentStatus || (remainingAmount(invoice) === 0 ? "Paid" : Number(invoice.paidAmount || 0) > 0 ? "Partial" : "Pending"),
+    Number(invoice.finalAmount || 0),
+    Number(remainingAmount(invoice)),
+    invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString("en-IN") : ""
+  ]);
+  return [headers, ...lines].map((row) => row.map(csvCell).join(",")).join("\n");
+}
+
+function csvCell(value: unknown) {
+  const text = String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 function normalizeNumber(value: string | number | undefined) {

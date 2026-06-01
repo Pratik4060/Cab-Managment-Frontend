@@ -15,6 +15,7 @@ function monthName(value: string) {
 }
 
 type DashboardPeriod = "day" | "week" | "month" | "year";
+const dashboardNow = new Date("2026-06-01T09:00:00+05:30");
 
 function itemDate(item: any) {
   return new Date(item.paidAt || item.createdAt || item.updatedAt || Date.now());
@@ -22,7 +23,7 @@ function itemDate(item: any) {
 
 function isInPeriod(item: any, period: DashboardPeriod) {
   const date = itemDate(item);
-  const now = new Date();
+  const now = dashboardNow;
   if (Number.isNaN(date.getTime())) return false;
 
   if (period === "day") {
@@ -37,10 +38,16 @@ function isInPeriod(item: any, period: DashboardPeriod) {
   }
 
   if (period === "month") {
-    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+    const monthStart = new Date(now);
+    monthStart.setDate(now.getDate() - 29);
+    monthStart.setHours(0, 0, 0, 0);
+    return date >= monthStart && date <= now;
   }
 
-  return date.getFullYear() === now.getFullYear();
+  const yearStart = new Date(now);
+  yearStart.setDate(now.getDate() - 364);
+  yearStart.setHours(0, 0, 0, 0);
+  return date >= yearStart && date <= now;
 }
 
 function periodLabel(value: string, period: DashboardPeriod) {
