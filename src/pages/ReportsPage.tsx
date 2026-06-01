@@ -13,12 +13,12 @@ import { downloadFile } from "../utils/downloadFile";
 type ReportRow = Record<string, any>;
 type ReportColumn = { key: string; header: string };
 type VisibleColumns = Record<string, boolean>;
+type ReportPeriod = "day" | "week" | "month" | "year";
 
 const REPORT_TYPE = "invoices";
-
+const reportBarColors = ["#ed1c24", "#111827", "#f59e0b", "#64748b", "#14b8a6", "#b50f16"];
 const tooltipStyle = { borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)" };
 const tooltipCursor = { fill: "rgba(148, 163, 184, 0.14)", stroke: "transparent" };
-const reportBarColors = ["#ed1c24", "#111827", "#f59e0b", "#64748b", "#14b8a6", "#b50f16"];
 
 function remainingAmount(invoice: any) {
   return Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0);
@@ -34,10 +34,9 @@ function paymentStatus(invoice: any) {
 
 export function ReportsPage() {
   const dispatch = useAppDispatch();
-  const report = useAppSelector((state) => selectReport(state, REPORT_TYPE));
+  const [filters, setFilters] = useState({ period: "month" as ReportPeriod, search: "", status: "" });
+  const report = useAppSelector((state) => selectReport(state, REPORT_TYPE, filters));
   const loading = useAppSelector((state) => state.reports.loading);
-  const invoices = useAppSelector((state) => state.invoices.allItems || state.invoices.items || []);
-  const [filters, setFilters] = useState({ from: "", to: "", search: "", status: "" });
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>({});
   const [columnMenuOpen, setColumnMenuOpen] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement | null>(null);
@@ -51,7 +50,9 @@ export function ReportsPage() {
   }, [dispatch, filters]);
 
   useEffect(() => {
-    if (report?.columns) setVisibleColumns(Object.fromEntries(report.columns.map((column: ReportColumn) => [column.key, true])));
+    if (report?.columns) {
+      setVisibleColumns(Object.fromEntries(report.columns.map((column: ReportColumn) => [column.key, true])));
+    }
     setColumnMenuOpen(false);
   }, [report?.type]);
 
@@ -64,36 +65,13 @@ export function ReportsPage() {
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
   }, [columnMenuOpen]);
 
-  const normalizedRows = useMemo<ReportRow[]>(() => {
-    return (invoices as ReportRow[]).map((row) => ({
-      ...row,
-      status: paymentStatus(row),
-      remainingAmount: remainingAmount(row),
-      balanceAmount: remainingAmount(row),
-      paymentStatus: paymentStatus(row)
-    }));
-  }, [invoices]);
-
-  const summaryRows = useMemo(() => {
-    const search = filters.search.toLowerCase();
-    return normalizedRows.filter((row) => {
-      const createdAt = row.createdAt ? new Date(row.createdAt) : null;
-      if (filters.from && createdAt && createdAt < new Date(filters.from)) return false;
-      if (filters.to && createdAt && createdAt > new Date(`${filters.to}T23:59:59`)) return false;
-      return !search || Object.values(row).join(" ").toLowerCase().includes(search);
-    });
-  }, [filters.from, filters.search, filters.to, normalizedRows]);
-
-  const rows = useMemo<ReportRow[]>(() => {
-    const search = filters.search.toLowerCase();
-    return summaryRows
-      .filter((row) => {
-        if (filters.status) {
-          if (row.status !== filters.status) return false;
-        }
-        return !search || Object.values(row).join(" ").toLowerCase().includes(search);
-      });
-  }, [filters.search, filters.status, summaryRows]);
+  const rows = useMemo<ReportRow[]>(() => (report?.rows || []).map((row: ReportRow, index: number) => ({
+    _id: row._id || `${REPORT_TYPE}-${index}`,
+    ...row,
+    paymentStatus: row.paymentStatus || paymentStatus(row),
+    remainingAmount: remainingAmount(row),
+    balanceAmount: remainingAmount(row)
+  })), [report?.rows]);
 
   const columns = ((report?.columns || []) as ReportColumn[]).filter((column) => visibleColumns[column.key] !== false);
   const exportQuery = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([, value]) => value))).toString();
@@ -102,15 +80,14 @@ export function ReportsPage() {
   const statusData = report?.charts?.status || [];
 
   const stats = useMemo(() => {
-    const totalAmount = summaryRows.reduce((sum, row) => sum + Number(row.finalAmount || 0), 0);
-    const paidAmount = summaryRows.reduce((sum, row) => sum + Number(row.paidAmount || 0), 0);
-    const outstandingAmount = summaryRows.reduce((sum, row) => sum + (remainingAmount(row) > 0 ? remainingAmount(row) : 0), 0);
-    const partialInvoices = rows.filter((row) => row.paymentStatus === "Partial").length;
-    return { totalAmount, paidAmount, outstandingAmount, partialInvoices };
-  }, [rows, summaryRows]);
+    const totalAmount = rows.reduce((sum, row) => sum + Number(row.finalAmount || 0), 0);
+    const paidAmount = rows.reduce((sum, row) => sum + Number(row.paidAmount || 0), 0);
+    const pendingAmount = rows.reduce((sum, row) => sum + (remainingAmount(row) > 0 ? remainingAmount(row) : 0), 0);
+    return { totalAmount, paidAmount, pendingAmount };
+  }, [rows]);
 
   function resetFilters() {
-    const empty = { from: "", to: "", search: "", status: "" };
+    const empty = { period: "month" as ReportPeriod, search: "", status: "" };
     setFilters(empty);
     dispatch(fetchReportByType({ type: REPORT_TYPE, params: empty }));
   }
@@ -120,7 +97,7 @@ export function ReportsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Invoice Reports</h1>
-          <p className="text-sm text-slate-500">Analytics, filters, exports, print support, and invoice tables only.</p>
+          <p className="text-sm text-slate-500">Analytics, period filters, exports, print support, and invoice tables only.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" onClick={() => downloadFile(`/reports/invoices/export.xlsx?${exportQuery}`, "invoice-reports.xlsx")}>
@@ -140,22 +117,26 @@ export function ReportsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={FileBarChart} label="Invoice Count" value={summary.records ?? rows.length ?? 0} />
-        <StatCard icon={FileBarChart} label="Paid Amount" value={`₹ ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
-        <StatCard icon={FileBarChart} label="Pending" value={`₹ ${Number(stats.outstandingAmount).toLocaleString()}`} tone="amber" />
-        <StatCard icon={FileBarChart} label="Total Amount" value={`₹ ${Number(stats.totalAmount).toLocaleString()}`} />
+        <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
+        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(stats.pendingAmount).toLocaleString()}`} tone="amber" />
+        <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(stats.totalAmount).toLocaleString()}`} />
       </div>
 
       <section className="panel p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">Advanced Filters</h2>
+          <h2 className="font-semibold">Period Filters</h2>
           <button className="btn-secondary" onClick={resetFilters}>
             <RotateCcw className="h-4 w-4" />
             Reset
           </button>
         </div>
         <div className="flex flex-wrap gap-3">
-          <input className="input w-36" type="date" value={filters.from} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))} />
-          <input className="input w-36" type="date" value={filters.to} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))} />
+          <select className="input w-36" value={filters.period} onChange={(e) => setFilters((f) => ({ ...f, period: e.target.value as ReportPeriod }))}>
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+          </select>
           <select className="input w-32" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
             <option value="">All Status</option>
             <option value="Draft">Draft</option>
@@ -171,7 +152,7 @@ export function ReportsPage() {
       <div className="grid gap-4 xl:grid-cols-3">
         <section className="panel p-4 xl:col-span-2">
           <h2 className="mb-1 font-semibold">Invoice Trend</h2>
-          <p className="mb-4 text-xs text-slate-500">Filtered invoice movement by amount</p>
+          <p className="mb-4 text-xs text-slate-500">Period-wise invoice movement by amount</p>
           {trendData.length ? (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={trendData}>
@@ -238,7 +219,7 @@ export function ReportsPage() {
             )}
           </div>
         </div>
-        <DataTable loading={loading} rows={rows.map((row: ReportRow, index: number) => ({ _id: row._id || `${REPORT_TYPE}-${index}`, ...row }))} columns={columns} />
+        <DataTable loading={loading} rows={rows} columns={columns} />
       </section>
     </div>
   );

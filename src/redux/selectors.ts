@@ -16,6 +16,7 @@ function monthName(value: string) {
 
 type DashboardPeriod = "day" | "week" | "month" | "year";
 const dashboardNow = new Date("2026-06-01T09:00:00+05:30");
+type ReportPeriod = DashboardPeriod;
 
 function itemDate(item: any) {
   return new Date(item.paidAt || item.createdAt || item.updatedAt || Date.now());
@@ -83,6 +84,10 @@ function invoicePaymentStatus(invoice: any) {
       : "Pending";
 }
 
+function reportInPeriod(item: any, period: ReportPeriod) {
+  return isInPeriod(item, period);
+}
+
 export function selectDashboardData(state: RootState, period: DashboardPeriod = "month") {
   const allBookings = rows(state, "bookings");
   const allTrips = rows(state, "trips");
@@ -142,13 +147,19 @@ const reportColumns: Record<string, { key: string; header: string }[]> = {
   ]
 };
 
-export function selectReport(state: RootState, type: string) {
+export function selectReport(state: RootState, type: string, params: Record<string, any> = {}) {
   const bookings = rows(state, "bookings");
   const trips = rows(state, "trips");
   const drivers = rows(state, "drivers");
   const vehicles = rows(state, "vehicles");
   const invoices = rows(state, "invoices");
   const payments = state.payments.items || [];
+  const period = (params.period as ReportPeriod) || null;
+  const search = String(params.search || "").toLowerCase();
+  const statusFilter = String(params.status || "");
+  const filterByPeriod = (items: any[]) => period ? items.filter((item) => reportInPeriod(item, period)) : items;
+  const filterSearch = (items: any[]) => !search ? items : items.filter((item) => Object.values(item).join(" ").toLowerCase().includes(search));
+
   const data: Record<string, any[]> = {
     "daily-trips": trips.map((trip) => ({ ...trip, driverName: trip.driver?.driverName, vehicle: trip.vehicle?.registrationNumber })),
     drivers,
@@ -167,9 +178,12 @@ export function selectReport(state: RootState, type: string) {
     utilization: vehicles.map((vehicle) => ({ ...vehicle, utilization: vehicle.status === "Available" ? 35 : 0 })),
     custom: [...bookings, ...trips].slice(0, 20)
   };
-  const selectedRows = data[type] || data["daily-trips"] || [];
+  let selectedRows = data[type] || data["daily-trips"] || [];
+  selectedRows = filterByPeriod(selectedRows);
+  selectedRows = filterSearch(selectedRows);
+  if (statusFilter) selectedRows = selectedRows.filter((row) => String(row.status) === statusFilter);
   const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-  const pendingAmount = invoices.reduce((sum, invoice) => sum + (invoiceRemainingAmount(invoice) > 0 ? invoiceRemainingAmount(invoice) : 0), 0);
+  const pendingAmount = filterByPeriod(invoices).reduce((sum, invoice) => sum + (invoiceRemainingAmount(invoice) > 0 ? invoiceRemainingAmount(invoice) : 0), 0);
 
   return {
     type,
@@ -178,7 +192,7 @@ export function selectReport(state: RootState, type: string) {
     rows: selectedRows,
     summary: {
       records: selectedRows.length,
-      totalKm: trips.reduce((sum, trip) => sum + Number(trip.totalKm || 0), 0),
+      totalKm: filterByPeriod(trips).reduce((sum, trip) => sum + Number(trip.totalKm || 0), 0),
       totalRevenue,
       pendingAmount
     },
