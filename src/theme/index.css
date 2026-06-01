@@ -20,6 +20,10 @@ button {
   @apply outline-none;
 }
 
+input[type="checkbox"] {
+  accent-color: #ed1c24;
+}
+
 .dark body {
   background: #08080a;
 }

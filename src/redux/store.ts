@@ -36,6 +36,15 @@ const listenerMiddleware = createListenerMiddleware();
 const cabTypeOptions = ["Hatchback", "Sedan", "SUV", "MUV/MPV"];
 const companyFallbacks = ["Toyota", "Maruti Suzuki", "Honda", "Hyundai", "Tata", "Mahindra", "Kia"];
 const modelFallbacks = ["Etios", "Dzire", "City", "Aura", "Nexon", "XUV700", "Carens"];
+const presentationNow = new Date("2026-06-01T09:00:00+05:30");
+const presentationDays = [0, 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 18, 22, 27, 34, 45, 60, 90, 130, 180, 250];
+
+function presentationIso(index: number, hour = 9) {
+  const date = new Date(presentationNow);
+  date.setDate(date.getDate() - (presentationDays[index] ?? index));
+  date.setHours(hour, 0, 0, 0);
+  return date.toISOString();
+}
 
 function normalizeVehicles(items: any[]) {
   return items.map((vehicle, index) => {
@@ -45,7 +54,8 @@ function normalizeVehicles(items: any[]) {
       ...vehicle,
       vehicleType: legacyType || !vehicle.vehicleType ? companyFallbacks[index % companyFallbacks.length] : vehicle.vehicleType,
       vehicleModel: legacyType || !vehicle.vehicleModel ? modelFallbacks[index % modelFallbacks.length] : String(vehicle.vehicleModel).replace(/^(Toyota|Maruti|Maruti Suzuki|Honda|Hyundai|Tata|Mahindra|Kia)\s+/i, ""),
-      cabType
+      cabType,
+      createdAt: presentationIso(index)
     };
   });
 }
@@ -54,6 +64,7 @@ function normalizeBookings(items: any[]) {
   return items.map((booking, index) => ({
     ...booking,
     bookingId: String(booking.bookingId || `TRP-2026-${String(index + 1).padStart(4, "0")}`).replace(/^BKG-/i, "TRP-"),
+    status: String(booking._id || "").startsWith("trp-req-") && index < 20 ? "Assigned" : (booking.status || "New"),
     travelStartDate: booking.travelStartDate || "",
     travelEndDate: booking.travelEndDate || "",
     departmentName: booking.departmentName || "",
@@ -61,8 +72,73 @@ function normalizeBookings(items: any[]) {
     costCenterOfProject: booking.costCenterOfProject || "",
     bookedBy: booking.bookedBy || booking.passengerName || "",
     purposeOfCabBooking: booking.purposeOfCabBooking || "",
-    employeeCount: booking.employeeCount || 1
+    employeeCount: booking.employeeCount || 1,
+    createdAt: presentationIso(index, 8 + (index % 8))
   }));
+}
+
+function normalizeDrivers(items: any[]) {
+  return items.map((driver, index) => ({
+    ...driver,
+    aadhaarNumber: driver.aadhaarNumber || `42${String(1000000000 + index * 17391).padStart(10, "0")}`,
+    panNumber: driver.panNumber || `ABCDE${String(1000 + index)}F`,
+    aadhaarCardPhoto: driver.aadhaarCardPhoto || "",
+    panCardPhoto: driver.panCardPhoto || "",
+    licensePhoto: driver.licensePhoto || "",
+    createdAt: presentationIso(index)
+  }));
+}
+
+function normalizeInvoices(items: any[]) {
+  return items.map((invoice, index) => {
+    const remainingAmount = Number(invoice.remainingAmount ?? invoice.balanceAmount ?? Math.max(0, Number(invoice.finalAmount || 0) - Number(invoice.paidAmount || 0)));
+    const paidAmount = Number(invoice.paidAmount || 0);
+    return {
+      ...invoice,
+      remainingAmount,
+      balanceAmount: remainingAmount,
+      paymentStatus: invoice.paymentStatus || (remainingAmount === 0 ? "Paid" : paidAmount > 0 ? "Partial" : "Pending"),
+      tripFare: Number(invoice.tripFare || 0),
+      tollCharges: Number(invoice.tollCharges || invoice.trip?.tollCharges || 0),
+      parkingCharges: Number(invoice.parkingCharges || invoice.trip?.parkingCharges || 0),
+      extraCharges: Number(invoice.extraCharges || invoice.trip?.extraCharges || 0),
+      gstPercent: Number(invoice.gstPercent ?? 5),
+      gstAmount: Number(invoice.gstAmount || 0),
+      subtotal: Number(invoice.subtotal || 0),
+      finalAmount: Number(invoice.finalAmount || 0),
+      createdAt: presentationIso(index),
+      sentAt: invoice.sentAt || presentationIso(index, 10)
+    };
+  });
+}
+
+function normalizeTrips(items: any[]) {
+  return items.map((trip, index) => ({
+    ...trip,
+    createdAt: presentationIso(index),
+    timeOut: trip.timeOut || presentationIso(index, 9),
+    timeIn: trip.timeIn || presentationIso(index, 13),
+    booking: trip.booking ? { ...trip.booking, createdAt: presentationIso(index, 8 + (index % 8)) } : trip.booking
+  }));
+}
+
+function normalizePayments(items: any[]) {
+  return items.map((payment, index) => ({
+    ...payment,
+    paidAt: presentationIso(index, 16),
+    createdAt: presentationIso(index, 16)
+  }));
+}
+
+function normalizeAdmins(items: any[]) {
+  return items.map((admin) => ({ ...admin, isActive: admin.isActive ?? true }));
+}
+
+function withSeedMinimum(items: any[], seed: any[], minimum: number) {
+  if (items.length >= minimum) return items;
+  const existingIds = new Set(items.map((item) => item._id || item.id));
+  const missingSeed = seed.filter((item) => !existingIds.has(item._id || item.id));
+  return [...items, ...missingSeed].slice(0, Math.max(minimum, items.length));
 }
 
 listenerMiddleware.startListening({
@@ -95,13 +171,13 @@ listenerMiddleware.startListening({
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState: {
-    bookings: entityState(normalizeBookings(readStorage(storageKeys.bookings, seedBookings))),
-    trips: entityState(readStorage(storageKeys.trips, seedTrips)),
+    bookings: entityState(normalizeBookings(withSeedMinimum(readStorage(storageKeys.bookings, seedBookings), seedBookings, seedBookings.length))),
+    trips: entityState(normalizeTrips(withSeedMinimum(readStorage(storageKeys.trips, seedTrips), seedTrips, seedTrips.length))),
     vehicles: entityState(normalizeVehicles(readStorage(storageKeys.vehicles, seedVehicles))),
-    drivers: entityState(readStorage(storageKeys.drivers, seedDrivers)),
-    invoices: entityState(readStorage(storageKeys.invoices, seedInvoices)),
-    payments: { items: readStorage(storageKeys.payments, seedPayments), loading: false, error: null },
-    admins: entityState(readStorage(storageKeys.admins, seedAdmins)),
+    drivers: entityState(normalizeDrivers(withSeedMinimum(readStorage(storageKeys.drivers, seedDrivers), seedDrivers, seedDrivers.length))),
+    invoices: entityState(normalizeInvoices(readStorage(storageKeys.invoices, seedInvoices))),
+    payments: { items: normalizePayments(readStorage(storageKeys.payments, seedPayments)), loading: false, error: null },
+    admins: entityState(normalizeAdmins(withSeedMinimum(readStorage(storageKeys.admins, seedAdmins), seedAdmins, seedAdmins.length))),
     dashboard: { data: readStorage(storageKeys.dashboard, null), loading: false, error: null, period: "month" }
   } as Partial<RootState>,
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(listenerMiddleware.middleware as any)

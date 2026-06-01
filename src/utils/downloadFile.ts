@@ -1,8 +1,8 @@
-export async function downloadFile(url: string, filename: string) {
+export async function downloadFile(url: string, filename: string, contentOverride?: string) {
   const extension = filename.split(".").pop()?.toLowerCase();
-  const content = extension === "pdf"
+  const content = contentOverride || (extension === "pdf"
     ? "Unique Carz\n\nLocal demo export. PDF generation is represented by this downloadable file in frontend-only mode."
-    : `Unique Carz Local Export\nSource,${url}\nGenerated,${new Date().toISOString()}\n`;
+    : `Unique Carz Local Export\nSource,${url}\nGenerated,${new Date().toISOString()}\n`);
   const type = extension === "pdf" ? "application/pdf" : "text/csv";
   const blobUrl = window.URL.createObjectURL(new Blob([content], { type }));
   const link = document.createElement("a");

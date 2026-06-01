@@ -5,12 +5,16 @@ import { LoadingSkeleton } from "../common/LoadingSkeleton";
 
 type Column = { key: string; header: string; render?: (row: any) => ReactNode };
 
-export function DataTable({ columns, rows = [], loading, actions, actionCount }: {
+export function DataTable({ columns, rows = [], loading, actions, actionCount, selectable, selectedIds, onToggleRow, onToggleAll }: {
   columns: Column[];
   rows?: any[];
   loading?: boolean;
   actions?: (row: any) => React.ReactNode;
   actionCount?: number;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onToggleRow?: (id: string) => void;
+  onToggleAll?: (ids: string[]) => void;
 }) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuDirection, setMenuDirection] = useState<"up" | "down">("down");
@@ -48,7 +52,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount }:
       const spaceBelow = scrollRect.bottom - triggerRect.bottom;
       const spaceAbove = triggerRect.top - scrollRect.top;
       const openRowIndex = rows.findIndex((row, index) => String(row._id ?? row.id ?? index) === openMenuId);
-      const nearBottomRow = openRowIndex >= Math.max(0, rows.length - 2);
+      const nearBottomRow = openRowIndex >= Math.max(0, rows.length - 3);
       const openUp = nearBottomRow || (spaceBelow < menuRect.height + 24 && spaceAbove > menuRect.height + 24);
       setMenuDirection(openUp ? "up" : "down");
     };
@@ -66,12 +70,25 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount }:
 
   if (loading) return <LoadingSkeleton />;
   if (!rows.length) return <EmptyState />;
+  const rowIds = rows.map((row, index) => String(row._id ?? row.id ?? index));
+  const selectedSet = new Set(selectedIds || []);
+  const allSelected = rowIds.length > 0 && rowIds.every((id) => selectedSet.has(id));
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-red-950/35">
       <div ref={scrollRef} className="scrollbar-hidden max-h-[65vh] overflow-auto">
         <table className="min-w-[640px] divide-y divide-slate-200 text-sm dark:divide-red-950/35 lg:min-w-full">
           <thead className="sticky top-0 z-30 bg-slate-50 dark:bg-[#171719]">
             <tr>
+              {selectable && (
+                <th className="w-10 whitespace-nowrap px-2 py-2 text-left">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all rows"
+                    checked={allSelected}
+                    onChange={() => onToggleAll?.(allSelected ? [] : rowIds)}
+                  />
+                </th>
+              )}
               {columns.map((column) => (
                 <th key={column.key} className="relative whitespace-nowrap px-2.5 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
                   {column.header}
@@ -86,10 +103,20 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount }:
 
               return (
               <tr key={rowKey} className="group transition-colors hover:bg-slate-50 dark:hover:bg-[#1f1113]">
+                {selectable && (
+                  <td className="w-10 whitespace-nowrap px-2 py-2.5">
+                    <input
+                      type="checkbox"
+                      aria-label="Select row"
+                      checked={selectedSet.has(rowKey)}
+                      onChange={() => onToggleRow?.(rowKey)}
+                    />
+                  </td>
+                )}
                 {columns.map((column) => <td key={column.key} className="whitespace-nowrap px-2.5 py-2.5 text-slate-700 transition-colors dark:text-slate-200 dark:group-hover:text-white">{column.render ? column.render(row) : row[column.key]}</td>)}
                 {actions && (
                   <td className="relative whitespace-nowrap px-2 py-2 text-right align-middle">
-                    {actionCount !== undefined && actionCount > 2 ? (
+                    {actionCount !== undefined && actionCount >= 2 ? (
                       <div className="relative inline-flex justify-end" ref={(node) => {
                         if (openMenuId === rowKey) {
                           menuRef.current = node;
@@ -118,7 +145,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount }:
                               }
                             }}
                             onClick={(event) => event.stopPropagation()}
-                            className={`absolute right-0 z-20 w-52 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/70 dark:border-slate-800 dark:bg-[#111114] dark:shadow-black/40 ${menuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}
+                            className={`absolute right-0 z-50 w-52 rounded-lg border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/70 dark:border-red-950/45 dark:bg-[#111114] dark:shadow-black/40 ${menuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}
                           >
                             <div className="flex flex-col gap-2">
                               {actions(row)}

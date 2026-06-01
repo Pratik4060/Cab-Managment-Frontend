@@ -18,6 +18,7 @@ const REPORT_TYPE = "invoices";
 
 const tooltipStyle = { borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)" };
 const tooltipCursor = { fill: "rgba(148, 163, 184, 0.14)", stroke: "transparent" };
+const reportBarColors = ["#ed1c24", "#111827", "#f59e0b", "#64748b", "#14b8a6", "#b50f16"];
 
 function remainingAmount(invoice: any) {
   return Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0);
@@ -178,7 +179,9 @@ export function ReportsPage() {
                 <XAxis dataKey="_id" tickLine={false} axisLine={false} />
                 <YAxis tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
-                <Bar dataKey="value" fill="#ed1c24" radius={[6, 6, 0, 0]} maxBarSize={44} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={44}>
+                  {trendData.map((_: unknown, index: number) => <Cell key={index} fill={reportBarColors[index % reportBarColors.length]} />)}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
