@@ -21,6 +21,10 @@ function itemDate(item: any) {
   return new Date(item.paidAt || item.createdAt || item.updatedAt || Date.now());
 }
 
+function sortRecent(items: any[]) {
+  return [...items].sort((a, b) => itemDate(b).getTime() - itemDate(a).getTime());
+}
+
 function isInPeriod(item: any, period: DashboardPeriod) {
   const date = itemDate(item);
   const now = dashboardNow;
@@ -80,11 +84,17 @@ function invoicePaymentStatus(invoice: any) {
 }
 
 export function selectDashboardData(state: RootState, period: DashboardPeriod = "month") {
-  const bookings = rows(state, "bookings").filter((item) => isInPeriod(item, period));
-  const trips = rows(state, "trips").filter((item) => isInPeriod(item, period));
-  const drivers = rows(state, "drivers").filter((item) => isInPeriod(item, period));
-  const vehicles = rows(state, "vehicles").filter((item) => isInPeriod(item, period));
-  const invoices = rows(state, "invoices").filter((item) => isInPeriod(item, period));
+  const allBookings = rows(state, "bookings");
+  const allTrips = rows(state, "trips");
+  const allDrivers = rows(state, "drivers");
+  const allVehicles = rows(state, "vehicles");
+  const allInvoices = rows(state, "invoices");
+
+  const bookings = allBookings.filter((item) => isInPeriod(item, period));
+  const trips = allTrips.filter((item) => isInPeriod(item, period));
+  const drivers = allDrivers.filter((item) => isInPeriod(item, period));
+  const vehicles = allVehicles.filter((item) => isInPeriod(item, period));
+  const invoices = allInvoices.filter((item) => isInPeriod(item, period));
   const payments = (state.payments.items || []).filter((item) => isInPeriod(item, period));
   const pendingInvoices = invoices.filter((invoice) => invoicePaymentStatus(invoice) === "Pending");
 
@@ -106,8 +116,8 @@ export function selectDashboardData(state: RootState, period: DashboardPeriod = 
       vehicleCompany: groupCount(vehicles, "vehicleType"),
       invoiceStatus: groupCount(invoices, "status")
     },
-    recentBookings: bookings.slice(0, 5),
-    recentInvoices: invoices.slice(0, 5)
+    recentBookings: sortRecent(allBookings).slice(0, 5),
+    recentInvoices: sortRecent(allInvoices).slice(0, 5)
   };
 }
 
