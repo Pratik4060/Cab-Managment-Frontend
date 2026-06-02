@@ -26,6 +26,9 @@ type DutySlipFormState = {
   kmIn: string;
   timeOut: string;
   timeIn: string;
+  closingKm: string;
+  closingTime: string;
+  closingLocation: string;
   tollCharges: string;
   parkingCharges: string;
   extraCharges: string;
@@ -649,11 +652,20 @@ export function TripsPage() {
               await dispatch(
                 updateTripStatus({ id: selectedTrip._id, payload }),
               );
+              const invoiceTripPayload = {
+                ...selectedTrip,
+                ...payload,
+              };
+              delete (invoiceTripPayload as any).closingKm;
+              delete (invoiceTripPayload as any).closingTime;
+              delete (invoiceTripPayload as any).closingLocation;
               await dispatch(
                 invoiceActions.generateInvoice({
-                  ...selectedTrip,
-                  ...payload,
-                  trip: { ...(selectedTrip.trip || {}), ...payload },
+                  ...invoiceTripPayload,
+                  trip: {
+                    ...(selectedTrip.trip || {}),
+                    ...payload,
+                  },
                 }),
               );
               setDutySlipOpen(false);
@@ -705,6 +717,9 @@ function DutySlipEditor({
       totalKm,
       timeOut: form.timeOut || undefined,
       timeIn: form.timeIn || undefined,
+      closingKm: normalizeNumber(form.closingKm),
+      closingTime: form.closingTime || undefined,
+      closingLocation: form.closingLocation || undefined,
       tollCharges: normalizeNumber(form.tollCharges),
       parkingCharges: normalizeNumber(form.parkingCharges),
       extraCharges: normalizeNumber(form.extraCharges),
@@ -782,6 +797,48 @@ function DutySlipEditor({
               type="datetime-local"
               value={form.timeIn}
               onChange={(event) => updateField("timeIn", event.target.value)}
+            />
+          }
+        />
+        <TripCard
+          label="Closing KM"
+          value={
+            <input
+              className="input mt-1"
+              type="number"
+              step="any"
+              inputMode="decimal"
+              value={form.closingKm}
+              onChange={(event) =>
+                updateField("closingKm", event.target.value)
+              }
+            />
+          }
+        />
+        <TripCard
+          label="Closing Time"
+          value={
+            <input
+              className="input mt-1"
+              type="datetime-local"
+              value={form.closingTime}
+              onChange={(event) =>
+                updateField("closingTime", event.target.value)
+              }
+            />
+          }
+        />
+        <TripCard
+          label="Closing Location"
+          value={
+            <input
+              className="input mt-1"
+              type="text"
+              placeholder="Enter closing location"
+              value={form.closingLocation}
+              onChange={(event) =>
+                updateField("closingLocation", event.target.value)
+              }
             />
           }
         />
@@ -978,6 +1035,9 @@ function buildDutySlipState(trip: any): DutySlipFormState {
       trip?.kmIn === undefined || trip?.kmIn === null ? "" : String(trip.kmIn),
     timeOut: trip?.timeOut ? toDatetimeLocal(trip.timeOut) : "",
     timeIn: trip?.timeIn ? toDatetimeLocal(trip.timeIn) : "",
+    closingKm: "",
+    closingTime: "",
+    closingLocation: String(trip?.closingLocation ?? ""),
     tollCharges: String(trip?.tollCharges ?? 0),
     parkingCharges: String(trip?.parkingCharges ?? 0),
     extraCharges: String(trip?.extraCharges ?? 0),
