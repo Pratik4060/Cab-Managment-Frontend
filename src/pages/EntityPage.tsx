@@ -2,6 +2,7 @@ import { Eye, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { z } from "zod";
+import { ConfirmDialog } from "../components/common/ConfirmDialog";
 import { EntityForm } from "../components/forms/EntityForm";
 import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
@@ -30,6 +31,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   const [open, setOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<any>(null);
   const [viewRow, setViewRow] = useState<any>(null);
+  const [deleteRow, setDeleteRow] = useState<any>(null);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const state = useAppSelector((store) => (store as any)[stateKey]);
@@ -99,7 +101,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
                   <Pencil className="h-4 w-4" />
                   <span>Edit</span>
                 </button>
-                <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700" onClick={() => dispatch(actions.deleteOne(row._id))} aria-label="Delete">
+                <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700" onClick={() => setDeleteRow(row)} aria-label="Delete">
                   <Trash2 className="h-4 w-4" />
                   <span>Delete</span>
                 </button>
@@ -137,6 +139,18 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           </div>
         )}
       </Modal>
+      <ConfirmDialog
+        open={Boolean(deleteRow)}
+        title={`Delete ${title}`}
+        message={`This will permanently delete ${deleteRow?.name || deleteRow?.invoiceNumber || deleteRow?.bookingId || deleteRow?.tripNumber || "this record"}.`}
+        onCancel={() => setDeleteRow(null)}
+        onConfirm={async () => {
+          if (deleteRow?._id) {
+            await dispatch(actions.deleteOne(deleteRow._id));
+          }
+          setDeleteRow(null);
+        }}
+      />
     </div>
   );
 }
