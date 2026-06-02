@@ -12,6 +12,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
+import { ConfirmDialog } from "../components/common/ConfirmDialog";
 import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
@@ -46,6 +47,7 @@ export function TripsPage() {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [selectedTrip, setSelectedTrip] = useState<any>(null);
   const [viewDetails, setViewDetails] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "new" | "assigned"; item: any } | null>(null);
   const [activeTable, setActiveTable] = useState<"new" | "assigned">("new");
   const bookings = useAppSelector((state) => state.bookings.items);
   const trips = useAppSelector((state) => state.trips.allItems);
@@ -383,7 +385,7 @@ export function TripsPage() {
                 </button>
                 <button
                   className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
-                  onClick={() => handleCancelNewTrip(row)}
+                  onClick={() => setDeleteTarget({ type: "new", item: row })}
                 >
                   <Ban className="h-4 w-4" />
                   <span>Cancel Trip</span>
@@ -439,7 +441,7 @@ export function TripsPage() {
                 <button
                   className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
                   title="Cancel trip"
-                  onClick={() => handleCancelAssignedTrip(row)}
+                  onClick={() => setDeleteTarget({ type: "assigned", item: row })}
                 >
                   <Ban className="h-4 w-4" />
                   <span>Cancel Trip</span>
@@ -674,6 +676,25 @@ export function TripsPage() {
           />
         )}
       </Modal>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete Trip"
+        message={
+          deleteTarget?.type === "assigned"
+            ? `This will cancel the assigned trip for ${deleteTarget.item?.booking?.passengerName || deleteTarget.item?.booking?.bookingId || deleteTarget.item?.tripNumber || "this trip"}.`
+            : `This will delete ${deleteTarget?.item?.passengerName || deleteTarget?.item?.bookingId || "this booking"}.`
+        }
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          if (deleteTarget.type === "new") {
+            await handleCancelNewTrip(deleteTarget.item);
+          } else {
+            await handleCancelAssignedTrip(deleteTarget.item);
+          }
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }
