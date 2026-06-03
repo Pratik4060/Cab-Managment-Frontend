@@ -93,8 +93,12 @@ function normalizeInvoices(items: any[]) {
   return items.map((invoice, index) => {
     const remainingAmount = Number(invoice.remainingAmount ?? invoice.balanceAmount ?? Math.max(0, Number(invoice.finalAmount || 0) - Number(invoice.paidAmount || 0)));
     const paidAmount = Number(invoice.paidAmount || 0);
+    const hasCostCenter = Boolean(String(invoice.booking?.costCenterOfProject ?? "").trim());
+    const projectType = normalizeProjectType(invoice.projectType ?? (hasCostCenter ? "Management" : "Process"));
     return {
       ...invoice,
+      projectType,
+      billingAddress: invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "",
       remainingAmount,
       balanceAmount: remainingAmount,
       paymentStatus: invoice.paymentStatus || (remainingAmount === 0 ? "Paid" : paidAmount > 0 ? "Partial" : "Pending"),
@@ -196,3 +200,11 @@ store.subscribe(() => {
 });
 
 export type AppDispatch = typeof store.dispatch;
+
+function normalizeProjectType(value: unknown) {
+  return String(value || "")
+    .trim()
+    .toLowerCase() === "management"
+    ? "Management"
+    : "Process";
+}

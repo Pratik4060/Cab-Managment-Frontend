@@ -39,21 +39,85 @@ function nextInvoiceNumber(items: any[]) {
   return `INV-${year}-${String(max + 1).padStart(4, "0")}`;
 }
 
-function invoiceFromTrip(trip: any, items: any[]) {
-  const subtotal = Math.round(Number(trip.totalKm || 40) * Number(trip.vehicle?.ratePerKm || 22) + Number(trip.tollCharges || 0) + Number(trip.parkingCharges || 0) + Number(trip.extraCharges || 0));
+function parseDateOnly(value: string | Date | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function startOfDay(value: Date) {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function addDays(value: Date, days: number) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+function listServiceDays(trip: any) {
+  const start =
+    parseDateOnly(trip.booking?.travelStartDate) ||
+    parseDateOnly(trip.timeOut) ||
+    parseDateOnly(trip.createdAt) ||
+    new Date();
+  const end =
+    parseDateOnly(trip.booking?.travelEndDate) ||
+    parseDateOnly(trip.timeIn) ||
+    start;
+
+  const normalizedStart = startOfDay(start);
+  const normalizedEnd = startOfDay(end);
+  if (normalizedEnd < normalizedStart) return [normalizedStart];
+
+  const days: Date[] = [];
+  for (let cursor = new Date(normalizedStart); cursor <= normalizedEnd; cursor = addDays(cursor, 1)) {
+    days.push(new Date(cursor));
+  }
+  return days.length ? days : [normalizedStart];
+}
+
+function splitAmount(total: number, parts: number, index: number) {
+  const roundedTotal = Math.round(total);
+  if (parts <= 1) return roundedTotal;
+  const base = Math.floor(roundedTotal / parts);
+  const remainder = roundedTotal - base * parts;
+  return index === parts - 1 ? base + remainder : base;
+}
+
+function invoiceFromTrip(trip: any, items: any[], serviceDate?: Date, index = 0, totalDays = 1) {
+  const hasCostCenter = Boolean(String(trip?.booking?.costCenterOfProject ?? "").trim());
+  const projectType = normalizeProjectType(
+    trip?.projectType ?? (hasCostCenter ? "Management" : "Process"),
+  );
+  const tripFareTotal = Math.round(Number(trip.totalKm || 40) * Number(trip.vehicle?.ratePerKm || 22));
+  const tollTotal = Number(trip.tollCharges || 0);
+  const parkingTotal = Number(trip.parkingCharges || 0);
+  const extraTotal = Number(trip.extraCharges || 0);
+  const tripFare = splitAmount(tripFareTotal, totalDays, index);
+  const subtotal = tripFare + splitAmount(tollTotal, totalDays, index) + splitAmount(parkingTotal, totalDays, index) + splitAmount(extraTotal, totalDays, index);
   const gstPercent = Number(trip.gstCharges ?? trip.gstPercent ?? 5);
   const gstAmount = Math.round(subtotal * (gstPercent / 100));
   const finalAmount = subtotal + gstAmount;
   return {
-    _id: `inv-${Date.now()}`,
+    _id: `inv-${Date.now()}-${index + 1}`,
     invoiceNumber: nextInvoiceNumber(items),
     tripId: trip._id,
     bookingId: trip.bookingId,
+    invoiceDate: serviceDate ? serviceDate.toISOString() : new Date().toISOString(),
     trip,
     booking: trip.booking,
     clientName: trip.booking?.businessUnit || "Client",
     clientEmail: trip.booking?.senderEmail || "",
-    tripFare: Math.round(Number(trip.totalKm || 40) * Number(trip.vehicle?.ratePerKm || 22)),
+    projectType,
+    billingAddress:
+      trip.billingAddress ||
+      trip.booking?.reportingAddress ||
+      trip.booking?.dropAddress ||
+      "",
+    tripFare,
     subtotal,
     gstPercent,
     gstAmount,
@@ -92,9 +156,17 @@ const invoiceSlice = createSlice({
     },
     generateInvoice(state, action: PayloadAction<any>) {
       const trip = action.payload;
-      const existing = state.allItems.find((invoice) => invoice.tripId === (trip._id || trip));
+    const tripId = trip?._id || trip;
+      const existing = state.allItems.find((invoice) => invoice.tripId === tripId);
       if (existing) return;
-      state.allItems.unshift(invoiceFromTrip(trip, state.allItems));
+      const serviceDays = listServiceDays(trip);
+      const created: any[] = [];
+      const invoices = serviceDays.map((serviceDate, index) => {
+        const invoice = invoiceFromTrip(trip, [...state.allItems, ...created], serviceDate, index, serviceDays.length);
+        created.push(invoice);
+        return invoice;
+      });
+      state.allItems.unshift(...invoices.reverse());
       refresh(state);
     },
     regenerateInvoice(state, action: PayloadAction<string>) {
@@ -136,3 +208,11 @@ const invoiceSlice = createSlice({
 export const invoiceActions = invoiceSlice.actions;
 export const { generateInvoice, regenerateInvoice, sendInvoice, applyPayment, setItems: setInvoices } = invoiceSlice.actions;
 export default invoiceSlice.reducer;
+
+function normalizeProjectType(value: unknown) {
+  return String(value || "")
+    .trim()
+    .toLowerCase() === "management"
+    ? "Management"
+    : "Process";
+}
