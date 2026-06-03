@@ -97,9 +97,7 @@ function invoiceRemainingAmount(invoice: any) {
 function invoicePaymentStatus(invoice: any) {
   return invoiceRemainingAmount(invoice) === 0
     ? "Paid"
-    : Number(invoice.paidAmount || 0) > 0
-      ? "Partial"
-      : "Pending";
+    : "Pending";
 }
 
 function reportInPeriod(item: any, period: ReportPeriod) {

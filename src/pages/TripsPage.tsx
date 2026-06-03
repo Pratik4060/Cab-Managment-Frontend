@@ -30,6 +30,9 @@ type DutySlipFormState = {
   closingKm: string;
   closingTime: string;
   closingLocation: string;
+  dutySlipPhoto: string;
+  projectType: string;
+  billingAddress: string;
   tollCharges: string;
   parkingCharges: string;
   extraCharges: string;
@@ -176,6 +179,14 @@ export function TripsPage() {
       required: false,
     },
     { name: "senderEmail", label: "Sender Email", required: false },
+    {
+      name: "emailScreenshot",
+      label: "Email Screenshot",
+      type: "file",
+      accept: "image/*",
+      full: true,
+      required: false,
+    },
   ];
 
   const assignFields = [
@@ -473,6 +484,7 @@ export function TripsPage() {
             employeeCount: optionalNumber(),
             purposeOfCabBooking: z.string().optional(),
             senderEmail: z.string().optional(),
+            emailScreenshot: z.string().optional(),
           })}
           defaults={{ bookingId: "Auto generated" }}
           submitLabel="Save Trip"
@@ -536,9 +548,10 @@ export function TripsPage() {
               costCenterOfProject: z.string().optional(),
               bookedBy: z.string().optional(),
               employeeCount: optionalNumber(),
-              purposeOfCabBooking: z.string().optional(),
-              senderEmail: z.string().optional(),
-            })}
+            purposeOfCabBooking: z.string().optional(),
+            senderEmail: z.string().optional(),
+            emailScreenshot: z.string().optional(),
+          })}
             defaults={{
               bookingId: selectedBooking.bookingId,
               cabRequestNumber: selectedBooking.cabRequestNumber,
@@ -557,6 +570,7 @@ export function TripsPage() {
               employeeCount: selectedBooking.employeeCount,
               purposeOfCabBooking: selectedBooking.purposeOfCabBooking,
               senderEmail: selectedBooking.senderEmail,
+              emailScreenshot: selectedBooking.emailScreenshot,
             }}
             submitLabel="Update Trip"
             onSubmit={async (values) => {
@@ -661,6 +675,7 @@ export function TripsPage() {
               delete (invoiceTripPayload as any).closingKm;
               delete (invoiceTripPayload as any).closingTime;
               delete (invoiceTripPayload as any).closingLocation;
+              delete (invoiceTripPayload as any).dutySlipPhoto;
               await dispatch(
                 invoiceActions.generateInvoice({
                   ...invoiceTripPayload,
@@ -741,6 +756,9 @@ function DutySlipEditor({
       closingKm: normalizeNumber(form.closingKm),
       closingTime: form.closingTime || undefined,
       closingLocation: form.closingLocation || undefined,
+      dutySlipPhoto: form.dutySlipPhoto || undefined,
+      projectType: form.projectType || undefined,
+      billingAddress: form.billingAddress || undefined,
       tollCharges: normalizeNumber(form.tollCharges),
       parkingCharges: normalizeNumber(form.parkingCharges),
       extraCharges: normalizeNumber(form.extraCharges),
@@ -860,7 +878,59 @@ function DutySlipEditor({
               onChange={(event) =>
                 updateField("closingLocation", event.target.value)
               }
+              />
+          }
+        />
+        <TripCard
+          label="Project Type"
+          value={
+            <select
+              className="input mt-1"
+              value={form.projectType}
+              onChange={(event) =>
+                updateField("projectType", event.target.value)
+              }
+            >
+              <option value="Process">Process</option>
+              <option value="Management">Management</option>
+            </select>
+          }
+        />
+        <TripCard
+          label="Address"
+          value={
+            <input
+              className="input mt-1"
+              type="text"
+              placeholder="Enter address"
+              value={form.billingAddress}
+              onChange={(event) =>
+                updateField("billingAddress", event.target.value)
+              }
             />
+          }
+        />
+        <TripCard
+          label="Duty Slip Photo"
+          value={
+            <div className="space-y-1">
+              <input
+                className="input mt-1 file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white"
+                type="file"
+                accept="image/*"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) {
+                    updateField("dutySlipPhoto", "");
+                    return;
+                  }
+                  updateField("dutySlipPhoto", await fileToDataUrl(file));
+                }}
+              />
+              <p className="text-[11px] text-slate-500">
+                {form.dutySlipPhoto ? "Duty slip photo attached." : "Upload the duty slip photo here."}
+              </p>
+            </div>
           }
         />
         <TripCard
@@ -1011,16 +1081,18 @@ function TripDetails({ data }: { data: any }) {
     ["Reporting Address", booking.reportingAddress],
     ["Drop Address", booking.dropAddress],
     ["Car Type", booking.carType],
-    ["Project Expenses", booking.projectExpenses],
-    ["Cost Center Of Project", booking.costCenterOfProject],
-    ["Booked By", booking.bookedBy],
-    ["Purpose of Cab Booking", booking.purposeOfCabBooking],
-    ["Employee Count", booking.employeeCount],
-    ["Email", booking.senderEmail],
-    ["Trip Status", data.status || booking.status],
-    ["Driver", data.driver?.driverName],
-    [
-      "Vehicle",
+        ["Project Expenses", booking.projectExpenses],
+        ["Cost Center Of Project", booking.costCenterOfProject],
+        ["Booked By", booking.bookedBy],
+        ["Purpose of Cab Booking", booking.purposeOfCabBooking],
+        ["Employee Count", booking.employeeCount],
+        ["Email", booking.senderEmail],
+        ["Email Screenshot", booking.emailScreenshot ? "Uploaded" : "-"],
+        ["Trip Status", data.status || booking.status],
+        ["Driver", data.driver?.driverName],
+        ["Duty Slip Photo", data.dutySlipPhoto ? "Uploaded" : "-"],
+        [
+          "Vehicle",
       data.vehicle
         ? `${data.vehicle.registrationNumber}${data.vehicle.vehicleModel ? ` - ${data.vehicle.vehicleModel}` : ""}`
         : undefined,
@@ -1047,6 +1119,7 @@ function optionalNumber() {
 }
 
 function buildDutySlipState(trip: any): DutySlipFormState {
+  const hasCostCenter = Boolean(String(trip?.booking?.costCenterOfProject ?? "").trim());
   return {
     kmOut:
       trip?.kmOut === undefined || trip?.kmOut === null
@@ -1059,6 +1132,13 @@ function buildDutySlipState(trip: any): DutySlipFormState {
     closingKm: "",
     closingTime: "",
     closingLocation: String(trip?.closingLocation ?? ""),
+    dutySlipPhoto: String(trip?.dutySlipPhoto ?? ""),
+    projectType: normalizeProjectType(
+      trip?.projectType ?? (hasCostCenter ? "Management" : "Process"),
+    ),
+    billingAddress: String(
+      trip?.billingAddress ?? trip?.booking?.reportingAddress ?? trip?.booking?.dropAddress ?? "",
+    ),
     tollCharges: String(trip?.tollCharges ?? 0),
     parkingCharges: String(trip?.parkingCharges ?? 0),
     extraCharges: String(trip?.extraCharges ?? 0),
@@ -1085,4 +1165,21 @@ function toDatetimeLocal(value: string | Date) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 16);
+}
+
+function normalizeProjectType(value: unknown) {
+  return String(value || "")
+    .trim()
+    .toLowerCase() === "management"
+    ? "Management"
+    : "Process";
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }

@@ -9,8 +9,9 @@ import { invoiceActions, sendInvoice } from "../redux/slices/invoiceSlice";
 import { downloadFile } from "../utils/downloadFile";
 
 type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
-type InvoicePaymentStatus = "Paid" | "Partial" | "Pending";
-type InvoicePaymentType = "UPI" | "Cash" | "Check";
+type InvoicePaymentStatus = "Paid" | "Pending";
+type InvoicePaymentType = "NEFT";
+type InvoiceProjectType = "Process" | "Management";
 
 type InvoiceDutySlipState = {
   kmOut: string;
@@ -21,12 +22,13 @@ type InvoiceDutySlipState = {
   parkingCharges: string;
   extraCharges: string;
   gstCharges: string;
+  projectType: InvoiceProjectType;
+  billingAddress: string;
 };
 
 type InvoicePaymentState = {
   paymentStatus: InvoicePaymentStatus;
-  paymentType: InvoicePaymentType | "";
-  addAmount: string;
+  paymentType: InvoicePaymentType;
   remark: string;
 };
 
@@ -37,6 +39,7 @@ export function InvoicesPage() {
   const [paymentTarget, setPaymentTarget] = useState<any>(null);
   const [sendTarget, setSendTarget] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [projectTypeFilter, setProjectTypeFilter] = useState<InvoiceProjectType | "">("");
   const [dateFilters, setDateFilters] = useState({ from: "", to: "" });
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const invoices = useAppSelector((s) => s.invoices);
@@ -55,25 +58,30 @@ export function InvoicesPage() {
       return true;
     });
   }, [dateFilters.from, dateFilters.to, invoices.items]);
-  const selectedInvoices = rows.filter((invoice) => selectedInvoiceIds.includes(String(invoice._id)));
+  const filteredRows = useMemo(() => {
+    if (!projectTypeFilter) return rows;
+    return rows.filter((invoice) => getInvoiceProjectType(invoice) === projectTypeFilter);
+  }, [projectTypeFilter, rows]);
+  const selectedInvoices = filteredRows.filter((invoice) => selectedInvoiceIds.includes(String(invoice._id)));
   const exportQuery = new URLSearchParams({
     ...(dateFilters.from ? { from: dateFilters.from } : {}),
     ...(dateFilters.to ? { to: dateFilters.to } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
+    ...(projectTypeFilter ? { projectType: projectTypeFilter } : {}),
     ...(selectedInvoiceIds.length ? { selected: selectedInvoiceIds.join(",") } : {})
   }).toString();
 
   useEffect(() => {
-    const visibleIds = new Set(rows.map((invoice) => String(invoice._id)));
+    const visibleIds = new Set(filteredRows.map((invoice) => String(invoice._id)));
     setSelectedInvoiceIds((current) => current.filter((id) => visibleIds.has(id)));
-  }, [rows]);
+  }, [filteredRows]);
 
   function toggleInvoiceSelection(id: string) {
     setSelectedInvoiceIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   }
 
   function exportInvoices(format: "xlsx" | "pdf") {
-    const exportRows = selectedInvoices.length ? selectedInvoices : rows;
+    const exportRows = selectedInvoices.length ? selectedInvoices : filteredRows;
     downloadFile(
       `/reports/invoices/export.${format}${exportQuery ? `?${exportQuery}` : ""}`,
       `invoices.${format}`,
@@ -89,9 +97,14 @@ export function InvoicesPage() {
           <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            className={`btn-secondary ${projectTypeFilter === "" ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-100" : ""}`}
+            onClick={() => setProjectTypeFilter("")}
+          >
+            All Types
+          </button>
           <select className="input w-28" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All Status</option>
-            <option value="Partial">Partial</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
@@ -116,16 +129,56 @@ export function InvoicesPage() {
         </div>
       </div>
 
+      <div className="grid gap-3 md:grid-cols-2">
+        {(["Process", "Management"] as InvoiceProjectType[]).map((type) => {
+          const typeRows = rows.filter((invoice) => getInvoiceProjectType(invoice) === type);
+          const totalAmount = typeRows.reduce((sum, invoice) => sum + Number(invoice.finalAmount || 0), 0);
+          const recentNumbers = typeRows.slice(0, 3).map((invoice) => invoice.invoiceNumber).filter(Boolean);
+          const isActive = projectTypeFilter === type;
+
+          return (
+            <button
+              key={type}
+              type="button"
+              className={`panel p-4 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${isActive ? "ring-2 ring-brand-500" : ""}`}
+              onClick={() => setProjectTypeFilter((current) => current === type ? "" : type)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{type}</p>
+                  <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{typeRows.length}</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {recentNumbers.length ? `Recent: ${recentNumbers.join(", ")}` : "No invoices yet"}
+                  </p>
+                </div>
+                <div className="rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700 dark:bg-brand-950/40 dark:text-brand-100">
+                  ₹ {totalAmount.toLocaleString()}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="panel p-2">
         <DataTable
           loading={invoices.loading}
-          rows={rows}
+          rows={filteredRows}
           selectable
           selectedIds={selectedInvoiceIds}
           onToggleRow={toggleInvoiceSelection}
           onToggleAll={setSelectedInvoiceIds}
           columns={[
             { key: "invoiceNumber", header: "Invoice" },
+            {
+              key: "createdAt",
+              header: "Date",
+              render: (r) => r.invoiceDate
+                ? new Date(r.invoiceDate).toLocaleDateString("en-IN")
+                : r.createdAt
+                  ? new Date(r.createdAt).toLocaleDateString("en-IN")
+                  : "-",
+            },
             { key: "clientName", header: "Client" },
             { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
             { key: "paymentStatus", header: "Payment Status", render: (r) => <PaymentStatusBadge invoice={r} /> },
@@ -230,10 +283,14 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Passenger" value={invoice.booking?.passengerName || "-"} />
         <InfoCard label="Trip" value={invoice.trip?.tripNumber || "-"} />
+        <InfoCard label="Project Type" value={getInvoiceProjectType(invoice)} />
+        <InfoCard label="Billing Address" value={invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "-"} />
         <InfoCard label="KM OUT" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
         <InfoCard label="KM IN" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
         <InfoCard label="Time OUT" value={<input className="input mt-1" type="datetime-local" value={form.timeOut} onChange={(event) => updateField("timeOut", event.target.value)} />} />
         <InfoCard label="Time IN" value={<input className="input mt-1" type="datetime-local" value={form.timeIn} onChange={(event) => updateField("timeIn", event.target.value)} />} />
+        <InfoCard label="Project Type" value={<select className="input mt-1" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}><option value="Process">Process</option><option value="Management">Management</option></select>} />
+        <InfoCard label="Address" value={<input className="input mt-1" type="text" value={form.billingAddress} onChange={(event) => updateField("billingAddress", event.target.value)} placeholder="Enter address" />} />
         <InfoCard label="Toll Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
         <InfoCard label="Parking Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
         <InfoCard label="Extra Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
@@ -274,12 +331,9 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         <InfoCard label="Invoice" value={invoice.invoiceNumber} />
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
-        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentStatus)}>{["Pending", "Partial", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
-        <InfoCard label="Payment Type" value={<select className="input mt-1" value={form.paymentType} onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentType)}><option value="">Select type</option>{["UPI", "Cash", "Check"].map((type) => <option key={type} value={type}>{type}</option>)}</select>} />
-        {form.paymentStatus === "Partial" && (
-          <InfoCard label="Add Amount" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.addAmount} onChange={(event) => updateField("addAmount", event.target.value)} />} />
-        )}
-        {(form.paymentStatus === "Pending" || form.paymentStatus === "Partial") && (
+        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentStatus)}>{["Pending", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
+        <InfoCard label="Payment Method" value={<select className="input mt-1" value={form.paymentType} onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentType)}><option value="NEFT">NEFT</option></select>} />
+        {form.paymentStatus === "Pending" && (
           <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
         )}
         <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
@@ -298,6 +352,8 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
 function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
   const computed = calculateInvoiceTotals(invoice, form);
   return {
+    projectType: form.projectType,
+    billingAddress: form.billingAddress || undefined,
     tripFare: computed.tripFare,
     kmOut: computed.kmOut,
     kmIn: computed.kmIn,
@@ -319,6 +375,8 @@ function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
       totalKm: computed.totalKm,
       timeOut: form.timeOut || undefined,
       timeIn: form.timeIn || undefined,
+      projectType: form.projectType,
+      billingAddress: form.billingAddress || undefined,
       tollCharges: computed.tollCharges,
       parkingCharges: computed.parkingCharges,
       extraCharges: computed.extraCharges,
@@ -331,7 +389,7 @@ function buildPaymentUpdatePayload(invoice: any, form: InvoicePaymentState) {
   const computed = calculatePaymentTotals(invoice, form);
   return {
     paymentStatus: computed.paymentStatus,
-    paymentType: form.paymentType || undefined,
+    paymentType: "NEFT",
     paidAmount: computed.paidAmount,
     remainingAmount: computed.remainingAmount,
     balanceAmount: computed.remainingAmount,
@@ -361,16 +419,13 @@ function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
 function calculatePaymentTotals(invoice: any, form: InvoicePaymentState) {
   const finalAmount = Number(invoice.finalAmount || 0);
   const existingPaid = Number(invoice.paidAmount || 0);
-  const addAmount = form.paymentStatus === "Partial" ? Math.max(0, normalizeNumber(form.addAmount) || 0) : 0;
   const paidAmount = form.paymentStatus === "Paid"
     ? finalAmount
-    : form.paymentStatus === "Partial"
-      ? Math.min(finalAmount, existingPaid + addAmount)
-      : existingPaid;
+    : existingPaid;
   const remainingAmount = Math.max(0, finalAmount - paidAmount);
 
   return {
-    paymentStatus: remainingAmount === 0 ? "Paid" : form.paymentStatus,
+    paymentStatus: remainingAmount === 0 ? "Paid" : "Pending",
     paidAmount,
     remainingAmount
   } satisfies { paymentStatus: InvoicePaymentStatus; paidAmount: number; remainingAmount: number };
@@ -387,16 +442,14 @@ function buildPreviewInvoice(invoice: any, form: InvoiceDutySlipState) {
 }
 
 function invoicePaymentDefaults(invoice: any): InvoicePaymentState {
-  const currentStatus = invoice.paymentStatus || (Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) === 0
+  const currentStatus = invoice.paymentStatus === "Paid"
+    || Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) === 0
     ? "Paid"
-    : Number(invoice.paidAmount || 0) > 0
-      ? "Partial"
-      : "Pending");
+    : "Pending";
 
   return {
-    paymentStatus: currentStatus === "Paid" || currentStatus === "Partial" ? currentStatus : "Pending",
-    paymentType: invoice.paymentType || invoice.paymentMethod || "",
-    addAmount: "",
+    paymentStatus: currentStatus,
+    paymentType: "NEFT",
     remark: String(invoice.paymentRemark || invoice.paymentRemarks || "")
   };
 }
@@ -410,7 +463,9 @@ function invoiceDutySlipDefaults(invoice: any): InvoiceDutySlipState {
     tollCharges: String(invoice.trip?.tollCharges ?? 0),
     parkingCharges: String(invoice.trip?.parkingCharges ?? 0),
     extraCharges: String(invoice.trip?.extraCharges ?? 0),
-    gstCharges: String(invoice.trip?.gstCharges ?? invoice.gstPercent ?? 5)
+    gstCharges: String(invoice.trip?.gstCharges ?? invoice.gstPercent ?? 5),
+    projectType: getInvoiceProjectType(invoice),
+    billingAddress: String(invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "")
   };
 }
 
@@ -431,10 +486,9 @@ function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
 
 function PaymentStatusBadge({ invoice }: { invoice: any }) {
   const amount = remainingAmount(invoice);
-  const status = invoice.paymentStatus || (amount === 0 ? "Paid" : Number(invoice.paidAmount || 0) > 0 || invoice.status === "Partial" ? "Partial" : "Pending");
+  const status = invoice.paymentStatus === "Paid" || amount === 0 ? "Paid" : "Pending";
   const styles: Record<string, string> = {
     Paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
-    Partial: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200",
     Pending: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
   };
   return <span className={`rounded-md px-2 py-1 text-xs font-semibold ${styles[status]}`}>{status}</span>;
@@ -443,10 +497,20 @@ function PaymentStatusBadge({ invoice }: { invoice: any }) {
 function InvoicePreview({ invoice }: { invoice: any }) {
   const rows = [
     ["Invoice Number", invoice.invoiceNumber],
+    [
+      "Date",
+      invoice.invoiceDate
+        ? new Date(invoice.invoiceDate).toLocaleDateString("en-IN")
+        : invoice.createdAt
+          ? new Date(invoice.createdAt).toLocaleDateString("en-IN")
+          : "-",
+    ],
     ["Client", invoice.clientName || invoice.booking?.businessUnit || "-"],
     ["Passenger", invoice.booking?.passengerName || "-"],
     ["Booking ID", invoice.booking?.bookingId || "-"],
     ["Trip", invoice.trip?.tripNumber || "-"],
+    ["Project Type", getInvoiceProjectType(invoice)],
+    ["Billing Address", invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "-"],
     ["Total KM", invoice.trip?.totalKm || 0],
     ["Trip Fare", `₹ ${Number(invoice.tripFare || 0).toLocaleString()}`],
     ["Toll Charges", `₹ ${Number(invoice.trip?.tollCharges || 0).toLocaleString()}`],
@@ -502,12 +566,18 @@ function InfoCard({ label, value }: { label: string; value: any }) {
 }
 
 function buildInvoiceExport(rows: any[]) {
-  const headers = ["Invoice", "Client", "Invoice Status", "Payment Status", "Total", "Balance", "Created At"];
+  const headers = ["Invoice", "Date", "Client", "Project Type", "Invoice Status", "Payment Status", "Total", "Balance", "Created At"];
   const lines = rows.map((invoice) => [
     invoice.invoiceNumber || "",
+    invoice.invoiceDate
+      ? new Date(invoice.invoiceDate).toLocaleDateString("en-IN")
+      : invoice.createdAt
+        ? new Date(invoice.createdAt).toLocaleDateString("en-IN")
+        : "",
     invoice.clientName || "",
+    getInvoiceProjectType(invoice),
     invoice.status || "",
-    invoice.paymentStatus || (remainingAmount(invoice) === 0 ? "Paid" : Number(invoice.paidAmount || 0) > 0 ? "Partial" : "Pending"),
+    invoice.paymentStatus === "Paid" || remainingAmount(invoice) === 0 ? "Paid" : "Pending",
     Number(invoice.finalAmount || 0),
     Number(remainingAmount(invoice)),
     invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString("en-IN") : ""
@@ -529,4 +599,11 @@ function normalizeNumber(value: string | number | undefined) {
 function toDatetimeLocal(value: string | Date) {
   const date = new Date(value);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function getInvoiceProjectType(invoice: any): InvoiceProjectType {
+  const value = String(invoice?.projectType || invoice?.trip?.projectType || invoice?.booking?.projectType || "");
+  if (value.trim().toLowerCase() === "management") return "Management";
+  if (value.trim().toLowerCase() === "process") return "Process";
+  return Boolean(String(invoice?.booking?.costCenterOfProject ?? "").trim()) ? "Management" : "Process";
 }
