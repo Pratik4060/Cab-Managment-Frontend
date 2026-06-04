@@ -1,4 +1,4 @@
-import { Banknote, Download, Eye, FileDown, Mail, Pencil } from "lucide-react";
+import { Banknote, Download, DownloadCloud, DownloadIcon, Eye, FileDown, Mail, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
@@ -97,12 +97,7 @@ export function InvoicesPage() {
           <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            className={`btn-secondary ${projectTypeFilter === "" ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-100" : ""}`}
-            onClick={() => setProjectTypeFilter("")}
-          >
-            All Types
-          </button>
+       
           <select className="input w-28" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Paid">Paid</option>
@@ -123,8 +118,8 @@ export function InvoicesPage() {
             className="btn-secondary"
           // onClick={() => exportInvoices("pdf")}
           >
-            <Mail className="h-4 w-4" />
-            Email
+            <Download className="h-4 w-4" />
+            Download
           </button>
         </div>
       </div>
@@ -145,7 +140,7 @@ export function InvoicesPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{type}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">{type}</p>
                   <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{typeRows.length}</h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {recentNumbers.length ? `Recent: ${recentNumbers.join(", ")}` : "No invoices yet"}
