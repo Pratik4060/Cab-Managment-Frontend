@@ -35,7 +35,7 @@ const sections = [
     label: "Admin",
     items: [
       { label: "Profile", path: "/admin/profile", icon: UserCircle },
-      { label: "Manage Admins", path: "/admin/manage", icon: Shield }
+      // { label: "Manage Admins", path: "/admin/manage", icon: Shield }
     ]
   }
 ];
