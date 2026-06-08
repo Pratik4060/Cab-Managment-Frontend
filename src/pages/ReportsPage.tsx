@@ -175,7 +175,7 @@ export function ReportsPage() {
           {statusData.length ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart margin={{ top: 18, right: 34, bottom: 18, left: 34 }}>
-                <Pie data={statusData} dataKey="value" nameKey="_id" innerRadius={48} outerRadius={76} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine}>
+                <Pie tabIndex={-1} data={statusData} dataKey="value" nameKey="_id" innerRadius={48} outerRadius={76} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine} style={{outline: "none"}}>
                   {statusData.map((_: unknown, index: number) => <Cell key={index} fill={chartColors[index % chartColors.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} cursor={false} />
