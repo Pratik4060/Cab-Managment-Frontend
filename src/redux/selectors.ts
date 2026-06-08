@@ -105,6 +105,10 @@ function reportInPeriod(item: any, period: ReportPeriod) {
 }
 
 export function selectDashboardData(state: RootState, period: DashboardPeriod = "month") {
+  if (state.dashboard.data) {
+    return mapApiDashboard(state.dashboard.data);
+  }
+
   const allBookings = rows(state, "bookings");
   const allTrips = rows(state, "trips");
   const allDrivers = rows(state, "drivers");
@@ -139,6 +143,45 @@ export function selectDashboardData(state: RootState, period: DashboardPeriod = 
     },
     recentBookings: sortRecent(allBookings).slice(0, 5),
     recentInvoices: sortRecent(allInvoices).slice(0, 5)
+  };
+}
+
+function mapApiDashboard(response: any) {
+  const data = response?.data || response;
+  const summary = data?.summary || {};
+  const bookingsChart = data?.bookingsChart?.items || [];
+  const vehicleCompanySplit = data?.vehicleCompanySplit?.items || [];
+  return {
+    cards: {
+      totalBookings: Number(summary.totalBookings || 0),
+      activeTrips: Number(summary.activeTrips || 0),
+      revenueSummary: Number(summary.revenueSummary || 0),
+      pendingPayments: Number(summary.pendingPayments || 0)
+    },
+    charts: {
+      bookings: bookingsChart.map((item: any) => ({ _id: item.label || item.bucket || "-", value: Number(item.count || 0) })),
+      vehicleCompany: vehicleCompanySplit.map((item: any) => ({ _id: item.company || "Unknown", value: Number(item.count || 0) })),
+      revenue: [],
+      trips: [],
+      invoiceStatus: []
+    },
+    recentBookings: (data?.recentBookings || []).map((booking: any) => ({
+      ...booking,
+      _id: String(booking.id || booking._id || booking.booking_id),
+      bookingId: booking.bookingId || booking.booking_id || "-",
+      cabRequestNumber: booking.cabRequestNumber || booking.cab_request_number || "",
+      passengerName: booking.passengerName || booking.passenger_name || "",
+      travelStartDate: booking.travelStartDate || booking.travel_start_date,
+      status: booking.status || "New",
+      createdAt: booking.createdAt || booking.created_at
+    })),
+    recentInvoices: (data?.recentInvoices || []).map((invoice: any) => ({
+      ...invoice,
+      _id: String(invoice.id || invoice._id || invoice.invoice_number),
+      invoiceNumber: invoice.invoiceNumber || invoice.invoice_number || "-",
+      finalAmount: Number(invoice.finalAmount ?? invoice.final_amount ?? 0),
+      status: invoice.status || "-"
+    }))
   };
 }
 
