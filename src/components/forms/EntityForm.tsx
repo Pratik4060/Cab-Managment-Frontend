@@ -109,6 +109,8 @@ function formatDateDefault(value: unknown) {
   if (typeof value === "string") return value.slice(0, 10);
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return String(value).slice(0, 10);
+}
+
 function getSelectedFile(value: unknown) {
   if (value instanceof File) return value;
   if (value instanceof FileList) return value[0];
