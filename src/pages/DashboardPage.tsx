@@ -69,7 +69,7 @@ export function DashboardPage() {
           {hasVehicleChartData ? (
             <ResponsiveContainer width="100%" height={238}>
               <PieChart margin={{ top: 12, right: 34, bottom: 12, left: 34 }}>
-                <Pie data={vehicleCompanyChart} dataKey="value" nameKey="name" innerRadius={50} outerRadius={78} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine}>
+                <Pie data={vehicleCompanyChart} tabIndex={-1} dataKey="value" nameKey="name" innerRadius={50} outerRadius={78} paddingAngle={5} label={renderPiePercentageLabel} labelLine={renderPieLabelLine} style={{outline: "none"}}>
                   {vehicleCompanyChart.map((_: { name: string; value: number }, index: number) => <Cell key={index} fill={chartColors[index % chartColors.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} cursor={false} />
