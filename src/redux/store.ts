@@ -48,14 +48,19 @@ function presentationIso(index: number, hour = 9) {
 
 function normalizeVehicles(items: any[]) {
   return items.map((vehicle, index) => {
-    const legacyType = ["SUV", "Sedan", "Hatchback", "MUV/MPV"].includes(vehicle.vehicleType);
-    const cabType = vehicle.cabType || (legacyType ? vehicle.vehicleType : cabTypeOptions[index % cabTypeOptions.length]);
+    const rawVehicleType = vehicle.vehicle_type ?? vehicle.vehicleType;
+    const legacyType = ["SUV", "Sedan", "Hatchback", "MUV/MPV"].includes(rawVehicleType);
+    const cabType = vehicle.cab_type || vehicle.cabType || (legacyType ? rawVehicleType : cabTypeOptions[index % cabTypeOptions.length]);
     return {
       ...vehicle,
-      vehicleType: legacyType || !vehicle.vehicleType ? companyFallbacks[index % companyFallbacks.length] : vehicle.vehicleType,
-      vehicleModel: legacyType || !vehicle.vehicleModel ? modelFallbacks[index % modelFallbacks.length] : String(vehicle.vehicleModel).replace(/^(Toyota|Maruti|Maruti Suzuki|Honda|Hyundai|Tata|Mahindra|Kia)\s+/i, ""),
-      cabType,
-      createdAt: presentationIso(index)
+      _id: String(vehicle._id || vehicle.id || `veh-${String(index + 1).padStart(3, "0")}`),
+      registration_number: vehicle.registration_number || vehicle.registrationNumber || "",
+      vehicle_type: legacyType || !rawVehicleType ? companyFallbacks[index % companyFallbacks.length] : rawVehicleType,
+      vehicle_model: legacyType || !(vehicle.vehicle_model || vehicle.vehicleModel) ? modelFallbacks[index % modelFallbacks.length] : String(vehicle.vehicle_model || vehicle.vehicleModel).replace(/^(Toyota|Maruti|Maruti Suzuki|Honda|Hyundai|Tata|Mahindra|Kia)\s+/i, ""),
+      cab_type: cabType,
+      seating_capacity: Number(vehicle.seating_capacity ?? vehicle.seatingCapacity ?? 4),
+      rate_per_km: Number(vehicle.rate_per_km ?? vehicle.ratePerKm ?? 20),
+      created_at: vehicle.created_at || vehicle.createdAt || presentationIso(index)
     };
   });
 }

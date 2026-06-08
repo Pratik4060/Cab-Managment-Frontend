@@ -92,7 +92,7 @@ function invoiceFromTrip(trip: any, items: any[], serviceDate?: Date, index = 0,
   const projectType = normalizeProjectType(
     trip?.projectType ?? (hasCostCenter ? "Management" : "Process"),
   );
-  const tripFareTotal = Math.round(Number(trip.totalKm || 40) * Number(trip.vehicle?.ratePerKm || 22));
+  const tripFareTotal = Math.round(Number(trip.totalKm || 40) * Number(trip.vehicle?.rate_per_km || trip.vehicle?.ratePerKm || 22));
   const tollTotal = Number(trip.tollCharges || 0);
   const parkingTotal = Number(trip.parkingCharges || 0);
   const extraTotal = Number(trip.extraCharges || 0);

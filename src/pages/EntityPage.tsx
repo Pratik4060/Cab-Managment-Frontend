@@ -192,7 +192,7 @@ function formatValue(key: string, value: any) {
       </a>
     );
   }
-  if (typeof value === "object") return value.name || value.driverName || value.registrationNumber || value.bookingId || JSON.stringify(value);
+  if (typeof value === "object") return value.name || value.driverName || value.registration_number || value.registrationNumber || value.bookingId || JSON.stringify(value);
   return String(value);
 }
 

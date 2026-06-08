@@ -35,7 +35,7 @@ export const fetchAll = createAsyncThunk("vehicles/fetchAll", async (filter: Rec
 
 export const createOne = createAsyncThunk("vehicles/createOne", async (payload: any, { rejectWithValue }) => {
   try {
-    return await vehicleApi.createVehicle({ status: "Available", ...payload });
+    return await vehicleApi.createVehicle({ ...payload, status: payload.status || "Available" });
   } catch (error) {
     return rejectWithValue(apiErrorMessage(error));
   }

@@ -207,7 +207,7 @@ export function TripsPage() {
       placeholder: "Select available vehicle",
       options: availableVehicles.map((vehicle) => ({
         value: vehicle._id,
-        label: `${vehicle.registrationNumber} - ${vehicle.vehicleModel} (${vehicle.cabType || vehicle.cabCategory || "Cab"})`,
+        label: `${vehicle.registration_number || vehicle.registrationNumber} - ${vehicle.vehicle_model || vehicle.vehicleModel} (${vehicle.cab_type || vehicle.cabType || vehicle.cabCategory || "Cab"})`,
       })),
     },
   ];
@@ -732,7 +732,7 @@ function DutySlipEditor({
   }, [trip]);
 
   const totalKm = calculateTotalKm(form.kmOut, form.kmIn);
-  const ratePerKm = Number(trip?.vehicle?.ratePerKm ?? 0);
+  const ratePerKm = Number(trip?.vehicle?.rate_per_km ?? trip?.vehicle?.ratePerKm ?? 0);
   const tollCharges = normalizeNumber(form.tollCharges) ?? 0;
   const parkingCharges = normalizeNumber(form.parkingCharges) ?? 0;
   const extraCharges = normalizeNumber(form.extraCharges) ?? 0;
@@ -779,7 +779,7 @@ function DutySlipEditor({
           label="Vehicle"
           value={
             trip.vehicle
-              ? `${trip.vehicle.registrationNumber}${trip.vehicle.vehicleModel ? ` - ${trip.vehicle.vehicleModel}` : ""}`
+              ? `${trip.vehicle.registration_number || trip.vehicle.registrationNumber}${trip.vehicle.vehicle_model || trip.vehicle.vehicleModel ? ` - ${trip.vehicle.vehicle_model || trip.vehicle.vehicleModel}` : ""}`
               : "-"
           }
         />
@@ -1094,7 +1094,7 @@ function TripDetails({ data }: { data: any }) {
         [
           "Vehicle",
       data.vehicle
-        ? `${data.vehicle.registrationNumber}${data.vehicle.vehicleModel ? ` - ${data.vehicle.vehicleModel}` : ""}`
+        ? `${data.vehicle.registration_number || data.vehicle.registrationNumber}${data.vehicle.vehicle_model || data.vehicle.vehicleModel ? ` - ${data.vehicle.vehicle_model || data.vehicle.vehicleModel}` : ""}`
         : undefined,
     ],
   ];

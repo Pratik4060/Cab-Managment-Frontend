@@ -18,6 +18,27 @@ export type LoginResponse = {
   message?: string;
 };
 
+export type ProfileResponse = {
+  success: boolean;
+  message?: string;
+  user: {
+    id: number | string;
+    fullName?: string;
+    name?: string;
+    email: string;
+    role: string;
+    isActive?: boolean | number;
+    createdAt?: string;
+  };
+};
+
+export type ProfileUpdatePayload = {
+  fullName?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+};
+
 export const authApi = {
   login(credentials: LoginCredentials) {
     return apiRequest<LoginResponse>({
@@ -25,6 +46,19 @@ export const authApi = {
       method: "POST",
       data: credentials,
       skipAuth: true
+    });
+  },
+  getProfile() {
+    return apiRequest<ProfileResponse>({
+      url: "/auth/profile",
+      method: "GET"
+    });
+  },
+  updateProfile(payload: ProfileUpdatePayload) {
+    return apiRequest<ProfileResponse>({
+      url: "/auth/profile",
+      method: "PUT",
+      data: payload
     });
   }
 };
