@@ -27,8 +27,16 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
 }) {
   const formDefaults = {
     ...defaults,
-    ...Object.fromEntries(fields.filter((field) => field.type === "date" && defaults[field.name]).map((field) => [field.name, formatDateDefault(defaults[field.name])])),
-    ...Object.fromEntries(fields.filter((field) => field.valueType === "boolean" && defaults[field.name] !== undefined).map((field) => [field.name, String(defaults[field.name])]))
+    ...Object.fromEntries(fields.map((field) => {
+      const value = defaults[field.name];
+      if (field.type === "date") {
+        return [field.name, value ? formatDateDefault(value) : ""];
+      }
+      if (field.valueType === "boolean" && value !== undefined && value !== null) {
+        return [field.name, String(value)];
+      }
+      return [field.name, value === null || value === undefined ? "" : value];
+    }))
   };
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Record<string, any>>({ resolver: zodResolver(schema), defaultValues: formDefaults });
 
@@ -47,6 +55,9 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
       }
       if (field.valueType === "boolean") {
         normalized[field.name] = values[field.name] === true || values[field.name] === "true";
+      }
+      if (field.required === false && (normalized[field.name] === "" || normalized[field.name] === null || normalized[field.name] === undefined)) {
+        delete normalized[field.name];
       }
     }
     await onSubmit(normalized);

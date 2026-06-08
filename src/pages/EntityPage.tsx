@@ -7,6 +7,7 @@ import { EntityForm } from "../components/forms/EntityForm";
 import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { formatDisplayDate, shouldFormatAsDate } from "../utils/formatDate";
 
 export function EntityPage({ title, subtitle, stateKey, actions, columns, fields, schema, defaults, extraActions, canEditRow = () => true, lockedLabel = "Locked", statusOptions = [], filterKey = "status", filterLabel = "Status", hiddenViewKeys = [], searchable = false, searchPlaceholder = "Search" }: {
   title: string;
@@ -42,11 +43,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
     : state.items;
   const formSchema = typeof schema === "function" ? schema(Boolean(editingRow)) : (schema || z.object(Object.fromEntries(fields.map((field) => [
     field.name,
-    field.type === "number"
-      ? z.coerce.number().min(field.min ?? 0)
-      : field.type === "file"
-        ? z.any().optional()
-        : z.string().min(field.required === false ? 0 : 1, "Required")
+    createFieldSchema(field)
   ]))));
   return (
     <div className="space-y-3.5">
@@ -192,6 +189,7 @@ function formatValue(key: string, value: any) {
       </a>
     );
   }
+  if (shouldFormatAsDate(key, value)) return formatDisplayDate(value);
   if (typeof value === "object") return value.name || value.driverName || value.registration_number || value.registrationNumber || value.bookingId || JSON.stringify(value);
   return String(value);
 }
@@ -202,5 +200,28 @@ function getErrorMessage(error: unknown) {
     return error.message;
   }
   return "Something went wrong. Please try again.";
+}
+
+function createFieldSchema(field: any) {
+  const requiredMessage = "This field is required.";
+
+  if (field.type === "number") {
+    const numberSchema = z.preprocess(
+      (value) => value === "" || value === null || value === undefined || (typeof value === "number" && Number.isNaN(value)) ? undefined : value,
+      field.required === false
+        ? z.coerce.number({ invalid_type_error: "Please enter a valid number." }).optional()
+        : z.coerce.number({ required_error: requiredMessage, invalid_type_error: "Please enter a valid number." }).min(field.min ?? 0, `Minimum value is ${field.min ?? 0}.`)
+    );
+    return numberSchema;
+  }
+
+  if (field.type === "file") {
+    return z.any().optional();
+  }
+
+  const stringInput = z.preprocess((value) => value === null || value === undefined ? "" : value, z.string({ invalid_type_error: requiredMessage }));
+  return field.required === false
+    ? stringInput.optional()
+    : stringInput.refine((value) => value.trim().length > 0, requiredMessage);
 }
 

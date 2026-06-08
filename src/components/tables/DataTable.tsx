@@ -2,6 +2,7 @@ import { MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EmptyState } from "../common/EmptyState";
 import { LoadingSkeleton } from "../common/LoadingSkeleton";
+import { formatDisplayDate, shouldFormatAsDate } from "../../utils/formatDate";
 
 type Column = { key: string; header: string; render?: (row: any) => ReactNode };
 const MENU_ROW_HEIGHT = 54;
@@ -115,7 +116,11 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
                     />
                   </td>
                 )}
-                {columns.map((column) => <td key={column.key} className="whitespace-nowrap px-2 py-1.5 text-slate-700 transition-colors dark:text-slate-200 dark:group-hover:text-white">{column.render ? column.render(row) : row[column.key]}</td>)}
+                {columns.map((column) => (
+                  <td key={column.key} className="whitespace-nowrap px-2 py-1.5 text-slate-700 transition-colors dark:text-slate-200 dark:group-hover:text-white">
+                    {column.render ? column.render(row) : formatTableValue(column.key, row[column.key])}
+                  </td>
+                ))}
                 {actions && (
                   <td className="relative whitespace-nowrap px-2 py-1.5 text-right align-middle">
                     {actionCount !== undefined && actionCount >= 2 ? (
@@ -170,3 +175,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
   );
 }
 
+function formatTableValue(key: string, value: unknown) {
+  if (value === null || value === undefined || value === "") return "-";
+  return shouldFormatAsDate(key, value) ? formatDisplayDate(value) : String(value);
+}
