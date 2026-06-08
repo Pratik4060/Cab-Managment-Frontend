@@ -6,9 +6,8 @@ import { EmptyState } from "../components/common/EmptyState";
 import { StatCard } from "../components/common/StatCard";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { selectReport } from "../redux/selectors";
 import { fetchReportByType, fetchReports } from "../redux/slices/reportSlice";
-import { downloadFile } from "../utils/downloadFile";
+import { reportApi } from "../api/reportApi";
 
 type ReportRow = Record<string, any>;
 type ReportColumn = { key: string; header: string };
@@ -35,8 +34,10 @@ function paymentStatus(invoice: any) {
 export function ReportsPage() {
   const dispatch = useAppDispatch();
   const [filters, setFilters] = useState({ period: "month" as ReportPeriod, search: "", status: "" });
-  const report = useAppSelector((state) => selectReport(state, REPORT_TYPE, filters));
+  const report = useAppSelector((state) => state.reports.current);
+  const summary = useAppSelector((state) => state.reports.summary);
   const loading = useAppSelector((state) => state.reports.loading);
+  const error = useAppSelector((state) => state.reports.error);
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>({});
   const [columnMenuOpen, setColumnMenuOpen] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement | null>(null);
@@ -54,7 +55,7 @@ export function ReportsPage() {
       setVisibleColumns(Object.fromEntries(report.columns.map((column: ReportColumn) => [column.key, true])));
     }
     setColumnMenuOpen(false);
-  }, [report?.type]);
+  }, [report?.columns]);
 
   useEffect(() => {
     if (!columnMenuOpen) return undefined;
@@ -74,8 +75,6 @@ export function ReportsPage() {
   })), [report?.rows]);
 
   const columns = ((report?.columns || []) as ReportColumn[]).filter((column) => visibleColumns[column.key] !== false);
-  const exportQuery = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([, value]) => value))).toString();
-  const summary = report?.summary || {};
   const trendData = report?.charts?.trend || [];
   const statusData = report?.charts?.status || [];
 
@@ -92,6 +91,12 @@ export function ReportsPage() {
     dispatch(fetchReportByType({ type: REPORT_TYPE, params: empty }));
   }
 
+  async function handleExport(format: "xlsx" | "pdf") {
+    const blob = await reportApi.exportReport(REPORT_TYPE, format, filters);
+    const filename = `invoice-reports.${format}`;
+    downloadBlob(blob, filename);
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -100,11 +105,11 @@ export function ReportsPage() {
           <p className="text-sm text-slate-500">Analytics, period filters, exports, print support, and invoice tables only.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-secondary" onClick={() => downloadFile(`/reports/invoices/export.xlsx?${exportQuery}`, "invoice-reports.xlsx")}>
+          <button className="btn-secondary" onClick={() => void handleExport("xlsx")}>
             <Download className="h-4 w-4" />
             Excel
           </button>
-          <button className="btn-secondary" onClick={() => downloadFile(`/reports/invoices/export.pdf?${exportQuery}`, "invoice-reports.pdf")}>
+          <button className="btn-secondary" onClick={() => void handleExport("pdf")}>
             <Download className="h-4 w-4" />
             PDF
           </button>
@@ -116,11 +121,17 @@ export function ReportsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={FileBarChart} label="Invoice Count" value={summary.records ?? rows.length ?? 0} />
-        <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(stats.paidAmount).toLocaleString()}`} tone="green" />
-        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(stats.pendingAmount).toLocaleString()}`} tone="amber" />
-        <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(stats.totalAmount).toLocaleString()}`} />
+        <StatCard icon={FileBarChart} label="Invoice Count" value={summary?.invoiceCount ?? summary?.records ?? rows.length ?? 0} />
+        <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(summary?.paidAmount ?? stats.paidAmount).toLocaleString()}`} tone="green" />
+        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(summary?.pendingAmount ?? stats.pendingAmount).toLocaleString()}`} tone="amber" />
+        <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(summary?.totalAmount ?? stats.totalAmount).toLocaleString()}`} />
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-950/50 dark:bg-red-950/30 dark:text-red-200">
+          {error}
+        </div>
+      )}
 
       <section className="panel p-3">
         <div className="mb-2.5 flex items-center justify-between">
@@ -223,4 +234,15 @@ export function ReportsPage() {
       </section>
     </div>
   );
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }
