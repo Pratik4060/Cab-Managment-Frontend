@@ -21,6 +21,7 @@ import { invoiceActions } from "../redux/slices/invoiceSlice";
 import { driverActions } from "../redux/slices/driverSlice";
 import { tripActions, updateTripStatus } from "../redux/slices/tripSlice";
 import { vehicleActions } from "../redux/slices/vehicleSlice";
+import { formatDisplayDate, shouldFormatAsDate } from "../utils/formatDate";
 
 type DutySlipFormState = {
   kmOut: string;
@@ -1102,10 +1103,15 @@ function TripDetails({ data }: { data: any }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {rows.map(([label, value]) => (
-        <TripCard key={label} label={String(label)} value={value || "-"} />
+        <TripCard key={label} label={String(label)} value={formatTripDetailValue(String(label), value)} />
       ))}
     </div>
   );
+}
+
+function formatTripDetailValue(label: string, value: unknown) {
+  if (value === null || value === undefined || value === "") return "-";
+  return shouldFormatAsDate(label, value) ? formatDisplayDate(value) : value;
 }
 
 function optionalNumber() {

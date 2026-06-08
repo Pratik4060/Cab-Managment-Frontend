@@ -7,6 +7,7 @@ import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { invoiceActions, sendInvoice } from "../redux/slices/invoiceSlice";
 import { downloadFile } from "../utils/downloadFile";
+import { formatDisplayDate } from "../utils/formatDate";
 
 type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
 type InvoicePaymentStatus = "Paid" | "Pending";
@@ -168,11 +169,7 @@ export function InvoicesPage() {
             {
               key: "createdAt",
               header: "Date",
-              render: (r) => r.invoiceDate
-                ? new Date(r.invoiceDate).toLocaleDateString("en-IN")
-                : r.createdAt
-                  ? new Date(r.createdAt).toLocaleDateString("en-IN")
-                  : "-",
+              render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt),
             },
             { key: "clientName", header: "Client" },
             { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
@@ -495,10 +492,8 @@ function InvoicePreview({ invoice }: { invoice: any }) {
     [
       "Date",
       invoice.invoiceDate
-        ? new Date(invoice.invoiceDate).toLocaleDateString("en-IN")
-        : invoice.createdAt
-          ? new Date(invoice.createdAt).toLocaleDateString("en-IN")
-          : "-",
+        ? formatDisplayDate(invoice.invoiceDate)
+        : formatDisplayDate(invoice.createdAt),
     ],
     ["Client", invoice.clientName || invoice.booking?.businessUnit || "-"],
     ["Passenger", invoice.booking?.passengerName || "-"],
@@ -529,7 +524,7 @@ function InvoicePreview({ invoice }: { invoice: any }) {
           </div>
           <div className="text-right">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">{invoice.invoiceNumber}</p>
-            <p className="text-xs text-slate-500">{new Date(invoice.createdAt).toLocaleDateString()}</p>
+            <p className="text-xs text-slate-500">{formatDisplayDate(invoice.createdAt)}</p>
           </div>
         </div>
       </div>
@@ -565,17 +560,15 @@ function buildInvoiceExport(rows: any[]) {
   const lines = rows.map((invoice) => [
     invoice.invoiceNumber || "",
     invoice.invoiceDate
-      ? new Date(invoice.invoiceDate).toLocaleDateString("en-IN")
-      : invoice.createdAt
-        ? new Date(invoice.createdAt).toLocaleDateString("en-IN")
-        : "",
+      ? formatDisplayDate(invoice.invoiceDate)
+      : formatDisplayDate(invoice.createdAt),
     invoice.clientName || "",
     getInvoiceProjectType(invoice),
     invoice.status || "",
     invoice.paymentStatus === "Paid" || remainingAmount(invoice) === 0 ? "Paid" : "Pending",
     Number(invoice.finalAmount || 0),
     Number(remainingAmount(invoice)),
-    invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString("en-IN") : ""
+    formatDisplayDate(invoice.createdAt)
   ]);
   return [headers, ...lines].map((row) => row.map(csvCell).join(",")).join("\n");
 }
