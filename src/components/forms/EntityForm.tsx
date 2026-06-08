@@ -36,12 +36,14 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
     const normalized = { ...values };
     for (const field of fields) {
       if (field.type === "file") {
-        const file = values[field.name]?.[0] as File | undefined;
+        const file = getSelectedFile(values[field.name]);
         if (file) {
           normalized[field.name] = await fileToDataUrl(file);
-        } else {
-          normalized[field.name] = defaults[field.name] || "";
+          continue;
         }
+
+        const existingValue = defaults[field.name];
+        normalized[field.name] = typeof existingValue === "string" ? existingValue : "";
       }
       if (field.valueType === "boolean") {
         normalized[field.name] = values[field.name] === true || values[field.name] === "true";
@@ -107,5 +109,17 @@ function formatDateDefault(value: unknown) {
   if (typeof value === "string") return value.slice(0, 10);
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return String(value).slice(0, 10);
+function getSelectedFile(value: unknown) {
+  if (value instanceof File) return value;
+  if (value instanceof FileList) return value[0];
+  if (Array.isArray(value)) {
+    const first = value[0];
+    if (first instanceof File) return first;
+  }
+  if (value && typeof value === "object" && "0" in value) {
+    const first = (value as { 0?: unknown })[0];
+    if (first instanceof File) return first;
+  }
+  return undefined;
 }
 
