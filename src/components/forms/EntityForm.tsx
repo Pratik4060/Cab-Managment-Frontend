@@ -27,6 +27,7 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
 }) {
   const formDefaults = {
     ...defaults,
+    ...Object.fromEntries(fields.filter((field) => field.type === "date" && defaults[field.name]).map((field) => [field.name, formatDateDefault(defaults[field.name])])),
     ...Object.fromEntries(fields.filter((field) => field.valueType === "boolean" && defaults[field.name] !== undefined).map((field) => [field.name, String(defaults[field.name])]))
   };
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Record<string, any>>({ resolver: zodResolver(schema), defaultValues: formDefaults });
@@ -99,5 +100,12 @@ function fileToDataUrl(file: File) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+function formatDateDefault(value: unknown) {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value).slice(0, 10);
 }
 

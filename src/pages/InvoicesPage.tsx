@@ -396,7 +396,7 @@ function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
   const kmOut = normalizeNumber(form.kmOut);
   const kmIn = normalizeNumber(form.kmIn);
   const totalKm = kmOut !== null && kmIn !== null && kmIn >= kmOut ? kmIn - kmOut : Number(invoice.trip?.totalKm || 0);
-  const ratePerKm = Number(invoice.trip?.vehicle?.ratePerKm || invoice.tripFare / Math.max(1, Number(invoice.trip?.totalKm || 1)) || 22);
+  const ratePerKm = Number(invoice.trip?.vehicle?.rate_per_km || invoice.trip?.vehicle?.ratePerKm || invoice.tripFare / Math.max(1, Number(invoice.trip?.totalKm || 1)) || 22);
   const tripFare = Math.round(totalKm * ratePerKm);
   const tollCharges = normalizeNumber(form.tollCharges) ?? Number(invoice.trip?.tollCharges || 0);
   const parkingCharges = normalizeNumber(form.parkingCharges) ?? Number(invoice.trip?.parkingCharges || 0);

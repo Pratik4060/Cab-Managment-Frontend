@@ -43,12 +43,12 @@ const cabTypes = ["Sedan", "Sedan", "Sedan", "MUV/MPV", "Sedan", "MUV/MPV", "SUV
 
 export const seedVehicles = Array.from({ length: 12 }, (_, index) => ({
   _id: `veh-${String(index + 1).padStart(3, "0")}`,
-  registrationNumber: `MH 12 ${["AB", "CD", "EF", "GH", "JK", "LM", "NP", "QR", "ST", "UV", "WX", "YZ"][index]} ${String(2100 + index * 137)}`,
-  vehicleType: vehicleCompanies[index],
-  vehicleModel: vehicleModels[index],
-  cabType: cabTypes[index],
-  seatingCapacity: cabTypes[index] === "Hatchback" ? 4 : cabTypes[index] === "Sedan" ? 4 : 6,
-  ratePerKm: cabTypes[index] === "Hatchback" ? 16 : cabTypes[index] === "Sedan" ? 20 : cabTypes[index] === "SUV" ? 28 : 26,
+  registration_number: `MH 12 ${["AB", "CD", "EF", "GH", "JK", "LM", "NP", "QR", "ST", "UV", "WX", "YZ"][index]} ${String(2100 + index * 137)}`,
+  vehicle_type: vehicleCompanies[index],
+  vehicle_model: vehicleModels[index],
+  cab_type: cabTypes[index],
+  seating_capacity: cabTypes[index] === "Hatchback" ? 4 : cabTypes[index] === "Sedan" ? 4 : 6,
+  rate_per_km: cabTypes[index] === "Hatchback" ? 16 : cabTypes[index] === "Sedan" ? 20 : cabTypes[index] === "SUV" ? 28 : 26,
   status: index < 3 ? "In Trip" : index === 10 ? "Maintenance" : "Available",
   createdAt: iso(recentDays[index] ?? index)
 }));

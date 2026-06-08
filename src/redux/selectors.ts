@@ -138,7 +138,7 @@ export function selectDashboardData(state: RootState, period: DashboardPeriod = 
       revenue: trend(payments, (payment) => Number(payment.amount || 0), period),
       trips: trend(trips, () => 1, period),
       bookings: trend(bookings, () => 1, period),
-      vehicleCompany: groupCount(vehicles, "vehicleType"),
+      vehicleCompany: groupCount(vehicles, "vehicle_type"),
       invoiceStatus: groupCount(invoices, "status")
     },
     recentBookings: sortRecent(allBookings).slice(0, 5),
@@ -193,7 +193,7 @@ const reportColumns: Record<string, { key: string; header: string }[]> = {
     { key: "driverName", header: "Driver" }, { key: "contactNumber", header: "Contact" }, { key: "status", header: "Status" }, { key: "licenseNumber", header: "License" }
   ],
   vehicles: [
-    { key: "registrationNumber", header: "Registration" }, { key: "vehicleType", header: "Company" }, { key: "vehicleModel", header: "Model" }, { key: "cabType", header: "Cab Type" }
+    { key: "registration_number", header: "Registration" }, { key: "vehicle_type", header: "Company" }, { key: "vehicle_model", header: "Model" }, { key: "cab_type", header: "Cab Type" }
   ],
   bookings: [
     { key: "bookingId", header: "Booking" }, { key: "passengerName", header: "Passenger" }, { key: "businessUnit", header: "Client" }, { key: "status", header: "Status" }
@@ -220,7 +220,7 @@ export function selectReport(state: RootState, type: string, params: Record<stri
   const filterSearch = (items: any[]) => !search ? items : items.filter((item) => Object.values(item).join(" ").toLowerCase().includes(search));
 
   const data: Record<string, any[]> = {
-    "daily-trips": trips.map((trip) => ({ ...trip, driverName: trip.driver?.driverName, vehicle: trip.vehicle?.registrationNumber })),
+    "daily-trips": trips.map((trip) => ({ ...trip, driverName: trip.driver?.driverName, vehicle: trip.vehicle?.registration_number || trip.vehicle?.registrationNumber })),
     drivers,
     vehicles,
     bookings,

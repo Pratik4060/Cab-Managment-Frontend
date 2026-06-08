@@ -173,7 +173,7 @@ function formatValue(value: any) {
   if (typeof value === "string" && value.startsWith("data:image/")) {
     return <img src={value} alt="Uploaded document" className="max-h-36 rounded-md border border-slate-200 object-contain dark:border-slate-800" />;
   }
-  if (typeof value === "object") return value.name || value.driverName || value.registrationNumber || value.bookingId || JSON.stringify(value);
+  if (typeof value === "object") return value.name || value.driverName || value.registration_number || value.registrationNumber || value.bookingId || JSON.stringify(value);
   return String(value);
 }
 

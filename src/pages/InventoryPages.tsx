@@ -12,18 +12,23 @@ const vehicleModelsByCompany = {
   Kia: ["Carens", "Seltos", "Sonet"]
 };
 const cabTypes = ["Hatchback", "Sedan", "SUV", "MUV/MPV"];
+// const vehicleStatuses = ["Available", "Booked", "Maintenance", "Inactive"];
 
 export function CarsPage() {
   return <EntityPage title="Cars" subtitle="Vehicle inventory, rates, compliance, and availability." stateKey="vehicles" actions={vehicleActions} columns={[
-    { key: "registrationNumber", header: "Registration" }, { key: "vehicleType", header: "Company" }, { key: "vehicleModel", header: "Model" }, { key: "cabType", header: "Cab Type" }, { key: "seatingCapacity", header: "Seats" }, { key: "ratePerKm", header: "Rate/KM" }
+    { key: "registration_number", header: "Registration" }, { key: "vehicle_type", header: "Company" }, { key: "vehicle_model", header: "Model" }, { key: "cab_type", header: "Cab Type" }, { key: "seating_capacity", header: "Seats" }, { key: "rate_per_km", header: "Rate/KM" }
   ]} fields={[
-    { name: "registrationNumber", label: "Vehicle Number", required: true },
-    { name: "vehicleType", label: "Vehicle Company", type: "select", options: Object.keys(vehicleModelsByCompany), required: true },
-    { name: "vehicleModel", label: "Vehicle Model", type: "select", dependsOn: "vehicleType", optionsBy: vehicleModelsByCompany, placeholder: "Select company first", required: true },
-    { name: "cabType", label: "Cab Type", type: "select", options: cabTypes, required: true },
-    { name: "seatingCapacity", label: "Seating Capacity", type: "number", min: 1, required: true },
-    { name: "ratePerKm", label: "Rate Per KM", type: "number", required: true }
-  ]} statusOptions={cabTypes} filterKey="cabType" filterLabel="Cab Type" hiddenViewKeys={["status", "cabCategory", "insurancePolicyNumber"]} />;
+    { name: "registration_number", label: "Vehicle Number", required: true },
+    { name: "vehicle_type", label: "Vehicle Company", type: "select", options: Object.keys(vehicleModelsByCompany), required: true },
+    { name: "vehicle_model", label: "Vehicle Model", type: "select", dependsOn: "vehicle_type", optionsBy: vehicleModelsByCompany, placeholder: "Select company first", required: true },
+    { name: "cab_type", label: "Cab Type", type: "select", options: cabTypes, required: true },
+    { name: "seating_capacity", label: "Seating Capacity", type: "number", min: 1, required: true },
+    { name: "rate_per_km", label: "Rate Per KM", type: "number", required: true },
+    // { name: "status", label: "Status", type: "select", options: vehicleStatuses, required: false },
+    { name: "insurance_policy_number", label: "Insurance Policy Number", required: false },
+    { name: "insurance_expiry", label: "Insurance Expiry", type: "date", required: false },
+    { name: "registration_date", label: "Registration Date", type: "date", required: false }
+  ]} defaults={{ status: "Available" }} statusOptions={cabTypes} filterKey="cab_type" filterLabel="Cab Type" hiddenViewKeys={["cabCategory", "insurancePolicyNumber"]} />;
 }
 
 export function DriversPage() {
