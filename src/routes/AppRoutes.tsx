@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AppLayout } from "../layouts/AppLayout";
 import { AdminsPage, ProfilePage } from "../pages/AdminPage";
 import { DashboardPage } from "../pages/DashboardPage";
@@ -8,10 +8,14 @@ import { InvoicesPage } from "../pages/InvoicesPage";
 import { LoginPage } from "../pages/LoginPage";
 import { ReportsPage } from "../pages/ReportsPage";
 import { TripsPage } from "../pages/TripsPage";
+import { useAppDispatch } from "../redux/hooks";
+import { logout, setAuthError } from "../redux/slices/authSlice";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export function AppRoutes() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [activePath, setActivePath] = useState(location.pathname);
 
   useEffect(() => {
@@ -30,6 +34,19 @@ export function AppRoutes() {
       window.removeEventListener("popstate", syncRoute);
     };
   }, []);
+
+  useEffect(() => {
+    function handleAuthFailure(event: Event) {
+      const message = (event as CustomEvent<{ message?: string }>).detail?.message || "Your session has expired. Please login again.";
+      dispatch(logout());
+      dispatch(setAuthError(message));
+      setActivePath("/login");
+      navigate("/login", { replace: true });
+    }
+
+    window.addEventListener("cab-auth-failed", handleAuthFailure);
+    return () => window.removeEventListener("cab-auth-failed", handleAuthFailure);
+  }, [dispatch, navigate]);
 
   if (activePath === "/login") {
     return <LoginPage />;

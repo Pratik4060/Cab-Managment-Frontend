@@ -184,7 +184,7 @@ export const store = configureStore({
     admins: entityState(normalizeAdmins(withSeedMinimum(readStorage(storageKeys.admins, seedAdmins), seedAdmins, seedAdmins.length))),
     dashboard: { data: readStorage(storageKeys.dashboard, null), loading: false, error: null, period: "month" }
   } as Partial<RootState>,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(listenerMiddleware.middleware as any)
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(listenerMiddleware.middleware)
 });
 
 store.subscribe(() => {
