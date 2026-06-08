@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BarChart3, Eye, EyeOff, FileCheck2, Route } from "lucide-react";
+import { BarChart3, Eye, EyeOff, FileCheck2, Loader2, Route } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate } from "react-router-dom";
@@ -16,8 +16,12 @@ export function LoginPage() {
   const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { email: "superadmin@caberp.local", password: "Admin@12345" }
+    defaultValues: { email: "admin@uniquecar.com", password: "" }
   });
+  const submitLogin = handleSubmit((values) => {
+    dispatch(login(values));
+  });
+
   if (isAuthenticated) return <Navigate to="/" replace />;
   return (
     <div className="min-h-screen bg-brand-50 p-3 text-slate-900 dark:bg-[#08080a] dark:text-slate-100">
@@ -62,7 +66,7 @@ export function LoginPage() {
               <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">Sign in to your account</h2>
               <p className="mt-2 text-sm text-slate-500">Use your admin credentials to access Unique Carz operations.</p>
             </div>
-            <form className="space-y-4" onSubmit={handleSubmit((values) => dispatch(login(values)))}>
+            <form className="space-y-4" onSubmit={submitLogin}>
               <label>
                 <span className="mb-1.5 block text-sm font-medium">Email</span>
                 <input className="input h-11" {...register("email")} />
@@ -84,11 +88,25 @@ export function LoginPage() {
                 {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
               </label>
               {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/40">{error}</div>}
-              <button className="btn-primary h-11 w-full" disabled={loading}>{loading ? "Signing in..." : "Login"}</button>
+              <button className="btn-primary h-11 w-full" disabled={loading}>
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {loading ? "Signing in..." : "Login"}
+              </button>
             </form>
           </div>
         </section>
       </div>
+      {loading && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/60 p-4 backdrop-blur-md dark:bg-black/60">
+          <div className="w-full max-w-sm rounded-2xl border border-brand-100 bg-white p-6 text-center shadow-2xl shadow-brand-600/20 dark:border-red-950/45 dark:bg-[#111114] dark:shadow-black/50">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-950/30 dark:text-brand-200">
+              <Loader2 className="h-7 w-7 animate-spin" />
+            </div>
+            <h3 className="mt-4 text-lg font-bold text-slate-950 dark:text-white">Signing you in</h3>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Connecting to Unique Carz secure admin API...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

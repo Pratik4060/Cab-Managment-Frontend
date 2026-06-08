@@ -1,4 +1,4 @@
-import { Eye, Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, Loader2, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { z } from "zod";
@@ -68,7 +68,20 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           <button className="btn-primary" onClick={() => { setEditingRow(null); setOpen(true); }}><Plus className="h-4 w-4" />Add</button>
         </div>
       </div>
-      <div className="panel p-2">
+      {state.error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-950/50 dark:bg-red-950/30 dark:text-red-200">
+          {state.error}
+        </div>
+      )}
+      <div className="panel relative p-2">
+        {state.loading && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center rounded-lg bg-white/70 backdrop-blur-sm dark:bg-black/45">
+            <div className="rounded-2xl border border-brand-100 bg-white px-5 py-4 text-center shadow-2xl shadow-brand-600/15 dark:border-red-950/45 dark:bg-[#111114]">
+              <Loader2 className="mx-auto h-6 w-6 animate-spin text-brand-600 dark:text-brand-200" />
+              <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Syncing data...</p>
+            </div>
+          </div>
+        )}
         <DataTable
           loading={state.loading}
           rows={visibleRows}
