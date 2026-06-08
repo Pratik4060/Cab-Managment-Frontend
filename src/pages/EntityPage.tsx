@@ -15,7 +15,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   actions: any;
   columns: any[];
   fields: any[];
-  schema?: any;
+  schema?: any | ((isEditing: boolean) => any);
   defaults?: Record<string, any>;
   extraActions?: ReactNode;
   canEditRow?: (row: any) => boolean;
@@ -34,19 +34,20 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   const [deleteRow, setDeleteRow] = useState<any>(null);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
   const state = useAppSelector((store) => (store as any)[stateKey]);
   useEffect(() => { dispatch(actions.fetchAll(status ? { [filterKey]: status } : {})); }, [dispatch, actions, filterKey, status]);
   const visibleRows = search
     ? state.items.filter((row: any) => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
     : state.items;
-  const formSchema = schema || z.object(Object.fromEntries(fields.map((field) => [
+  const formSchema = typeof schema === "function" ? schema(Boolean(editingRow)) : (schema || z.object(Object.fromEntries(fields.map((field) => [
     field.name,
     field.type === "number"
       ? z.coerce.number().min(field.min ?? 0)
       : field.type === "file"
         ? z.any().optional()
         : z.string().min(field.required === false ? 0 : 1, "Required")
-  ])));
+  ]))));
   return (
     <div className="space-y-3.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -65,7 +66,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
             </select>
           )}
           {extraActions}
-          <button className="btn-primary" onClick={() => { setEditingRow(null); setOpen(true); }}><Plus className="h-4 w-4" />Add</button>
+          <button className="btn-primary" onClick={() => { setEditingRow(null); setFormError(null); setOpen(true); }}><Plus className="h-4 w-4" />Add</button>
         </div>
       </div>
       {state.error && (
@@ -110,7 +111,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
                   <Eye className="h-4 w-4" />
                   <span>View</span>
                 </button>
-                <button className="btn-secondary w-full justify-start p-2" onClick={() => { setEditingRow(row); setOpen(true); }} aria-label="Edit">
+                <button className="btn-secondary w-full justify-start p-2" onClick={() => { setEditingRow(row); setFormError(null); setOpen(true); }} aria-label="Edit">
                   <Pencil className="h-4 w-4" />
                   <span>Edit</span>
                 </button>
@@ -123,30 +124,41 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           }}
         />
       </div>
-      <Modal open={open} title={`${editingRow ? "Edit" : "Add"} ${title}`} onClose={() => { setOpen(false); setEditingRow(null); }}>
+      <Modal open={open} title={`${editingRow ? "Edit" : "Add"} ${title}`} onClose={() => { setOpen(false); setEditingRow(null); setFormError(null); }}>
+        {formError && (
+          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-950/50 dark:bg-red-950/30 dark:text-red-200">
+            {formError}
+          </div>
+        )}
         <EntityForm
           fields={fields}
           schema={formSchema}
           defaults={editingRow || defaults}
           submitLabel={editingRow ? "Update" : "Save"}
           onSubmit={async (values) => {
-            if (editingRow) {
-              await dispatch(actions.updateOne({ id: editingRow._id, payload: values }));
-            } else {
-              await dispatch(actions.createOne(values));
+            try {
+              if (editingRow) {
+                await dispatch(actions.updateOne({ id: editingRow._id, payload: values })).unwrap();
+              } else {
+                await dispatch(actions.createOne(values)).unwrap();
+              }
+              await dispatch(actions.fetchAll(status ? { [filterKey]: status } : {}));
+              setOpen(false);
+              setEditingRow(null);
+              setFormError(null);
+            } catch (error) {
+              setFormError(getErrorMessage(error));
             }
-            setOpen(false);
-            setEditingRow(null);
           }}
         />
       </Modal>
-      <Modal open={Boolean(viewRow)} title={`View ${title}`} onClose={() => setViewRow(null)}>
+          <Modal open={Boolean(viewRow)} title={`View ${title}`} onClose={() => setViewRow(null)}>
         {viewRow && (
           <div className="grid gap-2.5 sm:grid-cols-2">
             {Object.entries(viewRow).filter(([key]) => !["_id", "__v", ...hiddenViewKeys].includes(key)).map(([key, value]) => (
               <div key={key} className="rounded-md border border-slate-200 p-2.5 dark:border-slate-800">
                 <p className="text-[11px] font-semibold uppercase text-slate-400">{key}</p>
-                <div className="mt-1 text-[13px] text-slate-900 dark:text-white">{formatValue(value)}</div>
+                <div className="mt-1 text-[13px] text-slate-900 dark:text-white">{formatValue(key, value)}</div>
               </div>
             ))}
           </div>
@@ -159,8 +171,9 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
         onCancel={() => setDeleteRow(null)}
         onConfirm={async () => {
           if (deleteRow?._id) {
-            await dispatch(actions.deleteOne(deleteRow._id));
+            await dispatch(actions.deleteOne(deleteRow._id)).unwrap();
           }
+          await dispatch(actions.fetchAll(status ? { [filterKey]: status } : {}));
           setDeleteRow(null);
         }}
       />
@@ -168,12 +181,26 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
   );
 }
 
-function formatValue(value: any) {
+function formatValue(key: string, value: any) {
   if (value === null || value === undefined || value === "") return "-";
-  if (typeof value === "string" && value.startsWith("data:image/")) {
-    return <img src={value} alt="Uploaded document" className="max-h-36 rounded-md border border-slate-200 object-contain dark:border-slate-800" />;
+  const normalizedKey = key.toLowerCase();
+  const imageLike = normalizedKey.includes("photo") || normalizedKey.includes("image") || normalizedKey.includes("screenshot");
+  if (imageLike && typeof value === "string") {
+    return (
+      <a href={value} target="_blank" rel="noreferrer" className="block">
+        <img src={value} alt={key} className="max-h-36 rounded-md border border-slate-200 object-contain dark:border-slate-800" />
+      </a>
+    );
   }
   if (typeof value === "object") return value.name || value.driverName || value.registrationNumber || value.bookingId || JSON.stringify(value);
   return String(value);
+}
+
+function getErrorMessage(error: unknown) {
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return "Something went wrong. Please try again.";
 }
 

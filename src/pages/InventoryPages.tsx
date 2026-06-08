@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { driverActions } from "../redux/slices/driverSlice";
 import { vehicleActions } from "../redux/slices/vehicleSlice";
 import { EntityPage } from "./EntityPage";
@@ -40,6 +41,24 @@ export function DriversPage() {
     { name: "panCardPhoto", label: "PAN Card Photo", type: "file", accept: "image/*", required: false },
     { name: "licensePhoto", label: "License Photo", type: "file", accept: "image/*", required: false, full: true },
     { name: "address", label: "Address", required: true, full: true }
-  ]} hiddenViewKeys={["status"]} searchable searchPlaceholder="Search drivers" />;
+  ]} schema={(isEditing: boolean) => z.object({
+    driverName: z.string().min(1, "Required"),
+    contactNumber: z.string().min(1, "Required"),
+    alternateContact: z.string().optional(),
+    aadhaarNumber: z.string().min(1, "Required"),
+    panNumber: z.string().min(1, "Required"),
+    licenseNumber: z.string().min(1, "Required"),
+    aadhaarCardPhoto: isEditing ? z.any().optional() : requiredUpload("Aadhaar card photo"),
+    panCardPhoto: isEditing ? z.any().optional() : requiredUpload("PAN card photo"),
+    licensePhoto: isEditing ? z.any().optional() : requiredUpload("License photo"),
+    address: z.string().min(1, "Required")
+  })} hiddenViewKeys={["status"]} searchable searchPlaceholder="Search drivers" />;
+}
+
+function requiredUpload(label: string) {
+  return z.any().refine((value) => {
+    if (typeof value === "string") return value.trim().length > 0;
+    return Boolean(value?.[0]);
+  }, `${label} is required`);
 }
 
