@@ -6,6 +6,7 @@ type ConfirmDialogProps = {
   open: boolean;
   title?: string;
   message: ReactNode;
+  prompt?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void | Promise<void>;
@@ -16,6 +17,7 @@ export function ConfirmDialog({
   open,
   title = "Confirm Delete",
   message,
+  prompt = "Are you sure want to delete?",
   confirmLabel = "Delete",
   cancelLabel = "Cancel",
   onConfirm,
@@ -27,7 +29,7 @@ export function ConfirmDialog({
         <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-3 text-red-800 dark:border-red-950/50 dark:bg-red-950/20 dark:text-red-100">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <div className="space-y-1">
-            <p className="text-sm font-semibold">Are you sure want to delete?</p>
+            <p className="text-sm font-semibold">{prompt}</p>
             <div className="text-sm text-red-700 dark:text-red-100/90">{message}</div>
           </div>
         </div>

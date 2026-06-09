@@ -1,4 +1,5 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
+import { showToast } from "../utils/toast";
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/+$/, "");
 
@@ -30,7 +31,18 @@ apiClient.interceptors.request.use((config) => {
 });
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toLowerCase();
+    const message = response.data && typeof response.data === "object" && "message" in response.data && typeof response.data.message === "string"
+      ? response.data.message
+      : "";
+
+    if (message && method && method !== "get") {
+      showToast({ type: "success", title: "Success", message });
+    }
+
+    return response;
+  },
   (error: AxiosError) => {
     const status = error.response?.status || 0;
     const data = error.response?.data;
@@ -39,6 +51,7 @@ apiClient.interceptors.response.use(
       handleAuthFailure(status, data);
     }
 
+    showToast({ type: "error", title: "Request failed", message: getMessage(data, status) });
     return Promise.reject(new ApiError(getMessage(data, status), status, data));
   }
 );

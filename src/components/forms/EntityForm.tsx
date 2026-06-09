@@ -32,6 +32,9 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
       if (field.type === "date") {
         return [field.name, value ? formatDateDefault(value) : ""];
       }
+      if (field.type === "datetime-local") {
+        return [field.name, value ? formatDateTimeDefault(value) : ""];
+      }
       if (field.valueType === "boolean" && value !== undefined && value !== null) {
         return [field.name, String(value)];
       }
@@ -120,6 +123,13 @@ function formatDateDefault(value: unknown) {
   if (typeof value === "string") return value.slice(0, 10);
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return String(value).slice(0, 10);
+}
+
+function formatDateTimeDefault(value: unknown) {
+  if (!value) return "";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
 function getSelectedFile(value: unknown) {

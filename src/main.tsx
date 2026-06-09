@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 import { store } from "./redux/store";
 import { AppRoutes } from "./routes/AppRoutes";
+import { ToastViewport } from "./components/common/ToastViewport";
 import "./theme/index.css";
 
 const rootElement = document.getElementById("root");
@@ -17,6 +18,7 @@ ReactDOM.createRoot(rootElement).render(
     <Provider store={store}>
       <BrowserRouter>
         <AppRoutes />
+        <ToastViewport />
       </BrowserRouter>
     </Provider>
   </React.StrictMode>
