@@ -17,11 +17,10 @@ import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { bookingActions } from "../redux/slices/bookingSlice";
-import { invoiceActions } from "../redux/slices/invoiceSlice";
 import { driverActions } from "../redux/slices/driverSlice";
-import { tripActions, updateTripStatus } from "../redux/slices/tripSlice";
 import { vehicleActions } from "../redux/slices/vehicleSlice";
 import { formatDisplayDate, shouldFormatAsDate } from "../utils/formatDate";
+import { showToast } from "../utils/toast";
 
 type DutySlipFormState = {
   kmOut: string;
@@ -43,7 +42,6 @@ type DutySlipFormState = {
 
 export function TripsPage() {
   const dispatch = useAppDispatch();
-  const [syncOpen, setSyncOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -53,26 +51,29 @@ export function TripsPage() {
   const [viewDetails, setViewDetails] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "new" | "assigned"; item: any } | null>(null);
   const [activeTable, setActiveTable] = useState<"new" | "assigned">("new");
-  const bookings = useAppSelector((state) => state.bookings.items);
-  const trips = useAppSelector((state) => state.trips.allItems);
-  const loading = useAppSelector((state) => state.trips.loading);
+  const bookingState = useAppSelector((state) => state.bookings);
+  const newBookingItems = bookingState.bucketItems?.New || [];
+  const confirmedBookingItems = bookingState.bucketItems?.Confirmed || [];
+  const loading = bookingState.loading;
   const drivers = useAppSelector((state) => state.drivers.items);
   const vehicles = useAppSelector((state) => state.vehicles.items);
 
   useEffect(() => {
-    dispatch(tripActions.fetchAll(undefined));
-    dispatch(bookingActions.fetchAll(undefined));
+    dispatch(bookingActions.fetchBookingBuckets());
+  }, [dispatch]);
+
+  useEffect(() => {
     dispatch(driverActions.fetchAll(undefined));
     dispatch(vehicleActions.fetchAll(undefined));
   }, [dispatch]);
 
   const pendingBookings = useMemo(
-    () => bookings.filter((booking) => booking.status === "New"),
-    [bookings],
+    () => newBookingItems.filter((booking) => booking.status === "New"),
+    [newBookingItems],
   );
   const assignedTrips = useMemo(
-    () => trips.filter((trip) => trip.status === "Assigned"),
-    [trips],
+    () => confirmedBookingItems.map((booking) => buildAssignedTripFromBooking(booking, drivers, vehicles)),
+    [confirmedBookingItems, drivers, vehicles],
   );
 
   const availableDrivers = drivers.filter(
@@ -84,41 +85,14 @@ export function TripsPage() {
 
   async function handleCancelNewTrip(booking: any) {
     if (!booking?._id) return;
-    await dispatch(bookingActions.deleteOne(booking._id));
+    await dispatch(bookingActions.cancelBooking(booking._id)).unwrap();
+    await dispatch(bookingActions.fetchBookingBuckets());
   }
 
   async function handleCancelAssignedTrip(trip: any) {
     if (!trip?._id) return;
-    const bookingId = trip.booking?._id || trip.bookingId;
-    await dispatch(tripActions.deleteOne(trip._id));
-    if (bookingId) {
-      await dispatch(
-        bookingActions.updateOne({
-          id: bookingId,
-          payload: { status: "New" },
-        }),
-      );
-    }
-    if (trip.driverId) {
-      await dispatch(
-        driverActions.updateOne({
-          id: trip.driverId,
-          payload: { status: "Available" },
-        }),
-      );
-    }
-    if (trip.vehicleId) {
-      await dispatch(
-        vehicleActions.updateOne({
-          id: trip.vehicleId,
-          payload: { status: "Available" },
-        }),
-      );
-    }
-    await dispatch(tripActions.fetchAll(undefined));
-    await dispatch(bookingActions.fetchAll(undefined));
-    await dispatch(driverActions.fetchAll(undefined));
-    await dispatch(vehicleActions.fetchAll(undefined));
+    await dispatch(bookingActions.cancelBooking(trip._id)).unwrap();
+    await dispatch(bookingActions.fetchBookingBuckets());
   }
 
   const inquiryFields = [
@@ -135,13 +109,13 @@ export function TripsPage() {
     {
       name: "travelStartDate",
       label: "Travel Start Date",
-      placeholder: "22-05-2026 07:00 AM",
+      type: "datetime-local",
       required: false,
     },
     {
       name: "travelEndDate",
       label: "Travel End Date",
-      placeholder: "22-05-2026 18:00 PM",
+      type: "datetime-local",
       required: false,
     },
     { name: "departmentName", label: "Department Name", required: false },
@@ -280,10 +254,7 @@ export function TripsPage() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-slate-100">
-                New
-              </p>
-              <div className="mt-2.5 flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
@@ -308,10 +279,7 @@ export function TripsPage() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-slate-100">
-                Assigned
-              </p>
-              <div className="mt-2.5 flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-slate-950 dark:text-white">
                   Assigned
                 </h2>
@@ -349,10 +317,27 @@ export function TripsPage() {
             <div className="flex shrink-0 gap-2">
               <button
                 className="btn-secondary"
-                // onClick={() => setSyncOpen(true)}
+                disabled={loading}
+                onClick={async () => {
+                  try {
+                    const result = await dispatch(bookingActions.scanMails()).unwrap();
+                    const insertedCount = Number(result?.insertedCount || 0);
+                    showToast({
+                      type: insertedCount > 0 ? "success" : "info",
+                      title: insertedCount > 0 ? "New Bookings Found" : "No Bookings Found",
+                      message: insertedCount > 0
+                        ? `${insertedCount} new booking${insertedCount === 1 ? "" : "s"} imported from mail.`
+                        : "No new bookings were found in the latest mail scan."
+                    });
+                    setActiveTable("new");
+                    await dispatch(bookingActions.fetchBookingBuckets());
+                  } catch {
+                    // API interceptor already shows the readable error toast.
+                  }
+                }}
               >
                 <RefreshCcw className="h-4 w-4" />
-                Sync with Email
+                Scan Mail
               </button>
               <button className="btn-primary" onClick={() => setAddOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -485,42 +470,16 @@ export function TripsPage() {
             employeeCount: optionalNumber(),
             purposeOfCabBooking: z.string().optional(),
             senderEmail: z.string().optional(),
-            emailScreenshot: z.string().optional(),
+            emailScreenshot: z.any().optional(),
           })}
           defaults={{ bookingId: "Auto generated" }}
           submitLabel="Save Trip"
           onSubmit={async (values) => {
             await dispatch(
               bookingActions.createOne({ ...values, status: "New" }),
-            );
+            ).unwrap();
+            await dispatch(bookingActions.fetchBookingBuckets());
             setAddOpen(false);
-          }}
-        />
-      </Modal>
-
-      <Modal
-        open={syncOpen}
-        title="Sync with Email"
-        onClose={() => setSyncOpen(false)}
-      >
-        <EntityForm
-          fields={[
-            {
-              name: "senderEmail",
-              label: "Sender Email",
-              type: "email",
-              full: true,
-            },
-          ]}
-          schema={z.object({
-            senderEmail: z.string().email("Valid email is required"),
-          })}
-          submitLabel="Sync"
-          onSubmit={async (values) => {
-            dispatch(
-              bookingActions.fetchAll({ senderEmail: values.senderEmail }),
-            );
-            setSyncOpen(false);
           }}
         />
       </Modal>
@@ -551,7 +510,7 @@ export function TripsPage() {
               employeeCount: optionalNumber(),
             purposeOfCabBooking: z.string().optional(),
             senderEmail: z.string().optional(),
-            emailScreenshot: z.string().optional(),
+            emailScreenshot: z.any().optional(),
           })}
             defaults={{
               bookingId: selectedBooking.bookingId,
@@ -583,7 +542,8 @@ export function TripsPage() {
                     status: selectedBooking.status || "New",
                   },
                 }),
-              );
+              ).unwrap();
+              await dispatch(bookingActions.fetchBookingBuckets());
               setEditOpen(false);
               setSelectedBooking(null);
             }}
@@ -630,12 +590,14 @@ export function TripsPage() {
           submitLabel="Assign"
           onSubmit={async (values) => {
             await dispatch(
-              tripActions.assignTrip({
-                ...values,
-                bookingId: selectedBooking?._id,
+              bookingActions.assignBooking({
+                id: selectedBooking?._id,
+                driverId: values.driverId,
+                vehicleId: values.vehicleId,
               }),
-            );
-            await dispatch(tripActions.fetchAll(undefined));
+            ).unwrap();
+            setActiveTable("assigned");
+            await dispatch(bookingActions.fetchBookingBuckets());
             setAssignOpen(false);
             setSelectedBooking(null);
           }}
@@ -667,25 +629,16 @@ export function TripsPage() {
             }}
             onSave={async (payload) => {
               await dispatch(
-                updateTripStatus({ id: selectedTrip._id, payload }),
-              );
-              const invoiceTripPayload = {
-                ...selectedTrip,
-                ...payload,
-              };
-              delete (invoiceTripPayload as any).closingKm;
-              delete (invoiceTripPayload as any).closingTime;
-              delete (invoiceTripPayload as any).closingLocation;
-              delete (invoiceTripPayload as any).dutySlipPhoto;
-              await dispatch(
-                invoiceActions.generateInvoice({
-                  ...invoiceTripPayload,
-                  trip: {
-                    ...(selectedTrip.trip || {}),
-                    ...payload,
-                  },
+                bookingActions.createDutySlip({
+                  tripId: selectedTrip.tripId || selectedTrip._id,
+                  bookingId: selectedTrip.bookingId || selectedTrip.booking?._id || selectedTrip._id,
+                  driverId: selectedTrip.driverId,
+                  vehicleId: selectedTrip.vehicleId,
+                  ratePerKm: selectedTrip.vehicle?.rate_per_km ?? selectedTrip.vehicle?.ratePerKm,
+                  ...payload
                 }),
-              );
+              ).unwrap();
+              await dispatch(bookingActions.fetchBookingBuckets());
               setDutySlipOpen(false);
               setSelectedTrip(null);
             }}
@@ -694,11 +647,13 @@ export function TripsPage() {
       </Modal>
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        title="Delete Trip"
+        title="Cancel Trip"
+        prompt="Are you sure you want to cancel this trip?"
+        confirmLabel="Cancel Trip"
         message={
           deleteTarget?.type === "assigned"
             ? `This will cancel the assigned trip for ${deleteTarget.item?.booking?.passengerName || deleteTarget.item?.booking?.bookingId || deleteTarget.item?.tripNumber || "this trip"}.`
-            : `This will delete ${deleteTarget?.item?.passengerName || deleteTarget?.item?.bookingId || "this booking"}.`
+            : `This will cancel ${deleteTarget?.item?.passengerName || deleteTarget?.item?.bookingId || "this booking"}.`
         }
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
@@ -1112,6 +1067,27 @@ function TripDetails({ data }: { data: any }) {
 function formatTripDetailValue(label: string, value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
   return shouldFormatAsDate(label, value) ? formatDisplayDate(value) : value;
+}
+
+function buildAssignedTripFromBooking(booking: any, drivers: any[], vehicles: any[]) {
+  const driverId = booking.assignedDriver || booking.assigned_driver;
+  const vehicleId = booking.assignedVehicle || booking.assigned_vehicle;
+  const driver = drivers.find((item) => String(item._id || item.id) === String(driverId));
+  const vehicle = vehicles.find((item) => String(item._id || item.id) === String(vehicleId));
+
+  return {
+    ...booking,
+    _id: booking._id,
+    tripId: booking.tripId || booking.trip_id || booking._id,
+    tripNumber: booking.tripNumber || booking.bookingId || booking.booking_id,
+    bookingId: booking._id,
+    driverId,
+    vehicleId,
+    driver,
+    vehicle,
+    booking,
+    status: "Assigned"
+  };
 }
 
 function optionalNumber() {
