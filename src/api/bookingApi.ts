@@ -39,7 +39,6 @@ export type BookingPayload = {
 };
 
 export type DutySlipPayload = {
-  tripId?: string | number;
   bookingId?: string | number;
   driverId?: string | number;
   vehicleId?: string | number;
@@ -78,7 +77,7 @@ export const bookingApi = {
     return normalizeBooking(unwrapData<any>(await apiRequest({ url: `/bookings/${id}`, method: "PUT", data: toBackendBookingPayload(payload) })));
   },
 
-  async assignBooking(id: string, payload: { assigned_driver: string; assigned_vehicle: string }) {
+  async assignBooking(id: string, payload: { assigned_driver: string; assigned_vehicle: string; driver_status?: string; vehicle_status?: string }) {
     return normalizeBooking(unwrapData<any>(await apiRequest({ url: `/bookings/${id}/assign`, method: "PATCH", data: payload })));
   },
 
@@ -192,7 +191,6 @@ function toBackendBookingPayload(payload: BookingPayload) {
 
 function toBackendDutySlipPayload(payload: DutySlipPayload) {
   const backendPayload: Record<string, unknown> = {};
-  assignIfPresent(backendPayload, "tripId", payload.tripId);
   assignIfPresent(backendPayload, "bookingId", payload.bookingId);
   assignIfPresent(backendPayload, "driverId", payload.driverId);
   assignIfPresent(backendPayload, "vehicleId", payload.vehicleId);
