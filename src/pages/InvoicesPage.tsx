@@ -1,8 +1,9 @@
-import { Banknote, Download, DownloadCloud, DownloadIcon, Eye, FileDown, Mail, Pencil } from "lucide-react";
+import { Banknote, Download, Eye, FileDown, Mail, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
 import { Modal } from "../components/common/Modal";
+import { ConfirmDialog } from "../components/common/ConfirmDialog";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { invoiceActions, sendInvoice } from "../redux/slices/invoiceSlice";
@@ -10,8 +11,6 @@ import { downloadFile } from "../utils/downloadFile";
 import { formatDisplayDate } from "../utils/formatDate";
 
 type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
-type InvoicePaymentStatus = "Paid" | "Pending";
-type InvoicePaymentType = "NEFT";
 type InvoiceProjectType = "Process" | "Management";
 
 type InvoiceDutySlipState = {
@@ -28,8 +27,8 @@ type InvoiceDutySlipState = {
 };
 
 type InvoicePaymentState = {
-  paymentStatus: InvoicePaymentStatus;
-  paymentType: InvoicePaymentType;
+  paymentStatus: "Paid" | "Partial" | "Pending";
+  addAmount: string;
   remark: string;
 };
 
@@ -39,6 +38,8 @@ export function InvoicesPage() {
   const [editTarget, setEditTarget] = useState<any>(null);
   const [paymentTarget, setPaymentTarget] = useState<any>(null);
   const [sendTarget, setSendTarget] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [bulkSendOpen, setBulkSendOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [projectTypeFilter, setProjectTypeFilter] = useState<InvoiceProjectType | "">("");
   const [dateFilters, setDateFilters] = useState({ from: "", to: "" });
@@ -117,10 +118,10 @@ export function InvoicesPage() {
           </button> */}
           <button
             className="btn-secondary"
-          // onClick={() => exportInvoices("pdf")}
+            onClick={() => setBulkSendOpen(true)}
           >
-            <Download className="h-4 w-4" />
-            Download
+            <Mail className="h-4 w-4" />
+            Bulk Send
           </button>
         </div>
       </div>
@@ -177,10 +178,10 @@ export function InvoicesPage() {
             { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
             { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
-          actionCount={5}
+          actionCount={6}
           actions={(row) => (
             <div className="flex min-w-36 flex-col gap-1.5">
-              <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={() => setPreviewInvoice(row)}>
+              <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
                 <Eye className="h-4 w-4" />
                 <span>Preview</span>
               </button>
@@ -196,9 +197,13 @@ export function InvoicesPage() {
                 <Mail className="h-4 w-4" />
                 <span>Send</span>
               </button>
-              <button className="btn-secondary w-full justify-start p-2" title="Download PDF" onClick={() => downloadFile(`/invoices/${row._id}/pdf`, `${row.invoiceNumber}.pdf`)}>
+              <button className="btn-secondary w-full justify-start p-2" title="Download PDF" onClick={() => downloadInvoicePdf(row)}>
                 <FileDown className="h-4 w-4" />
                 <span>Download PDF</span>
+              </button>
+              <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
+                <Trash2 className="h-4 w-4" />
+                <span>Delete</span>
               </button>
             </div>
           )}
@@ -206,7 +211,7 @@ export function InvoicesPage() {
       </div>
 
       <Modal open={Boolean(previewInvoice)} title={`Invoice Preview ${previewInvoice?.invoiceNumber || ""}`} onClose={() => setPreviewInvoice(null)}>
-        {previewInvoice && <InvoicePreview invoice={previewInvoice} />}
+        {previewInvoice && <InvoicePreview invoice={previewInvoice} onDownload={() => downloadInvoicePdf(previewInvoice)} />}
       </Modal>
 
       <Modal open={Boolean(editTarget)} title={`Edit Invoice ${editTarget?.invoiceNumber || ""}`} onClose={() => setEditTarget(null)}>
@@ -214,7 +219,8 @@ export function InvoicesPage() {
           <InvoiceDutySlipEditor
             invoice={editTarget}
             onSubmit={async (payload) => {
-              await dispatch(invoiceActions.updateOne({ id: editTarget._id, payload }));
+              await dispatch(invoiceActions.updateOne({ id: editTarget._id, payload })).unwrap();
+              await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
               setEditTarget(null);
             }}
           />
@@ -226,7 +232,8 @@ export function InvoicesPage() {
           <InvoicePaymentStatusEditor
             invoice={paymentTarget}
             onSubmit={async (payload) => {
-              await dispatch(invoiceActions.updateOne({ id: paymentTarget._id, payload }));
+              await dispatch(invoiceActions.updatePaymentStatus({ id: paymentTarget._id, payload })).unwrap();
+              await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
               setPaymentTarget(null);
             }}
           />
@@ -240,14 +247,77 @@ export function InvoicesPage() {
           schema={z.object({ clientEmail: z.string().email("Valid client email is required") })}
           submitLabel="Send Invoice"
           onSubmit={async (values) => {
-            await dispatch(sendInvoice({ id: sendTarget._id, payload: values }));
-            await dispatch(invoiceActions.fetchAll(undefined));
+            await dispatch(sendInvoice({ id: sendTarget._id, payload: values })).unwrap();
+            await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
             setSendTarget(null);
           }}
         />
       </Modal>
+      <Modal open={bulkSendOpen} title="Bulk Send Invoices" onClose={() => setBulkSendOpen(false)}>
+        <EntityForm
+          fields={[
+            { name: "status", label: "Invoice Status", type: "select", options: ["Pending", "Draft", "Sent", "Paid", "Partial"], required: false },
+            { name: "paymentStatus", label: "Payment Status", type: "select", options: ["Pending", "Partial", "Paid"], required: false },
+            { name: "from", label: "From", type: "date", required: false },
+            { name: "to", label: "To", type: "date", required: false },
+            { name: "search", label: "Search", required: false },
+            { name: "emailSubject", label: "Email Subject", full: true },
+            { name: "emailBody", label: "Email Body", full: true }
+          ]}
+          defaults={{
+            status: statusFilter || "Pending",
+            paymentStatus: "Pending",
+            from: dateFilters.from,
+            to: dateFilters.to,
+            search: "",
+            emailSubject: "Pending Invoices",
+            emailBody: "Please find the attached invoice list."
+          }}
+          schema={z.object({
+            status: z.string().optional(),
+            paymentStatus: z.string().optional(),
+            from: z.string().optional(),
+            to: z.string().optional(),
+            search: z.string().optional(),
+            emailSubject: z.string().min(1, "Email subject is required"),
+            emailBody: z.string().min(1, "Email body is required")
+          })}
+          submitLabel="Send Bulk"
+          onSubmit={async (values) => {
+            await dispatch(invoiceActions.sendBulkInvoices(values)).unwrap();
+            setBulkSendOpen(false);
+          }}
+        />
+      </Modal>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete Invoice"
+        prompt="Are you sure you want to delete this invoice?"
+        confirmLabel="Delete"
+        message={`This will permanently delete ${deleteTarget?.invoiceNumber || "this invoice"}.`}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (deleteTarget?._id) {
+            await dispatch(invoiceActions.deleteOne(deleteTarget._id)).unwrap();
+            await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+          }
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
+
+  async function downloadInvoicePdf(invoice: any) {
+    const result = await dispatch(invoiceActions.downloadPdf(invoice._id)).unwrap();
+    const blobUrl = window.URL.createObjectURL(result.blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `${invoice.invoiceNumber || "invoice"}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  }
 }
 
 function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: (payload: any) => Promise<void> | void }) {
@@ -323,11 +393,9 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         <InfoCard label="Invoice" value={invoice.invoiceNumber} />
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
-        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentStatus)}>{["Pending", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
-        <InfoCard label="Payment Method" value={<select className="input mt-1" value={form.paymentType} onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentType)}><option value="NEFT">NEFT</option></select>} />
-        {form.paymentStatus === "Pending" && (
-          <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
-        )}
+        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentState["paymentStatus"])}>{["Pending", "Partial", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
+        <InfoCard label="Add Amount" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.addAmount} onChange={(event) => updateField("addAmount", event.target.value)} />} />
+        <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
         <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
         <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
         <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
@@ -378,14 +446,10 @@ function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
 }
 
 function buildPaymentUpdatePayload(invoice: any, form: InvoicePaymentState) {
-  const computed = calculatePaymentTotals(invoice, form);
   return {
-    paymentStatus: computed.paymentStatus,
-    paymentType: "NEFT",
-    paidAmount: computed.paidAmount,
-    remainingAmount: computed.remainingAmount,
-    balanceAmount: computed.remainingAmount,
-    paymentRemark: form.remark.trim() || undefined
+    paymentStatus: form.paymentStatus,
+    addAmount: normalizeNumber(form.addAmount) ?? 0,
+    remark: form.remark.trim() || undefined
   };
 }
 
@@ -411,16 +475,17 @@ function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
 function calculatePaymentTotals(invoice: any, form: InvoicePaymentState) {
   const finalAmount = Number(invoice.finalAmount || 0);
   const existingPaid = Number(invoice.paidAmount || 0);
+  const addAmount = normalizeNumber(form.addAmount) ?? 0;
   const paidAmount = form.paymentStatus === "Paid"
     ? finalAmount
-    : existingPaid;
+    : Math.min(finalAmount, existingPaid + addAmount);
   const remainingAmount = Math.max(0, finalAmount - paidAmount);
 
   return {
     paymentStatus: remainingAmount === 0 ? "Paid" : "Pending",
     paidAmount,
     remainingAmount
-  } satisfies { paymentStatus: InvoicePaymentStatus; paidAmount: number; remainingAmount: number };
+  } satisfies { paymentStatus: string; paidAmount: number; remainingAmount: number };
 }
 
 function buildPreviewInvoice(invoice: any, form: InvoiceDutySlipState) {
@@ -434,14 +499,13 @@ function buildPreviewInvoice(invoice: any, form: InvoiceDutySlipState) {
 }
 
 function invoicePaymentDefaults(invoice: any): InvoicePaymentState {
-  const currentStatus = invoice.paymentStatus === "Paid"
-    || Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) === 0
+  const currentStatus = invoice.paymentStatus === "Paid" || Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) === 0
     ? "Paid"
-    : "Pending";
+    : Number(invoice.paidAmount || 0) > 0 ? "Partial" : "Pending";
 
   return {
     paymentStatus: currentStatus,
-    paymentType: "NEFT",
+    addAmount: currentStatus === "Paid" ? String(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) : "",
     remark: String(invoice.paymentRemark || invoice.paymentRemarks || "")
   };
 }
@@ -486,7 +550,7 @@ function PaymentStatusBadge({ invoice }: { invoice: any }) {
   return <span className={`rounded-md px-2 py-1 text-xs font-semibold ${styles[status]}`}>{status}</span>;
 }
 
-function InvoicePreview({ invoice }: { invoice: any }) {
+function InvoicePreview({ invoice, onDownload }: { invoice: any; onDownload: () => void }) {
   const rows = [
     ["Invoice Number", invoice.invoiceNumber],
     [
@@ -537,7 +601,7 @@ function InvoicePreview({ invoice }: { invoice: any }) {
         ))}
       </div>
       <div className="flex justify-end gap-2">
-        <button className="btn-secondary" onClick={() => downloadFile(`/invoices/${invoice._id}/pdf`, `${invoice.invoiceNumber}.pdf`)}>
+        <button className="btn-secondary" onClick={onDownload}>
           <FileDown className="h-4 w-4" />
           Download PDF
         </button>
