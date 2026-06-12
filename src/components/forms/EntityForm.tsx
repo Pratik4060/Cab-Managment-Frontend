@@ -49,7 +49,7 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
       if (field.type === "file") {
         const file = getSelectedFile(values[field.name]);
         if (file) {
-          normalized[field.name] = await fileToDataUrl(file);
+          normalized[field.name] = file;
           continue;
         }
 

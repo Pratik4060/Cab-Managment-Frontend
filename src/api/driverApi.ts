@@ -42,7 +42,8 @@ export const driverApi = {
   },
 
   async updateDriver(id: string, payload: Partial<DriverPayload>) {
-    return normalizeDriver(unwrapData<any>(await apiRequest({ url: `/drivers/${id}`, method: "PUT", data: payload })));
+    const formData = toDriverFormData(payload);
+    return normalizeDriver(unwrapData<any>(await apiRequest({ url: `/drivers/${id}`, method: "PUT", data: formData })));
   },
 
   async changeDriverStatus(id: string, status: string) {
@@ -81,20 +82,42 @@ function normalizeDriver(driver: any) {
   };
 }
 
-function toDriverFormData(payload: DriverPayload) {
+function toDriverFormData(payload: Partial<DriverPayload> & Record<string, any>) {
   const formData = new FormData();
   const body = stripFileFields(payload);
 
   for (const [key, value] of Object.entries(body)) {
     if (value === undefined || value === null) continue;
+    if (isFile(value)) {
+      formData.append(key, value);
+      continue;
+    }
+    if (isFileList(value)) {
+      const file = value[0];
+      if (file) formData.append(key, file);
+      continue;
+    }
     formData.append(key, String(value));
   }
 
   for (const field of FILE_FIELDS) {
     const value = payload[field];
+    if (isFile(value)) {
+      formData.append(field, value);
+      continue;
+    }
+    if (isFileList(value)) {
+      const file = value[0];
+      if (file) formData.append(field, file);
+      continue;
+    }
     const file = toFile(value, field);
     if (file) {
       formData.append(field, file);
+      continue;
+    }
+    if (typeof value === "string" && value.trim()) {
+      formData.append(field, value);
     }
   }
 
@@ -106,11 +129,21 @@ function stripFileFields(payload: Partial<DriverPayload>) {
   return rest;
 }
 
-function toFile(value: string | undefined, fieldName: string) {
-  if (!value || !value.startsWith("data:")) return null;
+function toFile(value: unknown, fieldName: string) {
+  if (isFile(value)) return value;
+  if (isFileList(value)) return value[0] || null;
+  if (typeof value !== "string" || !value || !value.startsWith("data:")) return null;
   const parsed = parseDataUrl(value);
   if (!parsed) return null;
   return new File([parsed.blob], `${fieldName}.${parsed.extension}`, { type: parsed.mimeType });
+}
+
+function isFile(value: unknown): value is File {
+  return !!value && typeof value === "object" && typeof (value as File).name === "string" && typeof (value as File).size === "number" && typeof (value as File).type === "string" && typeof (value as File).slice === "function";
+}
+
+function isFileList(value: unknown): value is FileList {
+  return !!value && typeof value === "object" && "length" in value && typeof (value as FileList).item === "function";
 }
 
 function parseDataUrl(dataUrl: string) {
