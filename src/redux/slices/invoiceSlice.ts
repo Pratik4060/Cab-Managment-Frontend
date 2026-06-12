@@ -1,4 +1,6 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { ApiError } from "../../api/client";
+import { invoiceApi, normalizeInvoice } from "../../api/invoiceApi";
 import { applyFilter } from "./createEntitySlice";
 import { seedInvoices } from "../seedData";
 
@@ -23,6 +25,74 @@ const initialState: InvoiceState = {
   error: null,
   filter: {}
 };
+
+function apiErrorMessage(error: unknown) {
+  return error instanceof ApiError ? error.message : "Invoice request failed.";
+}
+
+export const fetchAll = createAsyncThunk("invoices/fetchAll", async (filter: Record<string, any> | undefined, { rejectWithValue }) => {
+  try {
+    return { filter: filter || {}, items: await invoiceApi.getInvoices(filter || {}) };
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const fetchById = createAsyncThunk("invoices/fetchById", async (id: string, { rejectWithValue }) => {
+  try {
+    return await invoiceApi.getInvoiceById(id);
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const updateOne = createAsyncThunk("invoices/updateOne", async ({ id, payload }: { id: string; payload: any }, { rejectWithValue }) => {
+  try {
+    return await invoiceApi.updateInvoice(id, payload);
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const updatePaymentStatus = createAsyncThunk("invoices/updatePaymentStatus", async ({ id, payload }: { id: string; payload: any }, { rejectWithValue }) => {
+  try {
+    return await invoiceApi.updatePaymentStatus(id, payload);
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const sendInvoice = createAsyncThunk("invoices/sendInvoice", async ({ id, payload }: { id: string; payload: any }, { rejectWithValue }) => {
+  try {
+    return await invoiceApi.sendInvoice(id, payload);
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const sendBulkInvoices = createAsyncThunk("invoices/sendBulkInvoices", async (payload: any, { rejectWithValue }) => {
+  try {
+    return await invoiceApi.sendBulk(payload);
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const deleteOne = createAsyncThunk("invoices/deleteOne", async (id: string, { rejectWithValue }) => {
+  try {
+    return await invoiceApi.deleteInvoice(id);
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const downloadPdf = createAsyncThunk("invoices/downloadPdf", async (id: string, { rejectWithValue }) => {
+  try {
+    return { id, blob: await invoiceApi.downloadPdf(id) };
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
 
 function refresh(state: InvoiceState) {
   state.items = applyFilter(state.allItems, state.filter);
@@ -134,24 +204,16 @@ const invoiceSlice = createSlice({
   name: "invoices",
   initialState,
   reducers: {
-    fetchAll(state, action: PayloadAction<Record<string, any> | undefined>) {
-      state.filter = action.payload || {};
-      refresh(state);
-    },
     setItems(state, action: PayloadAction<any[]>) {
-      state.allItems = action.payload;
+      state.allItems = action.payload.map(normalizeInvoice);
       refresh(state);
     },
     createOne(state, action: PayloadAction<any>) {
       state.allItems.unshift({ _id: `inv-${Date.now()}`, createdAt: new Date().toISOString(), ...action.payload });
       refresh(state);
     },
-    updateOne(state, action: PayloadAction<{ id: string; payload: any }>) {
+    updateOneLocal(state, action: PayloadAction<{ id: string; payload: any }>) {
       state.allItems = state.allItems.map((invoice) => invoice._id === action.payload.id ? { ...invoice, ...action.payload.payload, updatedAt: new Date().toISOString() } : invoice);
-      refresh(state);
-    },
-    deleteOne(state, action: PayloadAction<string>) {
-      state.allItems = state.allItems.filter((invoice) => invoice._id !== action.payload);
       refresh(state);
     },
     generateInvoice(state, action: PayloadAction<any>) {
@@ -173,7 +235,7 @@ const invoiceSlice = createSlice({
       state.allItems = state.allItems.map((invoice) => invoice._id === action.payload ? { ...invoice, updatedAt: new Date().toISOString() } : invoice);
       refresh(state);
     },
-    sendInvoice(state, action: PayloadAction<{ id: string; payload?: any }>) {
+    sendInvoiceLocal(state, action: PayloadAction<{ id: string; payload?: any }>) {
       state.allItems = state.allItems.map((invoice) => (
         invoice._id === action.payload.id
           ? {
@@ -202,11 +264,61 @@ const invoiceSlice = createSlice({
       });
       refresh(state);
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAll.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAll.fulfilled, (state, action) => {
+        state.filter = action.payload.filter;
+        state.allItems = action.payload.items;
+        refresh(state);
+      })
+      .addCase(fetchAll.rejected, (state, action) => {
+        state.loading = false;
+        state.error = typeof action.payload === "string" ? action.payload : "Failed to fetch invoices.";
+      })
+      .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/pending") && action.type !== fetchAll.pending.type, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/fulfilled") && action.type !== fetchAll.fulfilled.type, (state, action: any) => {
+        state.loading = false;
+        if (action.type === deleteOne.fulfilled.type) {
+          state.allItems = state.allItems.filter((invoice) => String(invoice._id) !== String(action.payload));
+          refresh(state);
+          return;
+        }
+        if (action.type === downloadPdf.fulfilled.type || action.type === sendBulkInvoices.fulfilled.type) return;
+        if (action.payload && typeof action.payload === "object") {
+          const updated = normalizeInvoice(action.payload);
+          state.allItems = state.allItems.some((invoice) => String(invoice._id) === String(updated._id))
+            ? state.allItems.map((invoice) => String(invoice._id) === String(updated._id) ? updated : invoice)
+            : [updated, ...state.allItems];
+          refresh(state);
+        }
+      })
+      .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/rejected"), (state, action: any) => {
+        state.loading = false;
+        state.error = typeof action.payload === "string" ? action.payload : "Invoice request failed.";
+      });
   }
 });
 
-export const invoiceActions = invoiceSlice.actions;
-export const { generateInvoice, regenerateInvoice, sendInvoice, applyPayment, setItems: setInvoices } = invoiceSlice.actions;
+export const invoiceActions = {
+  ...invoiceSlice.actions,
+  fetchAll,
+  fetchById,
+  updateOne,
+  updatePaymentStatus,
+  sendInvoice,
+  sendBulkInvoices,
+  deleteOne,
+  downloadPdf
+};
+export const { generateInvoice, regenerateInvoice, applyPayment, setItems: setInvoices } = invoiceSlice.actions;
 export default invoiceSlice.reducer;
 
 function normalizeProjectType(value: unknown) {
