@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo2.png";
 import { useAppDispatch } from "../../redux/hooks";
 import { logout } from "../../redux/slices/authSlice";
+import { showToast } from "../../utils/toast";
 
 const sections = [
   {
@@ -75,6 +76,13 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
     return activePath === path || activePath.startsWith(`${path}/`);
   }
 
+  function handleLogout() {
+    dispatch(logout());
+    showToast({ type: "success", title: "Logged out", message: "You have been logged out successfully." });
+    navigate("/login", { replace: true });
+    window.dispatchEvent(new CustomEvent("cab-route-change", { detail: "/login" }));
+  }
+
   return (
     <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-brand-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-red-950/45 dark:bg-[#09090b]/98 dark:shadow-black/50`}>
       <div
@@ -130,7 +138,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{user?.name || "Admin"}</p>
           <p className="truncate text-xs text-slate-500">{user?.role || "Administrator"}</p>
         </div> */}
-        <button className="btn-secondary w-full justify-start" onClick={() => dispatch(logout())}>
+        <button className="btn-secondary w-full justify-start" onClick={handleLogout}>
           <LogOut className="h-3.5 w-3.5" />
           Logout
         </button>

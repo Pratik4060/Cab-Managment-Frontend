@@ -1,3 +1,5 @@
+import { showToast } from "./toast";
+
 export async function downloadFile(url: string, filename: string, contentOverride?: string) {
   const extension = filename.split(".").pop()?.toLowerCase();
   const content = contentOverride || (extension === "pdf"
@@ -13,4 +15,15 @@ export async function downloadFile(url: string, filename: string, contentOverrid
   link.click();
   link.remove();
   window.URL.revokeObjectURL(blobUrl);
+  showToast({
+    type: "success",
+    title: "Download ready",
+    message: `${downloadLabel(extension)} exported successfully.`
+  });
+}
+
+function downloadLabel(extension?: string) {
+  if (extension === "pdf") return "PDF";
+  if (extension === "xlsx" || extension === "xls" || extension === "csv") return "Excel";
+  return "File";
 }

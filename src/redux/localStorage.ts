@@ -1,13 +1,5 @@
 export const storageKeys = {
-  theme: "cab_admin_theme",
-  bookings: "cab_admin_bookings",
-  trips: "cab_admin_trips",
-  drivers: "cab_admin_drivers",
-  vehicles: "cab_admin_vehicles",
-  invoices: "cab_admin_invoices",
-  payments: "cab_admin_payments",
-  admins: "cab_admin_admins",
-  dashboard: "cab_admin_dashboard"
+  theme: "cab_admin_theme"
 } as const;
 
 export function readStorage<T>(key: string, fallback: T): T {

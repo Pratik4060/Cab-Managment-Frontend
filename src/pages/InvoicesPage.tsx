@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { invoiceActions, sendInvoice } from "../redux/slices/invoiceSlice";
 import { downloadFile } from "../utils/downloadFile";
 import { formatDisplayDate } from "../utils/formatDate";
+import { showToast } from "../utils/toast";
 
 type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
 type InvoiceProjectType = "Process" | "Management";
@@ -284,7 +285,10 @@ export function InvoicesPage() {
           })}
           submitLabel="Send Bulk"
           onSubmit={async (values) => {
-            await dispatch(invoiceActions.sendBulkInvoices(values)).unwrap();
+            const response = await dispatch(invoiceActions.sendBulkInvoices(values)).unwrap();
+            if (!response?.message) {
+              showToast({ type: "success", title: "Bulk send started", message: "Bulk invoice email request submitted successfully." });
+            }
             setBulkSendOpen(false);
           }}
         />
@@ -317,6 +321,7 @@ export function InvoicesPage() {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(blobUrl);
+    showToast({ type: "success", title: "Download ready", message: "Invoice PDF downloaded successfully." });
   }
 }
 
@@ -519,7 +524,7 @@ function invoiceDutySlipDefaults(invoice: any): InvoiceDutySlipState {
     tollCharges: String(invoice.trip?.tollCharges ?? 0),
     parkingCharges: String(invoice.trip?.parkingCharges ?? 0),
     extraCharges: String(invoice.trip?.extraCharges ?? 0),
-    gstCharges: String(invoice.trip?.gstCharges ?? invoice.gstPercent ?? 5),
+    gstCharges: String(invoice.trip?.gstCharges ?? invoice.gstPercent ?? 18),
     projectType: getInvoiceProjectType(invoice),
     billingAddress: String(invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "")
   };

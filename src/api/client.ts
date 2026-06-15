@@ -33,12 +33,19 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => {
     const method = response.config.method?.toLowerCase();
-    const message = response.data && typeof response.data === "object" && "message" in response.data && typeof response.data.message === "string"
-      ? response.data.message
-      : "";
+    const message = getMessage(response.data, response.status);
+    const success = getSuccessFlag(response.data);
 
-    if (message && method && method !== "get") {
-      showToast({ type: "success", title: "Success", message });
+    if (success === false) {
+      showToast({ type: "error", title: "Request failed", message });
+      return Promise.reject(new ApiError(message, response.status, response.data));
+    }
+
+    const url = String(response.config.url || "");
+    const hasCustomToast = url.includes("/auth/login") || url.includes("/bookings/scan-mails") || url.includes("/invoices/send-bulk");
+
+    if (method && method !== "get" && !hasCustomToast) {
+      showToast({ type: "success", title: "Success", message: message || successMessage(method) });
     }
 
     return response;
@@ -77,6 +84,20 @@ function getMessage(data: unknown, status: number) {
   if (status === 401) return "Your session has expired. Please login again.";
   if (status === 403) return "You do not have permission to perform this action.";
   return "Something went wrong. Please try again.";
+}
+
+function successMessage(method: string) {
+  if (method === "post") return "Created or submitted successfully.";
+  if (method === "put" || method === "patch") return "Updated successfully.";
+  if (method === "delete") return "Deleted successfully.";
+  return "Request completed successfully.";
+}
+
+function getSuccessFlag(data: unknown) {
+  if (data && typeof data === "object" && "success" in data && typeof data.success === "boolean") {
+    return data.success;
+  }
+  return undefined;
 }
 
 function handleAuthFailure(status: number, data: unknown) {

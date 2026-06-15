@@ -7,6 +7,7 @@ import { z } from "zod";
 import logo from "../assets/logo.png";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { login } from "../redux/slices/authSlice";
+import { showToast } from "../utils/toast";
 
 const schema = z.object({ email: z.string().email(), password: z.string().min(8) });
 
@@ -18,8 +19,13 @@ export function LoginPage() {
     resolver: zodResolver(schema),
     defaultValues: { email: "admin@uniquecar.com", password: "" }
   });
-  const submitLogin = handleSubmit((values) => {
-    dispatch(login(values));
+  const submitLogin = handleSubmit(async (values) => {
+    try {
+      await dispatch(login(values)).unwrap();
+      showToast({ type: "success", title: "Login successful", message: "Welcome back to Unique Carz." });
+    } catch {
+      // Axios/auth state already surfaces the readable error.
+    }
   });
 
   if (isAuthenticated) return <Navigate to="/" replace />;
