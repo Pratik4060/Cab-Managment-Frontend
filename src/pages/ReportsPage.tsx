@@ -1,4 +1,4 @@
-import { Columns3, Download, FileBarChart, Printer, RotateCcw } from "lucide-react";
+import { Columns3, Download, FileBarChart, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, renderPieLabelLine, renderPiePercentageLabel } from "../components/charts/PiePercentageLabel";
@@ -112,10 +112,6 @@ export function ReportsPage() {
           <button className="btn-secondary" onClick={() => void handleExport("pdf")}>
             <Download className="h-4 w-4" />
             PDF
-          </button>
-          <button className="btn-secondary" onClick={() => window.print()}>
-            <Printer className="h-4 w-4" />
-            Print
           </button>
         </div>
       </div>
