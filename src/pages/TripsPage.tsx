@@ -67,12 +67,10 @@ export function TripsPage() {
     dispatch(vehicleActions.fetchAll(undefined));
   }, [dispatch]);
 
-  const pendingBookings = useMemo(
-    () => newBookingItems.filter((booking) => booking.status === "New"),
-    [newBookingItems],
-  );
+  const pendingBookings = useMemo(() => newBookingItems || [], [newBookingItems]);
+
   const assignedTrips = useMemo(
-    () => confirmedBookingItems.map((booking) => buildAssignedTripFromBooking(booking, drivers, vehicles)),
+    () => (confirmedBookingItems || []).filter((b) => b.status === "Confirmed").map((booking) => buildAssignedTripFromBooking(booking, drivers, vehicles)),
     [confirmedBookingItems, drivers, vehicles],
   );
 
