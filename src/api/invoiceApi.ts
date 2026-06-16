@@ -17,6 +17,22 @@ export type InvoicePaymentPayload = {
   remark?: string;
 };
 
+export type InvoiceCreatePayload = {
+  bookingId: string;
+  clientName: string;
+  clientEmail: string;
+  projectType: string;
+  billingAddress: string;
+  tripFare: number | string;
+  totalKm: number | string;
+  kmOut: number | string;
+  kmIn: number | string;
+  tollCharges: number | string;
+  parkingCharges: number | string;
+  extraCharges: number | string;
+  gstPercent: number | string;
+};
+
 export type BulkSendPayload = {
   status?: string;
   paymentStatus?: string;
@@ -40,6 +56,18 @@ export const invoiceApi = {
     return normalizeInvoice(
       unwrapData<any>(
         await apiRequest({ url: `/invoices/${id}`, method: "GET" }),
+      ),
+    );
+  },
+
+  async createInvoice(payload: InvoiceCreatePayload) {
+    return normalizeInvoice(
+      unwrapData<any>(
+        await apiRequest({
+          url: "/invoices",
+          method: "POST",
+          data: toInvoiceCreatePayload(payload),
+        }),
       ),
     );
   },
@@ -69,20 +97,14 @@ export const invoiceApi = {
   },
 
   async sendInvoice(id: string, payload: { clientEmail: string }) {
-    return normalizeInvoice(
-      unwrapData<any>(
-        await apiRequest({
-          url: `/emails/send`,
-          method: "POST",
-          data: {
-            to: payload.clientEmail,
-            subject: "Invoice PDF",
-            html: "<h1>Please find attached invoice PDF</h1>",
-            invoiceId: "b89236bd-05f9-4d9e-a3da-ad69c536da69",
-          },
-        }),
-      ),
+    const data = unwrapData<any>(
+      await apiRequest({
+        url: `/invoices/${id}/send`,
+        method: "POST",
+        data: payload,
+      }),
     );
+    return data?.id || data?._id || data?.invoiceNumber ? normalizeInvoice(data) : null;
   },
 
   async sendBulk(payload: BulkSendPayload) {
@@ -245,6 +267,11 @@ export function normalizeInvoice(invoice: any) {
       invoice.cab_request_number ||
       booking.cabRequestNumber ||
       booking.cab_request_number,
+    emailScreenshot:
+      invoice.emailScreenshot ||
+      invoice.email_screenshot ||
+      booking.emailScreenshot ||
+      booking.email_screenshot,
     createdAt: invoice.createdAt || invoice.created_at,
     updatedAt: invoice.updatedAt || invoice.updated_at,
     trip: {
@@ -314,6 +341,11 @@ export function normalizeInvoice(invoice: any) {
         booking.sender_email ||
         invoice.clientEmail ||
         invoice.client_email,
+      emailScreenshot:
+        booking.emailScreenshot ||
+        booking.email_screenshot ||
+        invoice.emailScreenshot ||
+        invoice.email_screenshot,
     },
   };
 }
@@ -334,6 +366,24 @@ function toInvoiceUpdatePayload(payload: any) {
     true,
   );
   return result;
+}
+
+function toInvoiceCreatePayload(payload: InvoiceCreatePayload) {
+  return {
+    bookingId: payload.bookingId,
+    clientName: payload.clientName,
+    clientEmail: payload.clientEmail,
+    projectType: payload.projectType,
+    billingAddress: payload.billingAddress,
+    tripFare: Number(payload.tripFare),
+    totalKm: Number(payload.totalKm),
+    kmOut: Number(payload.kmOut),
+    kmIn: Number(payload.kmIn),
+    tollCharges: Number(payload.tollCharges),
+    parkingCharges: Number(payload.parkingCharges),
+    extraCharges: Number(payload.extraCharges),
+    gstPercent: Number(payload.gstPercent)
+  };
 }
 
 function toPaymentPayload(payload: InvoicePaymentPayload) {

@@ -506,10 +506,10 @@ export function TripsPage() {
               costCenterOfProject: z.string().optional(),
               bookedBy: z.string().optional(),
               employeeCount: optionalNumber(),
-            purposeOfCabBooking: z.string().optional(),
-            senderEmail: z.string().optional(),
-            emailScreenshot: z.any().optional(),
-          })}
+              purposeOfCabBooking: z.string().optional(),
+              senderEmail: z.string().optional(),
+              emailScreenshot: z.any().optional(),
+            })}
             defaults={{
               bookingId: selectedBooking.bookingId,
               cabRequestNumber: selectedBooking.cabRequestNumber,
@@ -568,16 +568,16 @@ export function TripsPage() {
         {(!pendingBookings.length ||
           !availableDrivers.length ||
           !availableVehicles.length) && (
-          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-            {!pendingBookings.length && <p>No new enquiries are available.</p>}
-            {!availableDrivers.length && (
-              <p>No available drivers are available.</p>
-            )}
-            {!availableVehicles.length && (
-              <p>No available vehicles are available.</p>
-            )}
-          </div>
-        )}
+            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              {!pendingBookings.length && <p>No new enquiries are available.</p>}
+              {!availableDrivers.length && (
+                <p>No available drivers are available.</p>
+              )}
+              {!availableVehicles.length && (
+                <p>No available vehicles are available.</p>
+              )}
+            </div>
+          )}
         <EntityForm
           fields={assignFields}
           defaults={{ driverId: "", vehicleId: "" }}
@@ -832,7 +832,7 @@ function DutySlipEditor({
               onChange={(event) =>
                 updateField("closingLocation", event.target.value)
               }
-              />
+            />
           }
         />
         <TripCard
@@ -884,6 +884,11 @@ function DutySlipEditor({
               <p className="text-[11px] text-slate-500">
                 {form.dutySlipPhoto ? "Duty slip photo attached." : "Upload the duty slip photo here."}
               </p>
+              {form.dutySlipPhoto && (
+                <a href={form.dutySlipPhoto} target="_blank" rel="noreferrer" className="inline-flex rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20">
+                  View Duty Slip
+                </a>
+              )}
             </div>
           }
         />
@@ -1035,18 +1040,18 @@ function TripDetails({ data }: { data: any }) {
     ["Reporting Address", booking.reportingAddress],
     ["Drop Address", booking.dropAddress],
     ["Car Type", booking.carType],
-        ["Project Expenses", booking.projectExpenses],
-        ["Cost Center Of Project", booking.costCenterOfProject],
-        ["Booked By", booking.bookedBy],
-        ["Purpose of Cab Booking", booking.purposeOfCabBooking],
-        ["Employee Count", booking.employeeCount],
-        ["Email", booking.senderEmail],
-        ["Email Screenshot", booking.emailScreenshot ? "Uploaded" : "-"],
-        ["Trip Status", data.status || booking.status],
-        ["Driver", data.driver?.driverName],
-        ["Duty Slip Photo", data.dutySlipPhoto ? "Uploaded" : "-"],
-        [
-          "Vehicle",
+    ["Project Expenses", booking.projectExpenses],
+    ["Cost Center Of Project", booking.costCenterOfProject],
+    ["Booked By", booking.bookedBy],
+    ["Purpose of Cab Booking", booking.purposeOfCabBooking],
+    ["Employee Count", booking.employeeCount],
+    ["Email", booking.senderEmail],
+    ["Email Screenshot", booking.emailScreenshot ? <AttachmentLink href={booking.emailScreenshot} label="View Email Screenshot" /> : "-"],
+    ["Trip Status", data.status || booking.status],
+    ["Driver", data.driver?.driverName],
+    ["Duty Slip Photo", data.dutySlipPhoto ? <AttachmentLink href={data.dutySlipPhoto} label="View Duty Slip" /> : "-"],
+    [
+      "Vehicle",
       data.vehicle
         ? `${data.vehicle.registration_number || data.vehicle.registrationNumber}${data.vehicle.vehicle_model || data.vehicle.vehicleModel ? ` - ${data.vehicle.vehicle_model || data.vehicle.vehicleModel}` : ""}`
         : undefined,
@@ -1065,6 +1070,14 @@ function TripDetails({ data }: { data: any }) {
 function formatTripDetailValue(label: string, value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
   return shouldFormatAsDate(label, value) ? formatDisplayDate(value) : value;
+}
+
+function AttachmentLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className="inline-flex rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20">
+      {label}
+    </a>
+  );
 }
 
 function buildAssignedTripFromBooking(booking: any, drivers: any[], vehicles: any[]) {

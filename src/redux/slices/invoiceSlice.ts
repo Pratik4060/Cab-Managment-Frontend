@@ -46,6 +46,14 @@ export const fetchById = createAsyncThunk("invoices/fetchById", async (id: strin
   }
 });
 
+export const createOne = createAsyncThunk("invoices/createOne", async (payload: any, { rejectWithValue }) => {
+  try {
+    return await invoiceApi.createInvoice(payload);
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
 export const updateOne = createAsyncThunk("invoices/updateOne", async ({ id, payload }: { id: string; payload: any }, { rejectWithValue }) => {
   try {
     return await invoiceApi.updateInvoice(id, payload);
@@ -311,6 +319,7 @@ export const invoiceActions = {
   ...invoiceSlice.actions,
   fetchAll,
   fetchById,
+  createOne,
   updateOne,
   updatePaymentStatus,
   sendInvoice,
