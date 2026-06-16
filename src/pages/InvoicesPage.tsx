@@ -625,21 +625,35 @@ function InfoCard({ label, value }: { label: string; value: any }) {
 }
 
 function buildInvoiceExport(rows: any[]) {
-  const headers = ["Invoice", "Date", "Client", "Project Type", "Invoice Status", "Payment Status", "Total", "Balance", "Created At"];
+  const headers = [
+    "Invoice",
+    "Date",
+    "Client",
+    "Project Type",
+    "Invoice Status",
+    "Payment Status",
+    "Total",
+    "Balance",
+    "Created At"
+  ];
+
   const lines = rows.map((invoice) => [
     invoice.invoiceNumber || "",
-    invoice.invoiceDate
-      ? formatDisplayDate(invoice.invoiceDate)
-      : formatDisplayDate(invoice.createdAt),
+    formatDisplayDate(invoice.invoiceDate || invoice.createdAt),
     invoice.clientName || "",
-    getInvoiceProjectType(invoice),
+    getInvoiceProjectType(invoice) || invoice.projectType || "",
     invoice.status || "",
-    invoice.paymentStatus === "Paid" || remainingAmount(invoice) === 0 ? "Paid" : "Pending",
-    Number(invoice.finalAmount || 0),
-    Number(remainingAmount(invoice)),
+    Number(invoice.remainingAmount ?? remainingAmount(invoice)) <= 0
+      ? "Paid"
+      : "Pending",
+    Number(invoice.finalAmount ?? 0),
+    Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0),
     formatDisplayDate(invoice.createdAt)
   ]);
-  return [headers, ...lines].map((row) => row.map(csvCell).join(",")).join("\n");
+
+  return [headers, ...lines]
+    .map((row) => row.map(csvCell).join(","))
+    .join("\n");
 }
 
 function csvCell(value: unknown) {

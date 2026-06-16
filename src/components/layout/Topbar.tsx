@@ -73,7 +73,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
             )}
           </button>
           {openNotifications && (
-            <div className="absolute right-0 top-11 z-50 w-72 rounded-lg border border-brand-100 bg-white p-2 shadow-2xl dark:border-red-950/40 dark:bg-[#101012]">
+            <div className="absolute right-0 top-11 z-5 w-72 rounded-lg border border-brand-100 bg-white p-2 shadow-2xl dark:border-red-950/40 dark:bg-[#101012]">
               <div className="flex items-center justify-between gap-3 border-b border-brand-100 px-2.5 py-1.5 dark:border-red-950/40">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
