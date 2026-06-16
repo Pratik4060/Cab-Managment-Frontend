@@ -1,4 +1,4 @@
-import { Loader2, Moon, Save, Sun } from "lucide-react";
+import { Eye, EyeOff, Loader2, Moon, Save, Sun } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { toggleTheme } from "../redux/slices/themeSlice";
@@ -23,6 +23,8 @@ export function ProfilePage() {
   const mode = useAppSelector((state) => state.theme.mode);
   const [profile, setProfile] = useState({ fullName: user?.fullName || user?.name || "", email: user?.email || "" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "" });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -85,8 +87,20 @@ export function ProfilePage() {
             {profileLoading && <ProfileLoader />}
             <h2 className="mb-3 text-[15px] font-semibold">Change Password</h2>
             <div className="space-y-3">
-              <input className="input" type="password" placeholder="Current password" value={passwords.currentPassword} onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))} />
-              <input className="input" type="password" placeholder="New password" value={passwords.newPassword} onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))} />
+              <PasswordInput
+                placeholder="Current password"
+                value={passwords.currentPassword}
+                visible={showCurrentPassword}
+                onToggle={() => setShowCurrentPassword((value) => !value)}
+                onChange={(value) => setPasswords((p) => ({ ...p, currentPassword: value }))}
+              />
+              <PasswordInput
+                placeholder="New password"
+                value={passwords.newPassword}
+                visible={showNewPassword}
+                onToggle={() => setShowNewPassword((value) => !value)}
+                onChange={(value) => setPasswords((p) => ({ ...p, newPassword: value }))}
+              />
               <button className="btn-secondary" disabled={profileLoading}><Save className="h-4 w-4" />Change Password</button>
             </div>
           </form>
@@ -96,6 +110,40 @@ export function ProfilePage() {
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PasswordInput({
+  placeholder,
+  value,
+  visible,
+  onToggle,
+  onChange
+}: {
+  placeholder: string;
+  value: string;
+  visible: boolean;
+  onToggle: () => void;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <input
+        className="input pr-10"
+        type={visible ? "text" : "password"}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <button
+        type="button"
+        className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 rounded-md p-1.5 text-slate-500 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-brand-200"
+        aria-label={visible ? `Hide ${placeholder}` : `Show ${placeholder}`}
+        onClick={onToggle}
+      >
+        {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
     </div>
   );
 }

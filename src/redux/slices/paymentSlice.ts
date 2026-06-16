@@ -1,9 +1,8 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { seedPayments } from "../seedData";
 
 const paymentSlice = createSlice({
   name: "payments",
-  initialState: { items: seedPayments as any[], loading: false, error: null as string | null },
+  initialState: { items: [] as any[], loading: false, error: null as string | null },
   reducers: {
     setPayments(state, action: PayloadAction<any[]>) {
       state.items = action.payload;

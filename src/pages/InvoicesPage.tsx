@@ -1,4 +1,4 @@
-import { Banknote, Download, Eye, FileArchive, FileDown, Mail, Pencil, Plus, Trash2 } from "lucide-react";
+import { Banknote, Download, Eye, FileArchive, FileDown, Loader2, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { z } from "zod";
@@ -94,7 +94,8 @@ export function InvoicesPage() {
   }
 
   return (
-    <div className="space-y-3.5">
+    <div className="relative space-y-3.5">
+      {invoices.loading && <RequestOverlay message={invoices.requestMessage || "Processing request..."} />}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Invoices</h1>
@@ -157,6 +158,7 @@ export function InvoicesPage() {
       <div className="panel p-2">
         <DataTable
           loading={invoices.loading}
+          loadingMessage={invoices.requestMessage || "Loading invoices..."}
           rows={filteredRows}
           selectable
           selectedIds={selectedInvoiceIds}
@@ -371,16 +373,16 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Trip" value={invoice.trip?.tripNumber || "-"} />
         <InfoCard label="Project Type" value={getInvoiceProjectType(invoice)} />
         <InfoCard label="Billing Address" value={invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "-"} />
-        <InfoCard label="KM OUT" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
-        <InfoCard label="KM IN" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
+        <InfoCard label="KM OUT" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
+        <InfoCard label="KM IN" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
         <InfoCard label="Time OUT" value={<input className="input mt-1" type="datetime-local" value={form.timeOut} onChange={(event) => updateField("timeOut", event.target.value)} />} />
         <InfoCard label="Time IN" value={<input className="input mt-1" type="datetime-local" value={form.timeIn} onChange={(event) => updateField("timeIn", event.target.value)} />} />
         <InfoCard label="Project Type" value={<select className="input mt-1" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}><option value="Process">Process</option><option value="Management">Management</option></select>} />
         <InfoCard label="Address" value={<input className="input mt-1" type="text" value={form.billingAddress} onChange={(event) => updateField("billingAddress", event.target.value)} placeholder="Enter address" />} />
-        <InfoCard label="Toll Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
-        <InfoCard label="Parking Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
-        <InfoCard label="Extra Charges" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
-        <InfoCard label="GST (%)" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
+        <InfoCard label="Toll Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
+        <InfoCard label="Parking Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
+        <InfoCard label="Extra Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
+        <InfoCard label="GST (%)" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
         <InfoCard label="Payment Status" value={<PaymentStatusBadge invoice={buildPreviewInvoice(invoice, form)} />} />
         <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
         <InfoCard label="Total KM" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{computed.totalKm.toLocaleString()}</p>} />
@@ -507,7 +509,7 @@ function InvoiceInput({ label, value, error, onChange, type = "text", full = fal
   return (
     <label className={full ? "sm:col-span-2" : ""}>
       <RequiredLabel>{label}</RequiredLabel>
-      <input className="input" type={type} step={type === "number" ? "any" : undefined} inputMode={type === "number" ? "decimal" : undefined} value={value} onChange={(event) => onChange(event.target.value)} />
+      <input className="input" type={type} step={type === "number" ? "any" : undefined} min={type === "number" ? 0 : undefined} inputMode={type === "number" ? "decimal" : undefined} value={value} onChange={(event) => onChange(event.target.value)} />
       {error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
     </label>
   );
@@ -526,16 +528,27 @@ function RequiredLabel({ children }: { children: ReactNode }) {
   return <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
 }
 
+function RequestOverlay({ message }: { message: string }) {
+  return (
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-white/45 backdrop-blur-sm dark:bg-black/45">
+      <div className="rounded-2xl border border-brand-100 bg-white px-6 py-5 text-center shadow-2xl shadow-brand-600/20 dark:border-red-950/45 dark:bg-[#111114]">
+        <Loader2 className="mx-auto h-7 w-7 animate-spin text-brand-600 dark:text-brand-200" />
+        <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-white">{message}</p>
+      </div>
+    </div>
+  );
+}
+
 function validateAddInvoiceForm(form: AddInvoiceFormState, totalKm: number) {
   const errors: Record<string, string> = {};
   const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "tripFare", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
   for (const field of required) {
     if (!String(form[field] ?? "").trim()) errors[field] = "Required";
   }
-  if (form.clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.clientEmail)) errors.clientEmail = "Enter a valid email";
+  if (form.clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.clientEmail)) errors.clientEmail = "Enter a valid email address.";
   for (const field of ["kmOut", "kmIn", "tripFare", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
     const value = normalizeNumber(form[field]);
-    if (value === null || value < 0) errors[field] = "Enter a valid positive number";
+    if (value === null || value < 0) errors[field] = "Enter a number 0 or greater.";
   }
   if (normalizeNumber(form.kmOut) !== null && normalizeNumber(form.kmIn) !== null && totalKm <= 0) {
     errors.kmIn = "KM In must be greater than KM Out";

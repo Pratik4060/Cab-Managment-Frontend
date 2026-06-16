@@ -76,12 +76,13 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           <div className="absolute inset-0 z-40 flex items-center justify-center rounded-lg bg-white/70 backdrop-blur-sm dark:bg-black/45">
             <div className="rounded-2xl border border-brand-100 bg-white px-5 py-4 text-center shadow-2xl shadow-brand-600/15 dark:border-red-950/45 dark:bg-[#111114]">
               <Loader2 className="mx-auto h-6 w-6 animate-spin text-brand-600 dark:text-brand-200" />
-              <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Syncing data...</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{state.requestMessage || "Processing request..."}</p>
             </div>
           </div>
         )}
         <DataTable
           loading={state.loading}
+          loadingMessage={state.requestMessage || `Loading ${title.toLowerCase()}...`}
           rows={visibleRows}
           columns={columns}
           actionCount={3}
@@ -206,11 +207,12 @@ function createFieldSchema(field: any) {
   const requiredMessage = "This field is required.";
 
   if (field.type === "number") {
+    const min = field.min ?? 0;
     const numberSchema = z.preprocess(
       (value) => value === "" || value === null || value === undefined || (typeof value === "number" && Number.isNaN(value)) ? undefined : value,
       field.required === false
-        ? z.coerce.number({ invalid_type_error: "Please enter a valid number." }).optional()
-        : z.coerce.number({ required_error: requiredMessage, invalid_type_error: "Please enter a valid number." }).min(field.min ?? 0, `Minimum value is ${field.min ?? 0}.`)
+        ? z.coerce.number({ invalid_type_error: "Please enter a valid number." }).min(min, `Minimum value is ${min}.`).optional()
+        : z.coerce.number({ required_error: requiredMessage, invalid_type_error: "Please enter a valid number." }).min(min, `Minimum value is ${min}.`)
     );
     return numberSchema;
   }

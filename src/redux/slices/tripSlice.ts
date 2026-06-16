@@ -1,6 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { applyFilter } from "./createEntitySlice";
-import { seedTrips } from "../seedData";
 
 type TripState = {
   items: any[];
@@ -14,9 +13,9 @@ type TripState = {
 };
 
 const initialState: TripState = {
-  items: seedTrips,
-  allItems: seedTrips,
-  total: seedTrips.length,
+  items: [],
+  allItems: [],
+  total: 0,
   page: 1,
   pages: 1,
   loading: false,

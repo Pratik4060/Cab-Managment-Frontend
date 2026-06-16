@@ -2,7 +2,6 @@ import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/tool
 import { ApiError } from "../../api/client";
 import { invoiceApi, normalizeInvoice } from "../../api/invoiceApi";
 import { applyFilter } from "./createEntitySlice";
-import { seedInvoices } from "../seedData";
 
 type InvoiceState = {
   items: any[];
@@ -11,17 +10,19 @@ type InvoiceState = {
   page: number;
   pages: number;
   loading: boolean;
+  requestMessage: string;
   error: string | null;
   filter: Record<string, any>;
 };
 
 const initialState: InvoiceState = {
-  items: seedInvoices,
-  allItems: seedInvoices,
-  total: seedInvoices.length,
+  items: [],
+  allItems: [],
+  total: 0,
   page: 1,
   pages: 1,
   loading: false,
+  requestMessage: "",
   error: null,
   filter: {}
 };
@@ -106,6 +107,7 @@ function refresh(state: InvoiceState) {
   state.items = applyFilter(state.allItems, state.filter);
   state.total = state.items.length;
   state.loading = false;
+  state.requestMessage = "";
 }
 
 function nextInvoiceNumber(items: any[]) {
@@ -277,6 +279,7 @@ const invoiceSlice = createSlice({
     builder
       .addCase(fetchAll.pending, (state) => {
         state.loading = true;
+        state.requestMessage = "Loading invoices...";
         state.error = null;
       })
       .addCase(fetchAll.fulfilled, (state, action) => {
@@ -286,14 +289,17 @@ const invoiceSlice = createSlice({
       })
       .addCase(fetchAll.rejected, (state, action) => {
         state.loading = false;
+        state.requestMessage = "";
         state.error = typeof action.payload === "string" ? action.payload : "Failed to fetch invoices.";
       })
-      .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/pending") && action.type !== fetchAll.pending.type, (state) => {
+      .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/pending") && action.type !== fetchAll.pending.type, (state, action) => {
         state.loading = true;
+        state.requestMessage = invoiceRequestMessage(action.type);
         state.error = null;
       })
       .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/fulfilled") && action.type !== fetchAll.fulfilled.type, (state, action: any) => {
         state.loading = false;
+        state.requestMessage = "";
         if (action.type === deleteOne.fulfilled.type) {
           state.allItems = state.allItems.filter((invoice) => String(invoice._id) !== String(action.payload));
           refresh(state);
@@ -310,6 +316,7 @@ const invoiceSlice = createSlice({
       })
       .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/rejected"), (state, action: any) => {
         state.loading = false;
+        state.requestMessage = "";
         state.error = typeof action.payload === "string" ? action.payload : "Invoice request failed.";
       });
   }
@@ -329,6 +336,17 @@ export const invoiceActions = {
 };
 export const { generateInvoice, regenerateInvoice, applyPayment, setItems: setInvoices } = invoiceSlice.actions;
 export default invoiceSlice.reducer;
+
+function invoiceRequestMessage(actionType: string) {
+  if (actionType === sendInvoice.pending.type || actionType === sendBulkInvoices.pending.type) return "Email sending...";
+  if (actionType === downloadPdf.pending.type) return "Preparing PDF...";
+  if (actionType === createOne.pending.type) return "Creating invoice...";
+  if (actionType === updateOne.pending.type) return "Updating invoice...";
+  if (actionType === updatePaymentStatus.pending.type) return "Updating payment status...";
+  if (actionType === deleteOne.pending.type) return "Deleting invoice...";
+  if (actionType === fetchById.pending.type) return "Loading invoice details...";
+  return "Processing request...";
+}
 
 function normalizeProjectType(value: unknown) {
   return String(value || "")

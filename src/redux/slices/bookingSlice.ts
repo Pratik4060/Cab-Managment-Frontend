@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { bookingApi, normalizeBooking, type BookingPayload, type DutySlipPayload } from "../../api/bookingApi";
 import { applyFilter } from "./createEntitySlice";
-import { seedBookings } from "../seedData";
 
 type BookingState = {
   items: any[];
@@ -10,6 +9,7 @@ type BookingState = {
   page: number;
   pages: number;
   loading: boolean;
+  requestMessage: string;
   error: string | null;
   message: string | null;
   filter: Record<string, any>;
@@ -17,23 +17,26 @@ type BookingState = {
   bucketItems: {
     New: any[];
     Confirmed: any[];
+    CompletedCancelled: any[];
   };
 };
 
 const initialState: BookingState = {
-  items: seedBookings.map(normalizeBooking),
-  allItems: seedBookings.map(normalizeBooking),
-  total: seedBookings.length,
+  items: [],
+  allItems: [],
+  total: 0,
   page: 1,
   pages: 1,
   loading: false,
+  requestMessage: "",
   error: null,
   message: null,
   filter: {},
   scanResult: null,
   bucketItems: {
     New: [],
-    Confirmed: []
+    Confirmed: [],
+    CompletedCancelled: []
   }
 };
 
@@ -43,12 +46,14 @@ function refresh(state: BookingState) {
   state.page = 1;
   state.pages = 1;
   state.loading = false;
+  state.requestMessage = "";
 }
 
 function ensureBuckets(state: BookingState) {
-  state.bucketItems ||= { New: [], Confirmed: [] };
+  state.bucketItems ||= { New: [], Confirmed: [], CompletedCancelled: [] };
   state.bucketItems.New ||= [];
   state.bucketItems.Confirmed ||= [];
+  state.bucketItems.CompletedCancelled ||= [];
 }
 
 function upsertBooking(items: any[], booking: any) {
@@ -77,11 +82,13 @@ export const fetchAll = createAsyncThunk("bookings/fetchAll", async (filter: Rec
 
 export const fetchBookingBuckets = createAsyncThunk("bookings/fetchBookingBuckets", async (_, { rejectWithValue }) => {
   try {
-    const [newItems, assignedItems] = await Promise.all([
+    const [newItems, assignedItems, completedItems, cancelledItems] = await Promise.all([
       bookingApi.getBookings({ status: "New" }),
-      bookingApi.getBookings({ status: "Confirmed" })
+      bookingApi.getBookings({ status: "Confirmed" }),
+      bookingApi.getBookings({ status: "Completed" }),
+      bookingApi.getBookings({ status: "Cancelled" })
     ]);
-    return { newItems, assignedItems };
+    return { newItems, assignedItems, completedCancelledItems: [...completedItems, ...cancelledItems] };
   } catch (error) {
     return rejectWithValue(rejectMessage(error));
   }
@@ -168,6 +175,7 @@ const bookingSlice = createSlice({
     builder
       .addCase(fetchAll.pending, (state) => {
         state.loading = true;
+        state.requestMessage = "Loading trips...";
         state.error = null;
       })
       .addCase(fetchAll.fulfilled, (state, action) => {
@@ -180,12 +188,16 @@ const bookingSlice = createSlice({
         if (action.payload.filter.status === "Confirmed") {
           state.bucketItems.Confirmed = action.payload.items;
         }
+        if (["Completed", "Cancelled"].includes(action.payload.filter.status)) {
+          state.bucketItems.CompletedCancelled = action.payload.items;
+        }
         refresh(state);
       })
       .addCase(fetchBookingBuckets.fulfilled, (state, action) => {
         ensureBuckets(state);
         state.bucketItems.New = action.payload.newItems;
         state.bucketItems.Confirmed = action.payload.assignedItems;
+        state.bucketItems.CompletedCancelled = action.payload.completedCancelledItems;
         state.allItems = state.filter.status === "Confirmed" ? action.payload.assignedItems : action.payload.newItems;
         state.filter = { status: state.filter.status === "Confirmed" ? "Confirmed" : "New" };
         refresh(state);
@@ -216,6 +228,7 @@ const bookingSlice = createSlice({
       })
       .addCase(scanMails.fulfilled, (state, action) => {
         state.loading = false;
+        state.requestMessage = "";
         state.scanResult = action.payload;
         const insertedCount = Number(action.payload?.insertedCount || 0);
         state.message = insertedCount > 0
@@ -224,14 +237,17 @@ const bookingSlice = createSlice({
       })
       .addCase(createDutySlip.fulfilled, (state) => {
         state.loading = false;
+        state.requestMessage = "";
         state.message = "Duty slip generated successfully.";
       })
-      .addMatcher((action) => action.type.startsWith("bookings/") && action.type.endsWith("/pending"), (state) => {
+      .addMatcher((action) => action.type.startsWith("bookings/") && action.type.endsWith("/pending"), (state, action) => {
         state.loading = true;
+        state.requestMessage = bookingRequestMessage(action.type);
         state.error = null;
       })
       .addMatcher((action) => action.type.startsWith("bookings/") && action.type.endsWith("/rejected"), (state, action: any) => {
         state.loading = false;
+        state.requestMessage = "";
         state.error = String(action.payload || "Booking request failed. Please try again.");
       });
   }
@@ -259,3 +275,15 @@ export const deleteBooking = cancelBooking;
 export const changeBookingStatus = bookingSlice.actions.changeStatus;
 export const setBookings = bookingSlice.actions.setItems;
 export default bookingSlice.reducer;
+
+function bookingRequestMessage(actionType: string) {
+  if (actionType === fetchAll.pending.type || actionType === fetchBookingBuckets.pending.type) return "Loading trips...";
+  if (actionType === scanMails.pending.type) return "Scanning mail...";
+  if (actionType === createDutySlip.pending.type) return "Generating duty slip...";
+  if (actionType === assignBooking.pending.type) return "Assigning trip...";
+  if (actionType === cancelBooking.pending.type) return "Cancelling trip...";
+  if (actionType === createOne.pending.type) return "Creating trip...";
+  if (actionType === updateOne.pending.type) return "Updating trip...";
+  if (actionType === fetchById.pending.type) return "Loading trip details...";
+  return "Processing trip request...";
+}
