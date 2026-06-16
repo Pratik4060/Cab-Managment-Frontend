@@ -7,10 +7,11 @@ import { formatDisplayDate, shouldFormatAsDate } from "../../utils/formatDate";
 type Column = { key: string; header: string; render?: (row: any) => ReactNode };
 const MENU_ROW_HEIGHT = 54;
 
-export function DataTable({ columns, rows = [], loading, actions, actionCount, selectable, selectedIds, onToggleRow, onToggleAll }: {
+export function DataTable({ columns, rows = [], loading, loadingMessage, actions, actionCount, selectable, selectedIds, onToggleRow, onToggleAll }: {
   columns: Column[];
   rows?: any[];
   loading?: boolean;
+  loadingMessage?: string;
   actions?: (row: any) => React.ReactNode;
   actionCount?: number;
   selectable?: boolean;
@@ -70,7 +71,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
     };
   }, [openMenuId, rows]);
 
-  if (loading) return <LoadingSkeleton />;
+  if (loading) return <LoadingSkeleton message={loadingMessage} />;
   if (!rows.length) return <EmptyState />;
   const rowIds = rows.map((row, index) => String(row._id ?? row.id ?? index));
   const selectedSet = new Set(selectedIds || []);

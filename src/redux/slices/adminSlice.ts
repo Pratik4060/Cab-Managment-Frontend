@@ -1,8 +1,7 @@
 import { createEntitySlice } from "./createEntitySlice";
-import { seedAdmins } from "../seedData";
 
 const slice = createEntitySlice("admins", {
-  seed: seedAdmins,
+  seed: [],
   createDefaults: () => ({ isActive: true })
 });
 export const adminActions = slice.actions;

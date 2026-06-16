@@ -21,7 +21,7 @@ const sections = [
   {
     label: "Bookings",
     items: [
-      { label: "Trips", path: "/bookings/trips", icon: Route }
+      { label: "Bookings", path: "/bookings/trips", icon: Route }
     ]
   },
   {

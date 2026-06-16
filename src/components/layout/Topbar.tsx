@@ -17,8 +17,8 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   );
   const [openNotifications, setOpenNotifications] = useState(false);
   const [notifications, setNotifications] = useState<BookingNotification[]>([]);
-  const [seenIds, setSeenIds] = useState<string[]>(() => JSON.parse(localStorage.getItem("seenBookingNotifications") || "[]"));
-  const [clearedIds, setClearedIds] = useState<string[]>(() => JSON.parse(localStorage.getItem("clearedBookingNotifications") || "[]"));
+  const [seenIds, setSeenIds] = useState<string[]>([]);
+  const [clearedIds, setClearedIds] = useState<string[]>([]);
   const notificationButtonRef = useRef<HTMLButtonElement | null>(null);
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
   const unreadNotifications = notifications.filter((item) => !seenIds.includes(item._id));
@@ -51,7 +51,6 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   function openTrips(notification: BookingNotification) {
     const nextSeen = Array.from(new Set([...seenIds, notification._id]));
     setSeenIds(nextSeen);
-    localStorage.setItem("seenBookingNotifications", JSON.stringify(nextSeen));
     setOpenNotifications(false);
     navigate("/bookings/trips");
   }
@@ -63,8 +62,6 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
     setSeenIds(nextSeen);
     setClearedIds(nextCleared);
     setNotifications((items) => items.filter((notification) => notification._id !== notificationId));
-    localStorage.setItem("seenBookingNotifications", JSON.stringify(nextSeen));
-    localStorage.setItem("clearedBookingNotifications", JSON.stringify(nextCleared));
   }
 
   function clearAllNotifications() {
@@ -73,8 +70,6 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
     setSeenIds(nextSeen);
     setClearedIds(nextCleared);
     setNotifications([]);
-    localStorage.setItem("seenBookingNotifications", JSON.stringify(nextSeen));
-    localStorage.setItem("clearedBookingNotifications", JSON.stringify(nextCleared));
   }
 
   return (

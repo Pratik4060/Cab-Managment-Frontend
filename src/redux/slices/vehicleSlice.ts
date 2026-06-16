@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { ApiError } from "../../api/client";
 import { vehicleApi } from "../../api/vehicleApi";
-import { seedVehicles } from "../seedData";
 
 type VehicleState = {
   items: any[];
@@ -10,17 +9,19 @@ type VehicleState = {
   page: number;
   pages: number;
   loading: boolean;
+  requestMessage: string;
   error: string | null;
   filter: Record<string, any>;
 };
 
 const initialState: VehicleState = {
-  items: seedVehicles,
-  allItems: seedVehicles,
-  total: seedVehicles.length,
+  items: [],
+  allItems: [],
+  total: 0,
   page: 1,
   pages: 1,
   loading: false,
+  requestMessage: "",
   error: null,
   filter: {}
 };
@@ -78,10 +79,12 @@ const vehicleSlice = createSlice({
     builder
       .addCase(fetchAll.pending, (state) => {
         state.loading = true;
+        state.requestMessage = "Loading cars...";
         state.error = null;
       })
       .addCase(fetchAll.fulfilled, (state, action) => {
         state.loading = false;
+        state.requestMessage = "";
         state.error = null;
         state.filter = action.payload.filter;
         state.allItems = action.payload.rows;
@@ -89,6 +92,7 @@ const vehicleSlice = createSlice({
       })
       .addCase(fetchAll.rejected, (state, action) => {
         state.loading = false;
+        state.requestMessage = "";
         state.error = typeof action.payload === "string" ? action.payload : "Failed to fetch cars.";
         refresh(state);
       })
@@ -132,6 +136,7 @@ function refresh(state: VehicleState) {
   state.page = 1;
   state.pages = 1;
   state.loading = false;
+  state.requestMessage = "";
 }
 
 function refreshSuccess(state: VehicleState) {
@@ -141,11 +146,13 @@ function refreshSuccess(state: VehicleState) {
 
 function setLoading(state: VehicleState) {
   state.loading = true;
+  state.requestMessage = "Processing car request...";
   state.error = null;
 }
 
 function setRejected(state: VehicleState, action: PayloadAction<unknown>) {
   state.loading = false;
+  state.requestMessage = "";
   state.error = typeof action.payload === "string" ? action.payload : "Car request failed.";
 }
 

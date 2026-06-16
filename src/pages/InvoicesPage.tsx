@@ -1,4 +1,4 @@
-import { Banknote, Download, Eye, FileArchive, FileDown, Mail, Pencil, Plus, Trash2 } from "lucide-react";
+import { Banknote, Download, Eye, FileArchive, FileDown, Loader2, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { z } from "zod";
@@ -94,7 +94,8 @@ export function InvoicesPage() {
   }
 
   return (
-    <div className="space-y-3.5">
+    <div className="relative space-y-3.5">
+      {invoices.loading && <RequestOverlay message={invoices.requestMessage || "Processing request..."} />}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Invoices</h1>
@@ -157,6 +158,7 @@ export function InvoicesPage() {
       <div className="panel p-2">
         <DataTable
           loading={invoices.loading}
+          loadingMessage={invoices.requestMessage || "Loading invoices..."}
           rows={filteredRows}
           selectable
           selectedIds={selectedInvoiceIds}
@@ -524,6 +526,17 @@ function ComputedField({ label, value }: { label: string; value: string }) {
 
 function RequiredLabel({ children }: { children: ReactNode }) {
   return <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
+}
+
+function RequestOverlay({ message }: { message: string }) {
+  return (
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-white/45 backdrop-blur-sm dark:bg-black/45">
+      <div className="rounded-2xl border border-brand-100 bg-white px-6 py-5 text-center shadow-2xl shadow-brand-600/20 dark:border-red-950/45 dark:bg-[#111114]">
+        <Loader2 className="mx-auto h-7 w-7 animate-spin text-brand-600 dark:text-brand-200" />
+        <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-white">{message}</p>
+      </div>
+    </div>
+  );
 }
 
 function validateAddInvoiceForm(form: AddInvoiceFormState, totalKm: number) {

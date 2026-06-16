@@ -251,9 +251,9 @@ export function TripsPage() {
     <div className="space-y-3.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Trips</h1>
+          <h1 className="text-xl font-bold">Bookings</h1>
           <p className="text-sm text-slate-500">
-            New enquiries on the left, assigned trips on the right.
+            New enquiries on the left, assigned bookings on the right.
           </p>
         </div>
       </div>
@@ -325,7 +325,7 @@ export function TripsPage() {
                 </span>
               </div>
               <p className="mt-2.5 text-sm text-slate-500">
-                Completed and cancelled trip history.
+               Click to jump to the Completed/cancelled trip history.
               </p>
             </div>
             <span className="rounded-full bg-zinc-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
@@ -341,7 +341,7 @@ export function TripsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-                  Trips
+                 New Bookings
                 </h2>
                 <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
@@ -378,13 +378,14 @@ export function TripsPage() {
               </button>
               <button className="btn-primary" onClick={() => setAddOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Add Trip
+                Add Booking
               </button>
             </div>
           </div>
 
           <DataTable
             loading={loading}
+            loadingMessage={bookingState.requestMessage || "Loading new trips..."}
             rows={pendingBookings}
             columns={pendingColumns}
             actionCount={4}
@@ -415,14 +416,14 @@ export function TripsPage() {
                   }}
                 >
                   <ClipboardCheck className="h-4 w-4" />
-                  <span>Assign Trip</span>
+                  <span>Assign Booking</span>
                 </button>
                 <button
                   className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
                   onClick={() => setDeleteTarget({ type: "new", item: row })}
                 >
                   <Ban className="h-4 w-4" />
-                  <span>Cancel Trip</span>
+                  <span>Cancel Booking</span>
                 </button>
               </div>
             )}
@@ -434,7 +435,7 @@ export function TripsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-                  Assigned Trips
+                  Assigned Bookings
                 </h2>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
@@ -448,6 +449,7 @@ export function TripsPage() {
 
           <DataTable
             loading={loading}
+            loadingMessage={bookingState.requestMessage || "Loading assigned trips..."}
             rows={assignedTrips}
             columns={assignedColumns}
             actionCount={3}
@@ -478,7 +480,7 @@ export function TripsPage() {
                   onClick={() => setDeleteTarget({ type: "assigned", item: row })}
                 >
                   <Ban className="h-4 w-4" />
-                  <span>Cancel Trip</span>
+                  <span>Cancel Booking</span>
                 </button>
               </div>
             )}
@@ -490,7 +492,7 @@ export function TripsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-                  Completed / Cancelled Trips
+                  Completed / Cancelled Bookings
                 </h2>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {closedTrips.length}
@@ -504,9 +506,10 @@ export function TripsPage() {
 
           <DataTable
             loading={loading}
+            loadingMessage={bookingState.requestMessage || "Loading completed and cancelled trips..."}
             rows={closedTrips}
             columns={closedColumns}
-            actionCount={1}
+            actionCount={2}
             actions={(row) => (
               <div className="flex min-w-40 flex-col gap-2">
                 <button
@@ -517,13 +520,21 @@ export function TripsPage() {
                   <Eye className="h-4 w-4" />
                   <span>View</span>
                 </button>
+                <button
+                  className="btn-secondary w-full justify-start p-2"
+                  title="View duty slip"
+                  onClick={() => setViewDetails({ type: "dutySlip", data: row })}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>View Duty Slip</span>
+                </button>
               </div>
             )}
           />
         </section>
       )}
 
-      <Modal open={addOpen} title="Add Trip" onClose={() => setAddOpen(false)}>
+      <Modal open={addOpen} title="Add Booking" onClose={() => setAddOpen(false)}>
         <EntityForm
           fields={inquiryFields}
           schema={z.object({
@@ -547,7 +558,7 @@ export function TripsPage() {
             emailScreenshot: z.any().optional(),
           })}
           defaults={{ bookingId: "Auto generated" }}
-          submitLabel="Save Trip"
+          submitLabel="Save Booking"
           onSubmit={async (values) => {
             await dispatch(
               bookingActions.createOne({ ...values, status: "New" }),
@@ -560,7 +571,7 @@ export function TripsPage() {
 
       <Modal
         open={editOpen}
-        title="Edit Trip"
+        title="Edit Booking"
         onClose={() => setEditOpen(false)}
       >
         {selectedBooking && (
@@ -606,7 +617,7 @@ export function TripsPage() {
               senderEmail: selectedBooking.senderEmail,
               emailScreenshot: selectedBooking.emailScreenshot,
             }}
-            submitLabel="Update Trip"
+            submitLabel="Update Booking"
             onSubmit={async (values) => {
               await dispatch(
                 bookingActions.updateOne({
@@ -627,7 +638,7 @@ export function TripsPage() {
 
       <Modal
         open={assignOpen}
-        title="Assign Trip"
+        title="Assign Booking"
         onClose={() => setAssignOpen(false)}
       >
         {selectedBooking && (
@@ -680,7 +691,7 @@ export function TripsPage() {
 
       <Modal
         open={Boolean(viewDetails)}
-        title="Trip Details"
+        title="Booking Details"
         onClose={() => setViewDetails(null)}
       >
         {viewDetails && <TripDetails data={viewDetails.data} />}
