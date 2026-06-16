@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type FieldOption = string | { value: string; label: string };
@@ -70,7 +71,10 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
     <form className="grid gap-3 sm:grid-cols-2" onSubmit={handleSubmit(submitWithFiles)}>
       {fields.map((field) => (
         <label key={field.name} className={field.full ? "sm:col-span-2" : ""}>
-          <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{field.label}</span>
+          <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">
+            {field.label}
+            {field.required !== false && !field.disabled && <span className="ml-0.5 text-brand-600">*</span>}
+          </span>
           {field.type === "select" ? (
             <select className="input" {...register(field.name as any)}>
               <option value="">{field.placeholder || `Select ${field.label}`}</option>
@@ -81,12 +85,15 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
               })}
             </select>
           ) : field.type === "file" ? (
-            <input
-              className="input file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white"
-              type="file"
-              accept={field.accept || "image/*"}
-              {...register(field.name as any)}
-            />
+            <div className="space-y-2">
+              <input
+                className="input file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white"
+                type="file"
+                accept={field.accept || "image/*"}
+                {...register(field.name as any)}
+              />
+              <FilePreview value={watch(field.name) || defaults[field.name]} label={field.label} />
+            </div>
           ) : (
             <input
               className="input"
@@ -106,6 +113,30 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
         <button className="btn-primary" disabled={isSubmitting}>{submitLabel}</button>
       </div>
     </form>
+  );
+}
+
+function FilePreview({ value, label }: { value: unknown; label: string }) {
+  const file = getSelectedFile(value);
+  const [objectUrl, setObjectUrl] = useState("");
+  const source = typeof value === "string" ? value : objectUrl;
+
+  useEffect(() => {
+    if (!file) {
+      setObjectUrl("");
+      return undefined;
+    }
+    const url = URL.createObjectURL(file);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  if (!source) return null;
+
+  return (
+    <a href={source} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20">
+      View {label}
+    </a>
   );
 }
 

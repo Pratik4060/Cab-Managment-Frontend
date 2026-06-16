@@ -1,5 +1,6 @@
-import { Banknote, Download, Eye, FileDown, Mail, Pencil, Trash2 } from "lucide-react";
+import { Banknote, Download, Eye, FileArchive, FileDown, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
 import { Modal } from "../components/common/Modal";
@@ -28,8 +29,7 @@ type InvoiceDutySlipState = {
 };
 
 type InvoicePaymentState = {
-  paymentStatus: "Paid" | "Partial" | "Pending";
-  addAmount: string;
+  paymentStatus: "Paid" | "Pending";
   remark: string;
 };
 
@@ -41,6 +41,7 @@ export function InvoicesPage() {
   const [sendTarget, setSendTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [bulkSendOpen, setBulkSendOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [projectTypeFilter, setProjectTypeFilter] = useState<InvoiceProjectType | "">("");
   const [dateFilters, setDateFilters] = useState({ from: "", to: "" });
@@ -88,7 +89,7 @@ export function InvoicesPage() {
     downloadFile(
       `/reports/invoices/export.${format}${exportQuery ? `?${exportQuery}` : ""}`,
       `invoices.${format}`,
-      buildInvoiceExport(exportRows)
+      format === "pdf" ? buildBulkPdfExport(exportRows) : buildInvoiceExport(exportRows)
     );
   }
 
@@ -112,11 +113,10 @@ export function InvoicesPage() {
             <Download className="h-4 w-4" />
             Excel
           </button>
-          {/* <button className="btn-secondary" onClick={() => exportInvoices("pdf")}>
-            <Download className="h-4 w-4" />
-            PDF
-
-          </button> */}
+          <button className="btn-secondary" onClick={() => exportInvoices("pdf")}>
+            <FileArchive className="h-4 w-4" />
+            Bulk PDFs
+          </button>
           <button
             className="btn-secondary"
             onClick={() => setBulkSendOpen(true)}
@@ -124,14 +124,16 @@ export function InvoicesPage() {
             <Mail className="h-4 w-4" />
             Bulk Send
           </button>
+          <button className="btn-primary" onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add Invoice
+          </button>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
         {(["Process", "Management"] as InvoiceProjectType[]).map((type) => {
           const typeRows = rows.filter((invoice) => getInvoiceProjectType(invoice) === type);
-          const totalAmount = typeRows.reduce((sum, invoice) => sum + Number(invoice.finalAmount || 0), 0);
-          const recentNumbers = typeRows.slice(0, 3).map((invoice) => invoice.invoiceNumber).filter(Boolean);
           const isActive = projectTypeFilter === type;
 
           return (
@@ -145,12 +147,6 @@ export function InvoicesPage() {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">{type}</p>
                   <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{typeRows.length}</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {recentNumbers.length ? `Recent: ${recentNumbers.join(", ")}` : "No invoices yet"}
-                  </p>
-                </div>
-                <div className="rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700 dark:bg-brand-950/40 dark:text-brand-100">
-                  ₹ {totalAmount.toLocaleString()}
                 </div>
               </div>
             </button>
@@ -179,7 +175,7 @@ export function InvoicesPage() {
             { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
             { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
-          actionCount={6}
+          actionCount={7}
           actions={(row) => (
             <div className="flex min-w-36 flex-col gap-1.5">
               <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
@@ -202,6 +198,10 @@ export function InvoicesPage() {
                 <FileDown className="h-4 w-4" />
                 <span>Download PDF</span>
               </button>
+              <button className="btn-secondary w-full justify-start p-2" title="Booking PDF" onClick={() => exportBookingPdf(row)}>
+                <FileArchive className="h-4 w-4" />
+                <span>Booking PDF</span>
+              </button>
               <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
                 <Trash2 className="h-4 w-4" />
                 <span>Delete</span>
@@ -213,6 +213,15 @@ export function InvoicesPage() {
 
       <Modal open={Boolean(previewInvoice)} title={`Invoice Preview ${previewInvoice?.invoiceNumber || ""}`} onClose={() => setPreviewInvoice(null)}>
         {previewInvoice && <InvoicePreview invoice={previewInvoice} onDownload={() => downloadInvoicePdf(previewInvoice)} />}
+      </Modal>
+      <Modal open={addOpen} title="Add Invoice" onClose={() => setAddOpen(false)}>
+        <AddInvoiceForm
+          onSubmit={async (values) => {
+            await dispatch(invoiceActions.createOne(values)).unwrap();
+            await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+            setAddOpen(false);
+          }}
+        />
       </Modal>
 
       <Modal open={Boolean(editTarget)} title={`Edit Invoice ${editTarget?.invoiceNumber || ""}`} onClose={() => setEditTarget(null)}>
@@ -258,7 +267,7 @@ export function InvoicesPage() {
         <EntityForm
           fields={[
             { name: "status", label: "Invoice Status", type: "select", options: ["Pending", "Draft", "Sent", "Paid", "Partial"], required: false },
-            { name: "paymentStatus", label: "Payment Status", type: "select", options: ["Pending", "Partial", "Paid"], required: false },
+            { name: "paymentStatus", label: "Payment Status", type: "select", options: ["Pending", "Paid"], required: false },
             { name: "from", label: "From", type: "date", required: false },
             { name: "to", label: "To", type: "date", required: false },
             { name: "search", label: "Search", required: false },
@@ -323,6 +332,16 @@ export function InvoicesPage() {
     window.URL.revokeObjectURL(blobUrl);
     showToast({ type: "success", title: "Download ready", message: "Invoice PDF downloaded successfully." });
   }
+
+  function exportBookingPdf(invoice: any) {
+    const bookingId = invoice.bookingId || invoice.booking?.bookingId || invoice.booking?._id;
+    const bookingInvoices = filteredRows.filter((row) => String(row.bookingId || row.booking?.bookingId || row.booking?._id) === String(bookingId));
+    downloadFile(
+      `/bookings/${bookingId}/invoice-pack.pdf`,
+      `booking-${bookingId || "invoice-pack"}.pdf`,
+      buildBookingPdfExport(invoice, bookingInvoices.length ? bookingInvoices : [invoice])
+    );
+  }
 }
 
 function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: (payload: any) => Promise<void> | void }) {
@@ -375,6 +394,155 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
   );
 }
 
+type AddInvoiceFormState = {
+  bookingId: string;
+  clientName: string;
+  clientEmail: string;
+  projectType: InvoiceProjectType;
+  billingAddress: string;
+  kmOut: string;
+  kmIn: string;
+  tripFare: string;
+  tollCharges: string;
+  parkingCharges: string;
+  extraCharges: string;
+  gstPercent: string;
+};
+
+function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void> | void }) {
+  const [form, setForm] = useState<AddInvoiceFormState>({
+    bookingId: "",
+    clientName: "",
+    clientEmail: "",
+    projectType: "Process",
+    billingAddress: "",
+    kmOut: "",
+    kmIn: "",
+    tripFare: "",
+    tollCharges: "0",
+    parkingCharges: "0",
+    extraCharges: "0",
+    gstPercent: "18"
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const kmOut = normalizeNumber(form.kmOut);
+  const kmIn = normalizeNumber(form.kmIn);
+  const totalKm = kmOut !== null && kmIn !== null ? Math.max(0, kmIn - kmOut) : 0;
+  const tripFare = normalizeNumber(form.tripFare) ?? 0;
+  const tollCharges = normalizeNumber(form.tollCharges) ?? 0;
+  const parkingCharges = normalizeNumber(form.parkingCharges) ?? 0;
+  const extraCharges = normalizeNumber(form.extraCharges) ?? 0;
+  const gstPercent = normalizeNumber(form.gstPercent) ?? 0;
+  const subtotal = tripFare + tollCharges + parkingCharges + extraCharges;
+  const gstAmount = Math.round(subtotal * (gstPercent / 100) * 100) / 100;
+  const totalAmount = Math.round((subtotal + gstAmount) * 100) / 100;
+
+  function updateField(field: keyof AddInvoiceFormState, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: "" }));
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors = validateAddInvoiceForm(form, totalKm);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        bookingId: form.bookingId.trim(),
+        clientName: form.clientName.trim(),
+        clientEmail: form.clientEmail.trim(),
+        projectType: form.projectType,
+        billingAddress: form.billingAddress.trim(),
+        tripFare,
+        totalKm,
+        kmOut: Number(form.kmOut),
+        kmIn: Number(form.kmIn),
+        tollCharges,
+        parkingCharges,
+        extraCharges,
+        gstPercent
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form className="grid gap-3 sm:grid-cols-2" onSubmit={submit}>
+      <InvoiceInput label="Booking ID" value={form.bookingId} error={errors.bookingId} onChange={(value) => updateField("bookingId", value)} />
+      <InvoiceInput label="Client Name" value={form.clientName} error={errors.clientName} onChange={(value) => updateField("clientName", value)} />
+      <InvoiceInput label="Client Email" type="email" value={form.clientEmail} error={errors.clientEmail} onChange={(value) => updateField("clientEmail", value)} />
+      <label>
+        <RequiredLabel>Project Type</RequiredLabel>
+        <select className="input" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}>
+          <option value="Process">Process</option>
+          <option value="Management">Management</option>
+        </select>
+      </label>
+      <InvoiceInput label="Billing Address" value={form.billingAddress} error={errors.billingAddress} onChange={(value) => updateField("billingAddress", value)} full />
+      <InvoiceInput label="KM Out" type="number" value={form.kmOut} error={errors.kmOut} onChange={(value) => updateField("kmOut", value)} />
+      <InvoiceInput label="KM In" type="number" value={form.kmIn} error={errors.kmIn} onChange={(value) => updateField("kmIn", value)} />
+      <ComputedField label="Total KM" value={totalKm.toLocaleString()} />
+      <InvoiceInput label="Trip Fare" type="number" value={form.tripFare} error={errors.tripFare} onChange={(value) => updateField("tripFare", value)} />
+      <InvoiceInput label="Toll Charges" type="number" value={form.tollCharges} error={errors.tollCharges} onChange={(value) => updateField("tollCharges", value)} />
+      <InvoiceInput label="Parking Charges" type="number" value={form.parkingCharges} error={errors.parkingCharges} onChange={(value) => updateField("parkingCharges", value)} />
+      <InvoiceInput label="Extra Charges" type="number" value={form.extraCharges} error={errors.extraCharges} onChange={(value) => updateField("extraCharges", value)} />
+      <ComputedField label="Subtotal Without GST" value={`₹ ${subtotal.toLocaleString()}`} />
+      <InvoiceInput label="GST (%)" type="number" value={form.gstPercent} error={errors.gstPercent} onChange={(value) => updateField("gstPercent", value)} />
+      <ComputedField label="GST Amount" value={`₹ ${gstAmount.toLocaleString()}`} />
+      <ComputedField label="Total Amount" value={`₹ ${totalAmount.toLocaleString()}`} />
+      <div className="sm:col-span-2">
+        <button className="btn-primary" disabled={submitting}>{submitting ? "Creating..." : "Create Invoice"}</button>
+      </div>
+    </form>
+  );
+}
+
+function InvoiceInput({ label, value, error, onChange, type = "text", full = false }: { label: string; value: string; error?: string; onChange: (value: string) => void; type?: string; full?: boolean }) {
+  return (
+    <label className={full ? "sm:col-span-2" : ""}>
+      <RequiredLabel>{label}</RequiredLabel>
+      <input className="input" type={type} step={type === "number" ? "any" : undefined} inputMode={type === "number" ? "decimal" : undefined} value={value} onChange={(event) => onChange(event.target.value)} />
+      {error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
+    </label>
+  );
+}
+
+function ComputedField({ label, value }: { label: string; value: string }) {
+  return (
+    <label>
+      <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>
+      <input className="input bg-slate-50 font-semibold text-slate-700 dark:bg-slate-900/70 dark:text-slate-100" value={value} readOnly />
+    </label>
+  );
+}
+
+function RequiredLabel({ children }: { children: ReactNode }) {
+  return <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
+}
+
+function validateAddInvoiceForm(form: AddInvoiceFormState, totalKm: number) {
+  const errors: Record<string, string> = {};
+  const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "tripFare", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
+  for (const field of required) {
+    if (!String(form[field] ?? "").trim()) errors[field] = "Required";
+  }
+  if (form.clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.clientEmail)) errors.clientEmail = "Enter a valid email";
+  for (const field of ["kmOut", "kmIn", "tripFare", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
+    const value = normalizeNumber(form[field]);
+    if (value === null || value < 0) errors[field] = "Enter a valid positive number";
+  }
+  if (normalizeNumber(form.kmOut) !== null && normalizeNumber(form.kmIn) !== null && totalKm <= 0) {
+    errors.kmIn = "KM In must be greater than KM Out";
+  }
+  return errors;
+}
+
 function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSubmit: (payload: any) => Promise<void> | void }) {
   const [form, setForm] = useState<InvoicePaymentState>(() => invoicePaymentDefaults(invoice));
 
@@ -398,8 +566,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         <InfoCard label="Invoice" value={invoice.invoiceNumber} />
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
-        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentState["paymentStatus"])}>{["Pending", "Partial", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
-        <InfoCard label="Add Amount" value={<input className="input mt-1" type="number" step="any" inputMode="decimal" value={form.addAmount} onChange={(event) => updateField("addAmount", event.target.value)} />} />
+        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentState["paymentStatus"])}>{["Pending", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
         <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
         <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
         <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
@@ -453,7 +620,7 @@ function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
 function buildPaymentUpdatePayload(invoice: any, form: InvoicePaymentState) {
   return {
     paymentStatus: form.paymentStatus,
-    addAmount: normalizeNumber(form.addAmount) ?? 0,
+    addAmount: form.paymentStatus === "Paid" ? remainingAmount(invoice) : 0,
     remark: form.remark.trim() || undefined
   };
 }
@@ -480,10 +647,9 @@ function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
 function calculatePaymentTotals(invoice: any, form: InvoicePaymentState) {
   const finalAmount = Number(invoice.finalAmount || 0);
   const existingPaid = Number(invoice.paidAmount || 0);
-  const addAmount = normalizeNumber(form.addAmount) ?? 0;
   const paidAmount = form.paymentStatus === "Paid"
     ? finalAmount
-    : Math.min(finalAmount, existingPaid + addAmount);
+    : existingPaid;
   const remainingAmount = Math.max(0, finalAmount - paidAmount);
 
   return {
@@ -506,11 +672,10 @@ function buildPreviewInvoice(invoice: any, form: InvoiceDutySlipState) {
 function invoicePaymentDefaults(invoice: any): InvoicePaymentState {
   const currentStatus = invoice.paymentStatus === "Paid" || Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) === 0
     ? "Paid"
-    : Number(invoice.paidAmount || 0) > 0 ? "Partial" : "Pending";
+    : "Pending";
 
   return {
     paymentStatus: currentStatus,
-    addAmount: currentStatus === "Paid" ? String(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) : "",
     remark: String(invoice.paymentRemark || invoice.paymentRemarks || "")
   };
 }
@@ -556,32 +721,7 @@ function PaymentStatusBadge({ invoice }: { invoice: any }) {
 }
 
 function InvoicePreview({ invoice, onDownload }: { invoice: any; onDownload: () => void }) {
-  const rows = [
-    ["Invoice Number", invoice.invoiceNumber],
-    [
-      "Date",
-      invoice.invoiceDate
-        ? formatDisplayDate(invoice.invoiceDate)
-        : formatDisplayDate(invoice.createdAt),
-    ],
-    ["Client", invoice.clientName || invoice.booking?.businessUnit || "-"],
-    ["Passenger", invoice.booking?.passengerName || "-"],
-    ["Booking ID", invoice.booking?.bookingId || "-"],
-    ["Trip", invoice.trip?.tripNumber || "-"],
-    ["Project Type", getInvoiceProjectType(invoice)],
-    ["Billing Address", invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "-"],
-    ["Total KM", invoice.trip?.totalKm || 0],
-    ["Trip Fare", `₹ ${Number(invoice.tripFare || 0).toLocaleString()}`],
-    ["Toll Charges", `₹ ${Number(invoice.trip?.tollCharges || 0).toLocaleString()}`],
-    ["Parking Charges", `₹ ${Number(invoice.trip?.parkingCharges || 0).toLocaleString()}`],
-    ["Extra Charges", `₹ ${Number(invoice.trip?.extraCharges || 0).toLocaleString()}`],
-    ["Subtotal", `₹ ${Number(invoice.subtotal || 0).toLocaleString()}`],
-    [`GST (${invoice.gstPercent || 0}%)`, `₹ ${Number(invoice.gstAmount || 0).toLocaleString()}`],
-    ["Final Amount", `₹ ${Number(invoice.finalAmount || 0).toLocaleString()}`],
-    ["Paid Amount", `₹ ${Number(invoice.paidAmount || 0).toLocaleString()}`],
-    ["Balance", `₹ ${Number(remainingAmount(invoice)).toLocaleString()}`],
-    ["Status", invoice.status]
-  ];
+  const rows = getInvoicePreviewRows(invoice);
 
   return (
     <div className="space-y-4">
@@ -625,35 +765,84 @@ function InfoCard({ label, value }: { label: string; value: any }) {
 }
 
 function buildInvoiceExport(rows: any[]) {
-  const headers = [
-    "Invoice",
-    "Date",
-    "Client",
-    "Project Type",
-    "Invoice Status",
-    "Payment Status",
-    "Total",
-    "Balance",
-    "Created At"
-  ];
-
-  const lines = rows.map((invoice) => [
-    invoice.invoiceNumber || "",
-    formatDisplayDate(invoice.invoiceDate || invoice.createdAt),
-    invoice.clientName || "",
-    getInvoiceProjectType(invoice) || invoice.projectType || "",
-    invoice.status || "",
-    Number(invoice.remainingAmount ?? remainingAmount(invoice)) <= 0
-      ? "Paid"
-      : "Pending",
-    Number(invoice.finalAmount ?? 0),
-    Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0),
-    formatDisplayDate(invoice.createdAt)
-  ]);
+  const headers = getInvoicePreviewRows(rows[0] || {}).map(([label]) => label);
+  const lines = rows.map((invoice) => getInvoicePreviewRows(invoice).map(([, value]) => value));
 
   return [headers, ...lines]
     .map((row) => row.map(csvCell).join(","))
     .join("\n");
+}
+
+function buildBulkPdfExport(rows: any[]) {
+  return [
+    "Unique Carz Bulk Invoice PDF Export",
+    `Generated: ${formatDisplayDate(new Date())}`,
+    "",
+    ...rows.flatMap((invoice, index) => [
+      `Invoice ${index + 1}`,
+      ...getInvoicePreviewRows(invoice).map(([label, value]) => `${label}: ${value}`),
+      ""
+    ])
+  ].join("\n");
+}
+
+function buildBookingPdfExport(anchorInvoice: any, rows: any[]) {
+  const booking = anchorInvoice.booking || {};
+  return [
+    "Unique Carz Booking Invoice Pack",
+    `Booking ID: ${booking.bookingId || anchorInvoice.bookingId || "-"}`,
+    `Cab Request No: ${booking.cabRequestNumber || anchorInvoice.cabRequestNumber || "-"}`,
+    `Passenger: ${booking.passengerName || anchorInvoice.passengerName || "-"}`,
+    `Business Unit: ${booking.businessUnit || anchorInvoice.businessUnit || "-"}`,
+    `Reference Email Screenshot: ${booking.emailScreenshot || anchorInvoice.emailScreenshot ? "Attached / available in booking record" : "Not available"}`,
+    "",
+    "Invoices",
+    ...rows.flatMap((invoice, index) => [
+      `Invoice ${index + 1}`,
+      ...getInvoicePreviewRows(invoice).map(([label, value]) => `${label}: ${value}`),
+      ""
+    ])
+  ].join("\n");
+}
+
+function getInvoicePreviewRows(invoice: any): Array<[string, any]> {
+  const booking = invoice.booking || {};
+  const trip = invoice.trip || {};
+  const paymentStatus = invoice.paymentStatus === "Paid" || remainingAmount(invoice) <= 0 ? "Paid" : "Pending";
+
+  return [
+    ["Invoice Number", invoice.invoiceNumber || "-"],
+    ["Invoice Date", formatDisplayDate(invoice.invoiceDate || invoice.createdAt)],
+    ["Booking ID", booking.bookingId || invoice.bookingId || "-"],
+    ["Cab Request No", booking.cabRequestNumber || invoice.cabRequestNumber || "-"],
+    ["Business Unit", booking.businessUnit || invoice.businessUnit || "-"],
+    ["Passenger", booking.passengerName || invoice.passengerName || "-"],
+    ["Client", invoice.clientName || booking.businessUnit || "-"],
+    ["Client Email", invoice.clientEmail || booking.senderEmail || "-"],
+    ["Project Type", getInvoiceProjectType(invoice)],
+    ["Billing Address", invoice.billingAddress || trip.billingAddress || booking.reportingAddress || "-"],
+    ["Reporting Address", booking.reportingAddress || invoice.reportingAddress || "-"],
+    ["Drop Address", booking.dropAddress || invoice.dropAddress || "-"],
+    ["KM Out", invoice.kmOut ?? trip.kmOut ?? "-"],
+    ["KM In", invoice.kmIn ?? trip.kmIn ?? "-"],
+    ["Total KM", invoice.totalKm || trip.totalKm || 0],
+    ["Time Out", invoice.timeOut || trip.timeOut ? formatDisplayDate(invoice.timeOut || trip.timeOut) : "-"],
+    ["Time In", invoice.timeIn || trip.timeIn ? formatDisplayDate(invoice.timeIn || trip.timeIn) : "-"],
+    ["Trip Fare", `₹ ${Number(invoice.tripFare || 0).toLocaleString()}`],
+    ["Toll Charges", `₹ ${Number(invoice.tollCharges ?? trip.tollCharges ?? 0).toLocaleString()}`],
+    ["Parking Charges", `₹ ${Number(invoice.parkingCharges ?? trip.parkingCharges ?? 0).toLocaleString()}`],
+    ["Extra Charges", `₹ ${Number(invoice.extraCharges ?? trip.extraCharges ?? 0).toLocaleString()}`],
+    ["Subtotal", `₹ ${Number(invoice.subtotal || 0).toLocaleString()}`],
+    [`GST (${invoice.gstPercent || trip.gstCharges || 0}%)`, `₹ ${Number(invoice.gstAmount || 0).toLocaleString()}`],
+    ["Final Amount", `₹ ${Number(invoice.finalAmount || 0).toLocaleString()}`],
+    ["Paid Amount", `₹ ${Number(invoice.paidAmount || 0).toLocaleString()}`],
+    ["Balance", `₹ ${Number(remainingAmount(invoice)).toLocaleString()}`],
+    ["Invoice Status", invoice.status || "-"],
+    ["Payment Status", paymentStatus],
+    ["Payment Remark", invoice.paymentRemark || "-"],
+    ["Created At", formatDisplayDate(invoice.createdAt)],
+    ["Updated At", invoice.updatedAt ? formatDisplayDate(invoice.updatedAt) : "-"]
+  ];
 }
 
 function csvCell(value: unknown) {
