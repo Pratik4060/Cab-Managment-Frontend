@@ -35,6 +35,8 @@ export type BookingPayload = {
   purpose_of_cab_booking?: string;
   senderEmail?: string;
   sender_email?: string;
+  emailScreenshot?: string | File;
+  email_screenshot?: string | File;
   status?: string;
 };
 
@@ -70,11 +72,11 @@ export const bookingApi = {
   },
 
   async createBooking(payload: BookingPayload) {
-    return normalizeBooking(unwrapData<any>(await apiRequest({ url: "/bookings", method: "POST", data: toBackendBookingPayload(payload) })));
+    return normalizeBooking(unwrapData<any>(await apiRequest({ url: "/bookings", method: "POST", data: toBookingRequestData(payload) })));
   },
 
   async updateBooking(id: string, payload: Partial<BookingPayload>) {
-    return normalizeBooking(unwrapData<any>(await apiRequest({ url: `/bookings/${id}`, method: "PUT", data: toBackendBookingPayload(payload) })));
+    return normalizeBooking(unwrapData<any>(await apiRequest({ url: `/bookings/${id}`, method: "PUT", data: toBookingRequestData(payload) })));
   },
 
   async assignBooking(id: string, payload: { assigned_driver: string; assigned_vehicle: string; driver_status?: string; vehicle_status?: string }) {
@@ -185,8 +187,29 @@ function toBackendBookingPayload(payload: BookingPayload) {
   assignIfPresent(backendPayload, "employee_count", payload.employee_count ?? payload.employeeCount, true);
   assignIfPresent(backendPayload, "purpose_of_cab_booking", payload.purpose_of_cab_booking ?? payload.purposeOfCabBooking);
   assignIfPresent(backendPayload, "sender_email", payload.sender_email ?? payload.senderEmail);
+  assignIfPresent(backendPayload, "email_screenshot", payload.email_screenshot ?? payload.emailScreenshot);
   assignIfPresent(backendPayload, "status", payload.status || "New");
   return backendPayload;
+}
+
+function toBookingRequestData(payload: BookingPayload | Partial<BookingPayload>) {
+  const file = getFile(payload.email_screenshot ?? payload.emailScreenshot);
+  const body = toBackendBookingPayload(payload as BookingPayload);
+  if (!file) return body;
+
+  const formData = new FormData();
+  Object.entries(body).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      formData.append(key, String(value));
+    }
+  });
+  formData.set("email_screenshot", file);
+  return formData;
+}
+
+function getFile(value: unknown) {
+  if (typeof File !== "undefined" && value instanceof File) return value;
+  return undefined;
 }
 
 function toBackendDutySlipPayload(payload: DutySlipPayload) {

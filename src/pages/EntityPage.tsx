@@ -206,11 +206,12 @@ function createFieldSchema(field: any) {
   const requiredMessage = "This field is required.";
 
   if (field.type === "number") {
+    const min = field.min ?? 0;
     const numberSchema = z.preprocess(
       (value) => value === "" || value === null || value === undefined || (typeof value === "number" && Number.isNaN(value)) ? undefined : value,
       field.required === false
-        ? z.coerce.number({ invalid_type_error: "Please enter a valid number." }).optional()
-        : z.coerce.number({ required_error: requiredMessage, invalid_type_error: "Please enter a valid number." }).min(field.min ?? 0, `Minimum value is ${field.min ?? 0}.`)
+        ? z.coerce.number({ invalid_type_error: "Please enter a valid number." }).min(min, `Minimum value is ${min}.`).optional()
+        : z.coerce.number({ required_error: requiredMessage, invalid_type_error: "Please enter a valid number." }).min(min, `Minimum value is ${min}.`)
     );
     return numberSchema;
   }

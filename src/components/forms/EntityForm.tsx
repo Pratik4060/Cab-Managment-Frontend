@@ -15,6 +15,7 @@ type Field = {
   full?: boolean;
   required?: boolean;
   step?: string;
+  min?: number;
   disabled?: boolean;
   valueType?: "boolean";
 };
@@ -102,6 +103,7 @@ export function EntityForm({ schema, fields, defaults = {}, onSubmit, submitLabe
               disabled={field.disabled}
               readOnly={field.disabled}
               step={field.type === "number" ? field.step || "any" : undefined}
+              min={field.type === "number" ? field.min ?? 0 : undefined}
               inputMode={field.type === "number" ? "decimal" : undefined}
               {...register(field.name as any, { valueAsNumber: field.type === "number" })}
             />
@@ -138,15 +140,6 @@ function FilePreview({ value, label }: { value: unknown; label: string }) {
       View {label}
     </a>
   );
-}
-
-function fileToDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
 }
 
 function formatDateDefault(value: unknown) {

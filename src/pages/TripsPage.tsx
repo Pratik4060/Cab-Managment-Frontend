@@ -8,6 +8,7 @@ import {
   RefreshCcw,
   Route,
   ClipboardList,
+  CheckCircle2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -50,10 +51,11 @@ export function TripsPage() {
   const [selectedTrip, setSelectedTrip] = useState<any>(null);
   const [viewDetails, setViewDetails] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "new" | "assigned"; item: any } | null>(null);
-  const [activeTable, setActiveTable] = useState<"new" | "assigned">("new");
+  const [activeTable, setActiveTable] = useState<"new" | "assigned" | "closed">("new");
   const bookingState = useAppSelector((state) => state.bookings);
   const newBookingItems = bookingState.bucketItems?.New || [];
   const confirmedBookingItems = bookingState.bucketItems?.Confirmed || [];
+  const closedBookingItems = bookingState.bucketItems?.CompletedCancelled || [];
   const loading = bookingState.loading;
   const drivers = useAppSelector((state) => state.drivers.items);
   const vehicles = useAppSelector((state) => state.vehicles.items);
@@ -72,6 +74,10 @@ export function TripsPage() {
   const assignedTrips = useMemo(
     () => (confirmedBookingItems || []).filter((b) => b.status === "Confirmed").map((booking) => buildAssignedTripFromBooking(booking, drivers, vehicles)),
     [confirmedBookingItems, drivers, vehicles],
+  );
+  const closedTrips = useMemo(
+    () => (closedBookingItems || []).map((booking) => buildAssignedTripFromBooking(booking, drivers, vehicles)),
+    [closedBookingItems, drivers, vehicles],
   );
 
   const availableDrivers = drivers.filter(
@@ -142,7 +148,7 @@ export function TripsPage() {
       name: "employeeCount",
       label: "Employee Count",
       type: "number",
-      min: 1,
+      min: 0,
       required: false,
     },
     {
@@ -232,6 +238,14 @@ export function TripsPage() {
     },
     // { key: "vehicle", header: "Cab", render: (row: any) => row.vehicle ? `${row.vehicle.registrationNumber}${row.vehicle.vehicleModel ? ` - ${row.vehicle.vehicleModel}` : ""}` : "-" }
   ];
+  const closedColumns = [
+    ...assignedColumns,
+    {
+      key: "status",
+      header: "Status",
+      render: (row: any) => <TripStatusBadge status={row.booking?.status || row.status} />
+    }
+  ];
 
   return (
     <div className="space-y-3.5">
@@ -244,7 +258,7 @@ export function TripsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <button
           type="button"
           className={`group relative overflow-hidden rounded-xl border border-l-[4px] p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "new" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
@@ -291,6 +305,31 @@ export function TripsPage() {
             </div>
             <span className="rounded-full bg-zinc-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
               <Route className="h-4 w-4" />
+            </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          className={`group relative overflow-hidden rounded-xl border border-l-[4px] p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "closed" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
+          onClick={() => setActiveTable("closed")}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
+                  Completed / Cancelled
+                </h2>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                  {closedTrips.length}
+                </span>
+              </div>
+              <p className="mt-2.5 text-sm text-slate-500">
+                Completed and cancelled trip history.
+              </p>
+            </div>
+            <span className="rounded-full bg-zinc-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
+              <CheckCircle2 className="h-4 w-4" />
             </span>
           </div>
         </button>
@@ -389,7 +428,7 @@ export function TripsPage() {
             )}
           />
         </section>
-      ) : (
+      ) : activeTable === "assigned" ? (
         <section className="panel p-3">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -445,6 +484,43 @@ export function TripsPage() {
             )}
           />
         </section>
+      ) : (
+        <section className="panel p-3">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                  Completed / Cancelled Trips
+                </h2>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                  {closedTrips.length}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-slate-500">
+                Historical trips with final status.
+              </p>
+            </div>
+          </div>
+
+          <DataTable
+            loading={loading}
+            rows={closedTrips}
+            columns={closedColumns}
+            actionCount={1}
+            actions={(row) => (
+              <div className="flex min-w-40 flex-col gap-2">
+                <button
+                  className="btn-secondary w-full justify-start p-2"
+                  title="View details"
+                  onClick={() => setViewDetails({ type: "trip", data: row })}
+                >
+                  <Eye className="h-4 w-4" />
+                  <span>View</span>
+                </button>
+              </div>
+            )}
+          />
+        </section>
       )}
 
       <Modal open={addOpen} title="Add Trip" onClose={() => setAddOpen(false)}>
@@ -455,7 +531,7 @@ export function TripsPage() {
             cabRequestNumber: z.string().optional(),
             businessUnit: z.string().optional(),
             passengerName: z.string().min(1, "Passenger name is required"),
-            mobileNumber: z.string().optional(),
+            mobileNumber: optionalMobileNumber(),
             travelStartDate: z.string().optional(),
             travelEndDate: z.string().optional(),
             departmentName: z.string().optional(),
@@ -495,7 +571,7 @@ export function TripsPage() {
               cabRequestNumber: z.string().optional(),
               businessUnit: z.string().optional(),
               passengerName: z.string().min(1, "Passenger name is required"),
-              mobileNumber: z.string().optional(),
+              mobileNumber: optionalMobileNumber(),
               travelStartDate: z.string().optional(),
               travelEndDate: z.string().optional(),
               departmentName: z.string().optional(),
@@ -744,6 +820,7 @@ function DutySlipEditor({
               className="input mt-1"
               type="number"
               step="any"
+              min="0"
               inputMode="decimal"
               value={form.kmOut}
               onChange={(event) => updateField("kmOut", event.target.value)}
@@ -757,6 +834,7 @@ function DutySlipEditor({
               className="input mt-1"
               type="number"
               step="any"
+              min="0"
               inputMode="decimal"
               value={form.kmIn}
               onChange={(event) => updateField("kmIn", event.target.value)}
@@ -800,6 +878,7 @@ function DutySlipEditor({
               className="input mt-1"
               type="number"
               step="any"
+              min="0"
               inputMode="decimal"
               value={form.closingKm}
               onChange={(event) =>
@@ -899,6 +978,7 @@ function DutySlipEditor({
               className="input mt-1"
               type="number"
               step="any"
+              min="0"
               inputMode="decimal"
               value={form.tollCharges}
               onChange={(event) =>
@@ -914,6 +994,7 @@ function DutySlipEditor({
               className="input mt-1"
               type="number"
               step="any"
+              min="0"
               inputMode="decimal"
               value={form.parkingCharges}
               onChange={(event) =>
@@ -929,6 +1010,7 @@ function DutySlipEditor({
               className="input mt-1"
               type="number"
               step="any"
+              min="0"
               inputMode="decimal"
               value={form.extraCharges}
               onChange={(event) =>
@@ -961,6 +1043,7 @@ function DutySlipEditor({
               className="input mt-1"
               type="number"
               step="any"
+              min="0"
               inputMode="decimal"
               value={form.gstCharges}
               onChange={(event) =>
@@ -1000,11 +1083,13 @@ function DutySlipEditor({
 }
 
 function BookingStatusBadge({ status }: { status: string }) {
-  const normalized = status === "New" ? "New" : "Assigned";
+  const normalized = status === "New" ? "New" : status === "Cancelled" ? "Cancelled" : status === "Completed" ? "Completed" : "Assigned";
   const className =
-    normalized === "Assigned"
+    normalized === "Completed" || normalized === "Assigned"
       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
-      : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200";
+      : normalized === "Cancelled"
+        ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-200"
+        : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200";
 
   return (
     <span
@@ -1013,6 +1098,10 @@ function BookingStatusBadge({ status }: { status: string }) {
       {normalized}
     </span>
   );
+}
+
+function TripStatusBadge({ status }: { status: string }) {
+  return <BookingStatusBadge status={status} />;
 }
 
 function TripCard({ label, value }: { label: string; value?: any }) {
@@ -1097,7 +1186,7 @@ function buildAssignedTripFromBooking(booking: any, drivers: any[], vehicles: an
     driver,
     vehicle,
     booking,
-    status: "Assigned"
+    status: booking.status || "Assigned"
   };
 }
 
@@ -1107,7 +1196,14 @@ function optionalNumber() {
       value === "" || (typeof value === "number" && Number.isNaN(value))
         ? undefined
         : value,
-    z.coerce.number().min(1).optional(),
+    z.coerce.number().min(0, "Value cannot be negative.").optional(),
+  );
+}
+
+function optionalMobileNumber() {
+  return z.preprocess(
+    (value) => value === null || value === undefined ? "" : value,
+    z.string().trim().refine((value) => !value || /^\d{10}$/.test(value), "Mobile number must be 10 digits."),
   );
 }
 

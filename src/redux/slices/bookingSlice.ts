@@ -17,6 +17,7 @@ type BookingState = {
   bucketItems: {
     New: any[];
     Confirmed: any[];
+    CompletedCancelled: any[];
   };
 };
 
@@ -33,7 +34,8 @@ const initialState: BookingState = {
   scanResult: null,
   bucketItems: {
     New: [],
-    Confirmed: []
+    Confirmed: [],
+    CompletedCancelled: []
   }
 };
 
@@ -46,9 +48,10 @@ function refresh(state: BookingState) {
 }
 
 function ensureBuckets(state: BookingState) {
-  state.bucketItems ||= { New: [], Confirmed: [] };
+  state.bucketItems ||= { New: [], Confirmed: [], CompletedCancelled: [] };
   state.bucketItems.New ||= [];
   state.bucketItems.Confirmed ||= [];
+  state.bucketItems.CompletedCancelled ||= [];
 }
 
 function upsertBooking(items: any[], booking: any) {
@@ -77,11 +80,13 @@ export const fetchAll = createAsyncThunk("bookings/fetchAll", async (filter: Rec
 
 export const fetchBookingBuckets = createAsyncThunk("bookings/fetchBookingBuckets", async (_, { rejectWithValue }) => {
   try {
-    const [newItems, assignedItems] = await Promise.all([
+    const [newItems, assignedItems, completedItems, cancelledItems] = await Promise.all([
       bookingApi.getBookings({ status: "New" }),
-      bookingApi.getBookings({ status: "Confirmed" })
+      bookingApi.getBookings({ status: "Confirmed" }),
+      bookingApi.getBookings({ status: "Completed" }),
+      bookingApi.getBookings({ status: "Cancelled" })
     ]);
-    return { newItems, assignedItems };
+    return { newItems, assignedItems, completedCancelledItems: [...completedItems, ...cancelledItems] };
   } catch (error) {
     return rejectWithValue(rejectMessage(error));
   }
@@ -180,12 +185,16 @@ const bookingSlice = createSlice({
         if (action.payload.filter.status === "Confirmed") {
           state.bucketItems.Confirmed = action.payload.items;
         }
+        if (["Completed", "Cancelled"].includes(action.payload.filter.status)) {
+          state.bucketItems.CompletedCancelled = action.payload.items;
+        }
         refresh(state);
       })
       .addCase(fetchBookingBuckets.fulfilled, (state, action) => {
         ensureBuckets(state);
         state.bucketItems.New = action.payload.newItems;
         state.bucketItems.Confirmed = action.payload.assignedItems;
+        state.bucketItems.CompletedCancelled = action.payload.completedCancelledItems;
         state.allItems = state.filter.status === "Confirmed" ? action.payload.assignedItems : action.payload.newItems;
         state.filter = { status: state.filter.status === "Confirmed" ? "Confirmed" : "New" };
         refresh(state);

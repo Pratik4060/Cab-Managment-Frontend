@@ -80,7 +80,7 @@ export function DataTable({ columns, rows = [], loading, actions, actionCount, s
     <div className="overflow-hidden rounded-md border border-slate-200 dark:border-red-950/35">
       <div ref={scrollRef} style={{ paddingBottom: openMenuId && menuDirection === "down" ? menuSpace : undefined }} className="scrollbar-hidden max-h-[65vh] overflow-auto">
         <table className="min-w-[640px] divide-y divide-slate-200 text-[13px] dark:divide-red-950/35 lg:min-w-full">
-          <thead className="sticky top-0 z-30 bg-slate-50 dark:bg-[#171719]">
+          <thead className="sticky top-0 z-30 bg-slate-50 dark:bg-[rgb(23,23,25)]">
             <tr>
               {selectable && (
                 <th className="w-10 whitespace-nowrap px-2 py-1.5 text-left">
