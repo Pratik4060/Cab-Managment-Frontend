@@ -96,7 +96,6 @@ export function InvoicesPage() {
 
   return (
     <div className="relative space-y-3.5">
-      {invoices.loading && <RequestOverlay message={invoices.requestMessage || "Processing request..."} />}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Invoices</h1>
