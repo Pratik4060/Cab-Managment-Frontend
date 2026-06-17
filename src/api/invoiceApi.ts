@@ -13,6 +13,7 @@ export type InvoiceUpdatePayload = {
 
 export type InvoicePaymentPayload = {
   paymentStatus: string;
+  paymentType?: string;
   addAmount?: number | string | null;
   remark?: string;
 };
@@ -389,6 +390,7 @@ function toInvoiceCreatePayload(payload: InvoiceCreatePayload) {
 function toPaymentPayload(payload: InvoicePaymentPayload) {
   const result: Record<string, unknown> = {};
   assignIfPresent(result, "paymentStatus", payload.paymentStatus);
+  assignIfPresent(result, "paymentType", payload.paymentType);
   assignIfPresent(result, "addAmount", payload.addAmount, true);
   assignIfPresent(result, "remark", payload.remark);
   return result;

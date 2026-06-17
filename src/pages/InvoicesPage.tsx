@@ -30,6 +30,7 @@ type InvoiceDutySlipState = {
 
 type InvoicePaymentState = {
   paymentStatus: "Paid" | "Pending";
+  paymentType: string;
   remark: string;
 };
 
@@ -580,6 +581,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
         <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentState["paymentStatus"])}>{["Pending", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
+        <InfoCard label="Payment Type" value={<select className="input mt-1" value={form.paymentType} onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentState["paymentType"])}>{["Cash", "UPI","Cheque","NEFT", "RTGS","Other"].map((type) => <option key={type} value={type}>{type}</option>)}</select>} />
         <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
         <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
         <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
@@ -633,6 +635,7 @@ function buildInvoiceUpdatePayload(invoice: any, form: InvoiceDutySlipState) {
 function buildPaymentUpdatePayload(invoice: any, form: InvoicePaymentState) {
   return {
     paymentStatus: form.paymentStatus,
+    paymentType: form.paymentType || undefined,
     addAmount: form.paymentStatus === "Paid" ? remainingAmount(invoice) : 0,
     remark: form.remark.trim() || undefined
   };
@@ -689,6 +692,7 @@ function invoicePaymentDefaults(invoice: any): InvoicePaymentState {
 
   return {
     paymentStatus: currentStatus,
+    paymentType: String(invoice.paymentType || invoice.payment_type || "Cash"),
     remark: String(invoice.paymentRemark || invoice.paymentRemarks || "")
   };
 }
