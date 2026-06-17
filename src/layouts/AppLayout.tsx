@@ -20,24 +20,24 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { active, message } = useAppSelector((state) => {
     const s = state as any;
-    const slices: Array<{ loading: boolean; message?: string }> = [
-      { loading: s.auth?.loading, message: s.auth?.requestMessage },
-      { loading: s.dashboard?.loading, message: s.dashboard?.requestMessage },
-      { loading: s.bookings?.loading, message: s.bookings?.requestMessage },
-      { loading: s.trips?.loading, message: s.trips?.requestMessage },
-      { loading: s.vehicles?.loading, message: s.vehicles?.requestMessage },
-      { loading: s.drivers?.loading, message: s.drivers?.requestMessage },
-      { loading: s.invoices?.loading, message: s.invoices?.requestMessage },
-      { loading: s.payments?.loading, message: s.payments?.requestMessage },
-      { loading: s.admins?.loading, message: s.admins?.requestMessage },
-      { loading: s.reports?.loading, message: s.reports?.requestMessage },
-      { loading: s.analytics?.loading, message: s.analytics?.requestMessage }
+    const slices: Array<{ key: string; loading: boolean; message?: string; defaultMessage?: string }> = [
+      { key: "auth", loading: s.auth?.loading, message: s.auth?.requestMessage, defaultMessage: "Authenticating..." },
+      { key: "dashboard", loading: s.dashboard?.loading, message: s.dashboard?.requestMessage, defaultMessage: "Loading dashboard..." },
+      { key: "bookings", loading: s.bookings?.loading, message: s.bookings?.requestMessage, defaultMessage: "Processing bookings..." },
+      { key: "trips", loading: s.trips?.loading, message: s.trips?.requestMessage, defaultMessage: "Processing trips..." },
+      { key: "vehicles", loading: s.vehicles?.loading, message: s.vehicles?.requestMessage, defaultMessage: "Loading vehicles..." },
+      { key: "drivers", loading: s.drivers?.loading, message: s.drivers?.requestMessage, defaultMessage: "Loading drivers..." },
+      { key: "invoices", loading: s.invoices?.loading, message: s.invoices?.requestMessage, defaultMessage: "Processing invoices..." },
+      { key: "payments", loading: s.payments?.loading, message: s.payments?.requestMessage, defaultMessage: "Processing payments..." },
+      { key: "admins", loading: s.admins?.loading, message: s.admins?.requestMessage, defaultMessage: "Applying admin changes..." },
+      { key: "reports", loading: s.reports?.loading, message: s.reports?.requestMessage, defaultMessage: "Generating reports..." },
+      { key: "analytics", loading: s.analytics?.loading, message: s.analytics?.requestMessage, defaultMessage: "Loading analytics..." }
     ];
 
     const activeSlice = slices.find((slice) => slice.loading);
     return {
       active: Boolean(activeSlice),
-      message: activeSlice?.message || "Processing request..."
+      message: activeSlice?.message || activeSlice?.defaultMessage || "Processing request..."
     };
   });
 
