@@ -175,7 +175,7 @@ const bookingSlice = createSlice({
     builder
       .addCase(fetchAll.pending, (state) => {
         state.loading = true;
-        state.requestMessage = "Loading trips...";
+        state.requestMessage = "Loading Bookings...";
         state.error = null;
       })
       .addCase(fetchAll.fulfilled, (state, action) => {
@@ -277,13 +277,13 @@ export const setBookings = bookingSlice.actions.setItems;
 export default bookingSlice.reducer;
 
 function bookingRequestMessage(actionType: string) {
-  if (actionType === fetchAll.pending.type || actionType === fetchBookingBuckets.pending.type) return "Loading trips...";
+  if (actionType === fetchAll.pending.type || actionType === fetchBookingBuckets.pending.type) return "Loading Bookings...";
   if (actionType === scanMails.pending.type) return "Scanning mail...";
   if (actionType === createDutySlip.pending.type) return "Generating duty slip...";
-  if (actionType === assignBooking.pending.type) return "Assigning trip...";
-  if (actionType === cancelBooking.pending.type) return "Cancelling trip...";
-  if (actionType === createOne.pending.type) return "Creating trip...";
-  if (actionType === updateOne.pending.type) return "Updating trip...";
-  if (actionType === fetchById.pending.type) return "Loading trip details...";
-  return "Processing trip request...";
+  if (actionType === assignBooking.pending.type) return "Assigning booking...";
+  if (actionType === cancelBooking.pending.type) return "Cancelling booking...";
+  if (actionType === createOne.pending.type) return "Creating booking...";
+  if (actionType === updateOne.pending.type) return "Updating booking...";
+  if (actionType === fetchById.pending.type) return "Loading booking details...";
+  return "Processing booking request...";
 }

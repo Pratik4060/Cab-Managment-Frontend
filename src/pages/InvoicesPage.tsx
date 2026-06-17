@@ -45,7 +45,6 @@ export function InvoicesPage() {
   const [paymentTarget, setPaymentTarget] = useState<any>(null);
   const [sendTarget, setSendTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
-  const [bulkSendOpen, setBulkSendOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [projectTypeFilter, setProjectTypeFilter] = useState<InvoiceProjectType | "">("");
@@ -54,6 +53,9 @@ export function InvoicesPage() {
   const [selectedBookingGroupIds, setSelectedBookingGroupIds] = useState<string[]>([]);
   const [expandedBookingGroupIds, setExpandedBookingGroupIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<InvoiceViewMode>("present");
+  const [bulkSendConfirmOpen, setBulkSendConfirmOpen] = useState(false);
+  const [bulkSendInvoiceCount, setBulkSendInvoiceCount] = useState(0);
+  const [bulkSendIsSelected, setBulkSendIsSelected] = useState(false);
   const invoices = useAppSelector((s) => s.invoices);
   const bookings = useAppSelector((s) => s.bookings.allItems);
 
@@ -105,6 +107,35 @@ export function InvoicesPage() {
     const result = await dispatch(invoiceActions.exportInvoices(buildExportPayload(format))).unwrap();
     downloadBlob(result.blob, `invoices.${format}`);
     showToast({ type: "success", title: "Download ready", message: `${format === "xlsx" ? "Excel" : "PDF"} report downloaded successfully.` });
+  }
+
+  async function handleBulkSend() {
+    const invoiceIds = selectedActionInvoiceIds.length
+      ? selectedActionInvoiceIds
+      : filteredRows.map((invoice) => String(invoice._id)).filter(Boolean);
+
+    if (!invoiceIds.length) {
+      showToast({ type: "info", title: "No invoices selected", message: "Select at least one invoice to send." });
+      return;
+    }
+
+    setBulkSendInvoiceCount(invoiceIds.length);
+    setBulkSendIsSelected(selectedActionInvoiceIds.length > 0);
+    setBulkSendConfirmOpen(true);
+  }
+
+  async function proceedWithBulkSend() {
+    const invoiceIds = selectedActionInvoiceIds.length
+      ? selectedActionInvoiceIds
+      : filteredRows.map((invoice) => String(invoice._id)).filter(Boolean);
+
+    await dispatch(invoiceActions.sendBulkInvoices({ invoiceIds })).unwrap();
+    showToast({
+      type: "success",
+      title: "Invoices Sent",
+      message: `${invoiceIds.length} invoice${invoiceIds.length > 1 ? "s have" : " has"} been sent to their respective clients.`
+    });
+    setBulkSendConfirmOpen(false);
   }
 
   function toggleBookingGroupSelection(id: string) {
@@ -197,7 +228,7 @@ export function InvoicesPage() {
           </button>
           <button
             className="btn-secondary"
-            onClick={() => setBulkSendOpen(true)}
+            onClick={handleBulkSend}
           >
             <Mail className="h-4 w-4" />
             Bulk Send
@@ -273,10 +304,7 @@ export function InvoicesPage() {
             onToggleInvoice={toggleInvoiceSelection}
             onToggleGroupInvoices={setGroupInvoiceSelection}
             onBookingPdf={(invoice) => exportBookingPdf(invoice)}
-            onBulkSend={(group) => {
-              setSelectedBookingGroupIds([group._id]);
-              setBulkSendOpen(true);
-            }}
+            onBulkSend={() => handleBulkSend()}
             renderInvoiceActions={renderInvoiceActions}
           />
         )}
@@ -310,7 +338,7 @@ export function InvoicesPage() {
                 </button>
                 <button className="btn-secondary w-full justify-start p-2" onClick={() => {
                   setSelectedBookingGroupIds([row._id]);
-                  setBulkSendOpen(true);
+                  handleBulkSend();
                 }}>
                   <Mail className="h-4 w-4" />
                   <span>Bulk Send</span>
@@ -374,45 +402,6 @@ export function InvoicesPage() {
           }}
         />
       </Modal>
-      <Modal open={bulkSendOpen} title="Bulk Send Invoices" onClose={() => setBulkSendOpen(false)}>
-        <EntityForm
-          fields={[
-            { name: "status", label: "Invoice Status", type: "select", options: ["Pending", "Draft", "Sent", "Paid", "Partial"], required: false },
-            { name: "paymentStatus", label: "Payment Status", type: "select", options: ["Pending", "Paid"], required: false },
-            { name: "from", label: "From", type: "date", required: false },
-            { name: "to", label: "To", type: "date", required: false },
-            { name: "search", label: "Search", required: false },
-            { name: "emailSubject", label: "Email Subject", full: true },
-            { name: "emailBody", label: "Email Body", full: true }
-          ]}
-          defaults={{
-            status: statusFilter || "Pending",
-            paymentStatus: "Pending",
-            from: dateFilters.from,
-            to: dateFilters.to,
-            search: "",
-            emailSubject: "Pending Invoices",
-            emailBody: "Please find the attached invoice list."
-          }}
-          schema={z.object({
-            status: z.string().optional(),
-            paymentStatus: z.string().optional(),
-            from: z.string().optional(),
-            to: z.string().optional(),
-            search: z.string().optional(),
-            emailSubject: z.string().min(1, "Email subject is required"),
-            emailBody: z.string().min(1, "Email body is required")
-          })}
-          submitLabel="Send Bulk"
-          onSubmit={async (values) => {
-            const response = await dispatch(invoiceActions.sendBulkInvoices({ ...values, invoiceIds: selectedActionInvoiceIds, bookingIds: selectedBookingIds })).unwrap();
-            if (!response?.message) {
-              showToast({ type: "success", title: "Bulk send started", message: "Bulk invoice email request submitted successfully." });
-            }
-            setBulkSendOpen(false);
-          }}
-        />
-      </Modal>
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title="Delete Invoice"
@@ -427,6 +416,27 @@ export function InvoicesPage() {
           }
           setDeleteTarget(null);
         }}
+      />
+      <ConfirmDialog
+        open={bulkSendConfirmOpen}
+        title="Send Invoices"
+        prompt="Confirm Bulk Invoice Send"
+        confirmLabel="Send"
+        message={
+          <div className="space-y-2">
+            <p>
+              {bulkSendIsSelected
+                // ? `Send invoices to ${bulkSendInvoiceCount} selected invoice${bulkSendInvoiceCount > 1 ? "s" : ""}?`
+                ? `Send ${bulkSendInvoiceCount} selected invoice${bulkSendInvoiceCount > 1 ? "s" : ""}?`
+                : `Send all ${bulkSendInvoiceCount} invoice${bulkSendInvoiceCount > 1 ? "s" : ""} to respective clients?`}
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              Each client will receive their invoice(s) via email.
+            </p>
+          </div>
+        }
+        onCancel={() => setBulkSendConfirmOpen(false)}
+        onConfirm={proceedWithBulkSend}
       />
     </div>
   );
@@ -577,7 +587,7 @@ function BookingInvoiceGroups({
 
         return (
           <div key={group._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-red-950/35 dark:bg-[#101012]">
-            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1.4fr_1.1fr_.7fr_.8fr_auto] md:items-center">
+            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1fr_.45fr_auto] md:items-center">
               <input
                 type="checkbox"
                 aria-label="Select booking group"
@@ -590,15 +600,10 @@ function BookingInvoiceGroups({
                 <p className="text-xs text-slate-500">{group.cabRequestNumber}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Recent Invoice</p>
-                <p className="font-semibold text-slate-950 dark:text-white">{recentInvoice?.invoiceNumber || "-"}</p>
-                <p className="text-xs text-slate-500">{group.passengerName}</p>
-              </div>
-              <div>
                 <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Invoices</p>
                 <p className="font-semibold">{group.invoiceCount}</p>
               </div>
-              <div>
+              <div className="hidden">
                 <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Balance</p>
                 <p className="font-semibold">₹ {Number(group.balanceAmount || 0).toLocaleString()}</p>
               </div>
@@ -606,14 +611,14 @@ function BookingInvoiceGroups({
                 {otherInvoices.length > 0 && (
                   <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onToggleExpand(group._id)}>
                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    Other ({otherInvoices.length})
+                    {isExpanded?"Hide":"View"} ({otherInvoices.length})
                   </button>
                 )}
-                <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onBookingPdf(recentInvoice)}>
+                <button type="button" className="hidden btn-secondary px-2 py-1.5" onClick={() => onBookingPdf(recentInvoice)}>
                   <FileArchive className="h-4 w-4" />
                   PDF
                 </button>
-                <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onBulkSend(group)}>
+                <button type="button" className="hidden btn-secondary px-2 py-1.5" onClick={() => onBulkSend(group)}>
                   <Mail className="h-4 w-4" />
                   Send
                 </button>
