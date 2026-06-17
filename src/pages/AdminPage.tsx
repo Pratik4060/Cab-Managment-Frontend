@@ -1,7 +1,6 @@
-import { Eye, EyeOff, Loader2, Moon, Save, Sun } from "lucide-react";
+import { Eye, EyeOff, Loader2, Save } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { toggleTheme } from "../redux/slices/themeSlice";
 import { fetchProfile, updateProfile } from "../redux/slices/authSlice";
 import { adminActions } from "../redux/slices/adminSlice";
 import { EntityPage } from "./EntityPage";
@@ -20,7 +19,6 @@ export function ProfilePage() {
   const user = useAppSelector((state) => state.auth.user);
   const profileLoading = useAppSelector((state) => state.auth.profileLoading);
   const profileError = useAppSelector((state) => state.auth.profileError);
-  const mode = useAppSelector((state) => state.theme.mode);
   const [profile, setProfile] = useState({ fullName: user?.fullName || user?.name || "", email: user?.email || "" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "" });
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -104,10 +102,6 @@ export function ProfilePage() {
               <button className="btn-secondary" disabled={profileLoading}><Save className="h-4 w-4" />Change Password</button>
             </div>
           </form>
-          <section className="panel p-4">
-            <h2 className="mb-3 text-[15px] font-semibold">Theme</h2>
-            <button className="btn-secondary" onClick={() => dispatch(toggleTheme())}>{mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}{mode === "dark" ? "Light Mode" : "Dark Mode"}</button>
-          </section>
         </div>
       </div>
     </div>
