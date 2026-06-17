@@ -46,7 +46,7 @@ export function InvoicesPage() {
   const [sendTarget, setSendTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
   const [projectTypeFilter, setProjectTypeFilter] = useState<InvoiceProjectType | "">("");
   const [dateFilters, setDateFilters] = useState({ from: "", to: "" });
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
@@ -60,8 +60,8 @@ export function InvoicesPage() {
   const bookings = useAppSelector((s) => s.bookings.allItems);
 
   useEffect(() => {
-    dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
-  }, [dispatch, statusFilter]);
+    dispatch(invoiceActions.fetchAll(paymentStatusFilter ? { paymentStatus: paymentStatusFilter } : {}));
+  }, [dispatch, paymentStatusFilter]);
 
   useEffect(() => {
     dispatch(bookingActions.fetchAll({}));
@@ -211,7 +211,7 @@ export function InvoicesPage() {
               By Booking
             </button>
           </div>
-          <select className="input w-28" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+          <select className="input w-28" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
@@ -357,7 +357,7 @@ export function InvoicesPage() {
           bookings={bookings}
           onSubmit={async (values) => {
             await dispatch(invoiceActions.createOne(values)).unwrap();
-            await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+            await dispatch(invoiceActions.fetchAll(paymentStatusFilter ? { paymentStatus: paymentStatusFilter } : {}));
             setAddOpen(false);
           }}
         />
@@ -369,7 +369,7 @@ export function InvoicesPage() {
             invoice={editTarget}
             onSubmit={async (payload) => {
               await dispatch(invoiceActions.updateOne({ id: editTarget._id, payload })).unwrap();
-              await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+              await dispatch(invoiceActions.fetchAll(paymentStatusFilter ? { paymentStatus: paymentStatusFilter } : {}));
               setEditTarget(null);
             }}
           />
@@ -382,7 +382,7 @@ export function InvoicesPage() {
             invoice={paymentTarget}
             onSubmit={async (payload) => {
               await dispatch(invoiceActions.updatePaymentStatus({ id: paymentTarget._id, payload })).unwrap();
-              await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+              await dispatch(invoiceActions.fetchAll(paymentStatusFilter ? { paymentStatus: paymentStatusFilter } : {}));
               setPaymentTarget(null);
             }}
           />
@@ -397,7 +397,7 @@ export function InvoicesPage() {
           submitLabel="Send Invoice"
           onSubmit={async (values) => {
             await dispatch(sendInvoice({ id: sendTarget._id, payload: values })).unwrap();
-            await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+            await dispatch(invoiceActions.fetchAll(paymentStatusFilter ? { paymentStatus: paymentStatusFilter } : {}));
             setSendTarget(null);
           }}
         />
@@ -412,7 +412,7 @@ export function InvoicesPage() {
         onConfirm={async () => {
           if (deleteTarget?._id) {
             await dispatch(invoiceActions.deleteOne(deleteTarget._id)).unwrap();
-            await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
+            await dispatch(invoiceActions.fetchAll(paymentStatusFilter ? { paymentStatus: paymentStatusFilter } : {}));
           }
           setDeleteTarget(null);
         }}
@@ -452,7 +452,7 @@ export function InvoicesPage() {
     const result = await dispatch(invoiceActions.downloadBookingPdf({
       bookingId,
       payload: {
-        status: statusFilter || undefined,
+        paymentStatus: paymentStatusFilter || undefined,
         projectType: projectTypeFilter || undefined,
         from: dateFilters.from || undefined,
         to: dateFilters.to || undefined,
@@ -466,7 +466,7 @@ export function InvoicesPage() {
   function buildExportPayload(format: "xlsx" | "pdf") {
     return {
       format,
-      status: statusFilter || undefined,
+      paymentStatus: paymentStatusFilter || undefined,
       projectType: projectTypeFilter || undefined,
       from: dateFilters.from || undefined,
       to: dateFilters.to || undefined,
