@@ -18,6 +18,7 @@ type InvoiceProjectType = "Process" | "Management";
 type InvoiceDutySlipState = {
   kmOut: string;
   kmIn: string;
+  vehicleChargesPerKm: string;
   timeOut: string;
   timeIn: string;
   tollCharges: string;
@@ -379,6 +380,8 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Time IN" value={<input className="input mt-1" type="datetime-local" value={form.timeIn} onChange={(event) => updateField("timeIn", event.target.value)} />} />
         <InfoCard label="Project Type" value={<select className="input mt-1" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}><option value="Process">Process</option><option value="Management">Management</option></select>} />
         <InfoCard label="Address" value={<input className="input mt-1" type="text" value={form.billingAddress} onChange={(event) => updateField("billingAddress", event.target.value)} placeholder="Enter address" />} />
+        <InfoCard label="Vehicle Charges Per KM" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.vehicleChargesPerKm} onChange={(event) => updateField("vehicleChargesPerKm", event.target.value)} />} />
+        <InfoCard label="Trip Fare" value={<input className="input mt-1 bg-slate-50 font-semibold" type="number" value={String(computed.tripFare)} readOnly />} />
         <InfoCard label="Toll Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
         <InfoCard label="Parking Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
         <InfoCard label="Extra Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
@@ -404,7 +407,7 @@ type AddInvoiceFormState = {
   billingAddress: string;
   kmOut: string;
   kmIn: string;
-  tripFare: string;
+  vehicleChargesPerKm: string;
   tollCharges: string;
   parkingCharges: string;
   extraCharges: string;
@@ -420,7 +423,7 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
     billingAddress: "",
     kmOut: "",
     kmIn: "",
-    tripFare: "",
+    vehicleChargesPerKm: "",
     tollCharges: "0",
     parkingCharges: "0",
     extraCharges: "0",
@@ -431,8 +434,9 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
 
   const kmOut = normalizeNumber(form.kmOut);
   const kmIn = normalizeNumber(form.kmIn);
+  const vehicleChargesPerKm = normalizeNumber(form.vehicleChargesPerKm) ?? 0;
   const totalKm = kmOut !== null && kmIn !== null ? Math.max(0, kmIn - kmOut) : 0;
-  const tripFare = normalizeNumber(form.tripFare) ?? 0;
+  const tripFare = Math.round(totalKm * vehicleChargesPerKm);
   const tollCharges = normalizeNumber(form.tollCharges) ?? 0;
   const parkingCharges = normalizeNumber(form.parkingCharges) ?? 0;
   const extraCharges = normalizeNumber(form.extraCharges) ?? 0;
@@ -490,7 +494,8 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
       <InvoiceInput label="KM Out" type="number" value={form.kmOut} error={errors.kmOut} onChange={(value) => updateField("kmOut", value)} />
       <InvoiceInput label="KM In" type="number" value={form.kmIn} error={errors.kmIn} onChange={(value) => updateField("kmIn", value)} />
       <ComputedField label="Total KM" value={totalKm.toLocaleString()} />
-      <InvoiceInput label="Trip Fare" type="number" value={form.tripFare} error={errors.tripFare} onChange={(value) => updateField("tripFare", value)} />
+      <InvoiceInput label="Vehicle Charges Per KM" type="number" value={form.vehicleChargesPerKm} error={errors.vehicleChargesPerKm} onChange={(value) => updateField("vehicleChargesPerKm", value)} />
+      <InvoiceInput label="Trip Fare" type="number" value={String(tripFare)} readOnly />
       <InvoiceInput label="Toll Charges" type="number" value={form.tollCharges} error={errors.tollCharges} onChange={(value) => updateField("tollCharges", value)} />
       <InvoiceInput label="Parking Charges" type="number" value={form.parkingCharges} error={errors.parkingCharges} onChange={(value) => updateField("parkingCharges", value)} />
       <InvoiceInput label="Extra Charges" type="number" value={form.extraCharges} error={errors.extraCharges} onChange={(value) => updateField("extraCharges", value)} />
@@ -505,11 +510,22 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
   );
 }
 
-function InvoiceInput({ label, value, error, onChange, type = "text", full = false }: { label: string; value: string; error?: string; onChange: (value: string) => void; type?: string; full?: boolean }) {
+function InvoiceInput({ label, value, error, onChange, type = "text", full = false, readOnly = false }: { label: string; value: string; error?: string; onChange?: (value: string) => void; type?: string; full?: boolean; readOnly?: boolean }) {
   return (
     <label className={full ? "sm:col-span-2" : ""}>
       <RequiredLabel>{label}</RequiredLabel>
-      <input className="input" type={type} step={type === "number" ? "any" : undefined} min={type === "number" ? 0 : undefined} inputMode={type === "number" ? "decimal" : undefined} value={value} onChange={(event) => onChange(event.target.value)} />
+      <input
+        className="input"
+        type={type}
+        step={type === "number" ? "any" : undefined}
+        min={type === "number" ? 0 : undefined}
+        inputMode={type === "number" ? "decimal" : undefined}
+        value={value}
+        onChange={(event) => {
+          if (!readOnly && onChange) onChange(event.target.value);
+        }}
+        readOnly={readOnly}
+      />
       {error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
     </label>
   );
@@ -541,12 +557,12 @@ function RequestOverlay({ message }: { message: string }) {
 
 function validateAddInvoiceForm(form: AddInvoiceFormState, totalKm: number) {
   const errors: Record<string, string> = {};
-  const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "tripFare", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
+  const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
   for (const field of required) {
     if (!String(form[field] ?? "").trim()) errors[field] = "Required";
   }
   if (form.clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.clientEmail)) errors.clientEmail = "Enter a valid email address.";
-  for (const field of ["kmOut", "kmIn", "tripFare", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
+  for (const field of ["kmOut", "kmIn", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
     const value = normalizeNumber(form[field]);
     if (value === null || value < 0) errors[field] = "Enter a number 0 or greater.";
   }
@@ -644,7 +660,7 @@ function calculateInvoiceTotals(invoice: any, form: InvoiceDutySlipState) {
   const kmOut = normalizeNumber(form.kmOut);
   const kmIn = normalizeNumber(form.kmIn);
   const totalKm = kmOut !== null && kmIn !== null && kmIn >= kmOut ? kmIn - kmOut : Number(invoice.trip?.totalKm || 0);
-  const ratePerKm = Number(invoice.trip?.vehicle?.rate_per_km || invoice.trip?.vehicle?.ratePerKm || invoice.tripFare / Math.max(1, Number(invoice.trip?.totalKm || 1)) || 22);
+  const ratePerKm = normalizeNumber(form.vehicleChargesPerKm) ?? Number(invoice.trip?.vehicle?.rate_per_km || invoice.trip?.vehicle?.ratePerKm || 22);
   const tripFare = Math.round(totalKm * ratePerKm);
   const tollCharges = normalizeNumber(form.tollCharges) ?? Number(invoice.trip?.tollCharges || 0);
   const parkingCharges = normalizeNumber(form.parkingCharges) ?? Number(invoice.trip?.parkingCharges || 0);
@@ -700,6 +716,7 @@ function invoiceDutySlipDefaults(invoice: any): InvoiceDutySlipState {
   return {
     kmOut: invoice.trip?.kmOut === undefined || invoice.trip?.kmOut === null ? "" : String(invoice.trip.kmOut),
     kmIn: invoice.trip?.kmIn === undefined || invoice.trip?.kmIn === null ? "" : String(invoice.trip.kmIn),
+    vehicleChargesPerKm: invoice.trip?.vehicle?.rate_per_km ? String(invoice.trip.vehicle.rate_per_km) : invoice.trip?.vehicle?.ratePerKm ? String(invoice.trip.vehicle.ratePerKm) : "",
     timeOut: invoice.trip?.timeOut ? toDatetimeLocal(invoice.trip.timeOut) : "",
     timeIn: invoice.trip?.timeIn ? toDatetimeLocal(invoice.trip.timeIn) : "",
     tollCharges: String(invoice.trip?.tollCharges ?? 0),

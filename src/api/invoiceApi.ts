@@ -1,6 +1,10 @@
 import { apiClient, apiRequest, unwrapData } from "./client";
 
 export type InvoiceUpdatePayload = {
+  projectType?: string;
+  billingAddress?: string;
+  tripFare?: number | string | null;
+  totalKm?: number | string | null;
   kmOut?: number | string | null;
   kmIn?: number | string | null;
   timeOut?: string;
@@ -8,7 +12,12 @@ export type InvoiceUpdatePayload = {
   tollCharges?: number | string | null;
   parkingCharges?: number | string | null;
   extraCharges?: number | string | null;
+  gstPercent?: number | string | null;
   gstCharges?: number | string | null;
+  gstAmount?: number | string | null;
+  finalAmount?: number | string | null;
+  remainingAmount?: number | string | null;
+  balanceAmount?: number | string | null;
 };
 
 export type InvoicePaymentPayload = {
@@ -357,6 +366,10 @@ function toInvoiceUpdatePayload(payload: any) {
   assignIfPresent(result, "kmIn", payload.kmIn, true);
   assignIfPresent(result, "timeOut", toIsoDate(payload.timeOut));
   assignIfPresent(result, "timeIn", toIsoDate(payload.timeIn));
+  assignIfPresent(result, "projectType", payload.projectType);
+  assignIfPresent(result, "billingAddress", payload.billingAddress);
+  assignIfPresent(result, "tripFare", payload.tripFare, true);
+  assignIfPresent(result, "totalKm", payload.totalKm, true);
   assignIfPresent(result, "tollCharges", payload.tollCharges, true);
   assignIfPresent(result, "parkingCharges", payload.parkingCharges, true);
   assignIfPresent(result, "extraCharges", payload.extraCharges, true);
@@ -366,6 +379,10 @@ function toInvoiceUpdatePayload(payload: any) {
     payload.gstCharges ?? payload.gstPercent,
     true,
   );
+  assignIfPresent(result, "gstAmount", payload.gstAmount, true);
+  assignIfPresent(result, "finalAmount", payload.finalAmount, true);
+  assignIfPresent(result, "remainingAmount", payload.remainingAmount, true);
+  assignIfPresent(result, "balanceAmount", payload.balanceAmount, true);
   return result;
 }
 

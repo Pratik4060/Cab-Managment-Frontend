@@ -767,13 +767,15 @@ function DutySlipEditor({
   const [form, setForm] = useState<DutySlipFormState>(() =>
     buildDutySlipState(trip),
   );
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setForm(buildDutySlipState(trip));
+    setErrors({});
   }, [trip]);
 
   const totalKm = calculateTotalKm(form.kmOut, form.kmIn);
-  const ratePerKm = Number(trip?.vehicle?.rate_per_km ?? trip?.vehicle?.ratePerKm ?? 0);
+  const ratePerKm = normalizeNumber(form.perKmCharges) ?? Number(trip?.vehicle?.rate_per_km ?? trip?.vehicle?.ratePerKm ?? 0);
   const tollCharges = normalizeNumber(form.tollCharges) ?? 0;
   const parkingCharges = normalizeNumber(form.parkingCharges) ?? 0;
   const extraCharges = normalizeNumber(form.extraCharges) ?? 0;
@@ -783,11 +785,55 @@ function DutySlipEditor({
   const gstAmount = Math.round(subTotal * (gstRate / 100));
   const finalAmount = subTotal + gstAmount;
 
+  const errorMessages = Object.values(errors);
+  const hasErrors = errorMessages.length > 0;
+
   function updateField(field: keyof DutySlipFormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function validateDutySlip() {
+    const kmOutVal = normalizeNumber(form.kmOut);
+    const kmInVal = normalizeNumber(form.kmIn);
+    const perKmVal = normalizeNumber(form.perKmCharges);
+    const timeOutVal = String(form.timeOut || "").trim();
+    const timeInVal = String(form.timeIn || "").trim();
+    const nextErrors: Record<string, string> = {};
+
+    if (!trip.driverId && !trip.driver) {
+      nextErrors.driver = "Please assign a driver for this trip.";
+    }
+    if (!trip.vehicleId && !trip.vehicle) {
+      nextErrors.vehicle = "Please assign a vehicle for this trip.";
+    }
+    if (kmOutVal === null || kmOutVal < 0) {
+      nextErrors.kmOut = "Please enter a valid KM OUT value.";
+    }
+    if (kmInVal === null || kmInVal < 0) {
+      nextErrors.kmIn = "Please enter a valid KM IN value.";
+    }
+    if (kmOutVal !== null && kmInVal !== null && kmInVal < kmOutVal) {
+      nextErrors.kmIn = "KM IN must be greater than or equal to KM OUT.";
+    }
+    if (!timeOutVal) {
+      nextErrors.timeOut = "Please select a Time OUT value.";
+    }
+    if (!timeInVal) {
+      nextErrors.timeIn = "Please select a Time IN value.";
+    }
+    if (perKmVal === null || perKmVal <= 0) {
+      nextErrors.perKmCharges = "Please enter the vehicle charge per kilometer.";
+    }
+    if (normalizeNumber(form.gstCharges) === null) {
+      nextErrors.gstCharges = "Please enter the GST percentage.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
   async function handleSave() {
+    if (!validateDutySlip()) return;
     await onSave({
       kmOut: normalizeNumber(form.kmOut),
       kmIn: normalizeNumber(form.kmIn),
@@ -804,11 +850,22 @@ function DutySlipEditor({
       parkingCharges: normalizeNumber(form.parkingCharges),
       extraCharges: normalizeNumber(form.extraCharges),
       gstCharges: normalizeNumber(form.gstCharges),
+      perKmCharges: normalizeNumber(form.perKmCharges)
     });
   }
 
   return (
     <div className="space-y-4">
+      {hasErrors && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <p className="font-semibold">Please fix the following duty slip fields:</p>
+          <ul className="mt-2 list-disc list-inside space-y-1">
+            {errorMessages.map((message, index) => (
+              <li key={index}>{message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <TripCard label="Trip" value={trip.tripNumber} />
         <TripCard
@@ -825,31 +882,37 @@ function DutySlipEditor({
           }
         />
         <TripCard
-          label="KM OUT"
+          label={<>KM OUT <span className="text-red-600">*</span></>}
           value={
-            <input
-              className="input mt-1"
-              type="number"
-              step="any"
-              min="0"
-              inputMode="decimal"
-              value={form.kmOut}
-              onChange={(event) => updateField("kmOut", event.target.value)}
-            />
+            <div className="space-y-1">
+              <input
+                className="input mt-1"
+                type="number"
+                step="any"
+                min="0"
+                inputMode="decimal"
+                value={form.kmOut}
+                onChange={(event) => updateField("kmOut", event.target.value)}
+              />
+              {errors.kmOut && <p className="text-xs text-red-600">{errors.kmOut}</p>}
+            </div>
           }
         />
         <TripCard
-          label="KM IN"
+          label={<>KM IN <span className="text-red-600">*</span></>}
           value={
-            <input
-              className="input mt-1"
-              type="number"
-              step="any"
-              min="0"
-              inputMode="decimal"
-              value={form.kmIn}
-              onChange={(event) => updateField("kmIn", event.target.value)}
-            />
+            <div className="space-y-1">
+              <input
+                className="input mt-1"
+                type="number"
+                step="any"
+                min="0"
+                inputMode="decimal"
+                value={form.kmIn}
+                onChange={(event) => updateField("kmIn", event.target.value)}
+              />
+              {errors.kmIn && <p className="text-xs text-red-600">{errors.kmIn}</p>}
+            </div>
           }
         />
         <TripCard
@@ -861,25 +924,31 @@ function DutySlipEditor({
           }
         />
         <TripCard
-          label="Time OUT"
+          label={<>Time OUT <span className="text-red-600">*</span></>}
           value={
-            <input
-              className="input mt-1"
-              type="datetime-local"
-              value={form.timeOut}
-              onChange={(event) => updateField("timeOut", event.target.value)}
-            />
+            <div className="space-y-1">
+              <input
+                className="input mt-1"
+                type="datetime-local"
+                value={form.timeOut}
+                onChange={(event) => updateField("timeOut", event.target.value)}
+              />
+              {errors.timeOut && <p className="text-xs text-red-600">{errors.timeOut}</p>}
+            </div>
           }
         />
         <TripCard
-          label="Time IN"
+          label={<>Time IN <span className="text-red-600">*</span></>}
           value={
-            <input
-              className="input mt-1"
-              type="datetime-local"
-              value={form.timeIn}
-              onChange={(event) => updateField("timeIn", event.target.value)}
-            />
+            <div className="space-y-1">
+              <input
+                className="input mt-1"
+                type="datetime-local"
+                value={form.timeIn}
+                onChange={(event) => updateField("timeIn", event.target.value)}
+              />
+              {errors.timeIn && <p className="text-xs text-red-600">{errors.timeIn}</p>}
+            </div>
           }
         />
         <TripCard
@@ -975,9 +1044,16 @@ function DutySlipEditor({
                 {form.dutySlipPhoto ? "Duty slip photo attached." : "Upload the duty slip photo here."}
               </p>
               {form.dutySlipPhoto && (
-                <a href={form.dutySlipPhoto} target="_blank" rel="noreferrer" className="inline-flex rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20">
-                  View Duty Slip
-                </a>
+                <div className="space-y-2">
+                  <a href={form.dutySlipPhoto} target="_blank" rel="noreferrer" className="inline-flex rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20">
+                    View Duty Slip
+                  </a>
+                  <img
+                    src={form.dutySlipPhoto}
+                    alt="Duty slip preview"
+                    className="max-h-40 w-full rounded-md border border-slate-200 object-contain dark:border-slate-800"
+                  />
+                </div>
               )}
             </div>
           }
@@ -1031,14 +1107,30 @@ function DutySlipEditor({
           }
         />
         <TripCard
-          label="Rate Per KM"
+          label={<>Vehicle Charges Per KM <span className="text-red-600">*</span></>}
+          value={
+            <div className="space-y-1">
+              <input
+                className="input mt-1"
+                type="number"
+                step="any"
+                min="0"
+                inputMode="decimal"
+                value={form.perKmCharges}
+                onChange={(event) => updateField("perKmCharges", event.target.value)}
+              />
+              {errors.perKmCharges && <p className="text-xs text-red-600">{errors.perKmCharges}</p>}
+            </div>
+          }
+        />
+        <TripCard
+          label="Trip Fare"
           value={
             <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
-              {ratePerKm.toLocaleString()}
+              {tripFare.toLocaleString()}
             </p>
           }
         />
-        {/* <TripCard label="Trip Fare" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{tripFare.toLocaleString()}</p>} /> */}
         <TripCard
           label="Sub Total"
           value={
@@ -1048,19 +1140,22 @@ function DutySlipEditor({
           }
         />
         <TripCard
-          label="GST (%)"
+          label={<>GST (%) <span className="text-red-600">*</span></>}
           value={
-            <input
-              className="input mt-1"
-              type="number"
-              step="any"
-              min="0"
-              inputMode="decimal"
-              value={form.gstCharges}
-              onChange={(event) =>
-                updateField("gstCharges", event.target.value)
-              }
-            />
+            <div className="space-y-1">
+              <input
+                className="input mt-1"
+                type="number"
+                step="any"
+                min="0"
+                inputMode="decimal"
+                value={form.gstCharges}
+                onChange={(event) =>
+                  updateField("gstCharges", event.target.value)
+                }
+              />
+              {errors.gstCharges && <p className="text-xs text-red-600">{errors.gstCharges}</p>}
+            </div>
           }
         />
         <TripCard
@@ -1115,7 +1210,7 @@ function TripStatusBadge({ status }: { status: string }) {
   return <BookingStatusBadge status={status} />;
 }
 
-function TripCard({ label, value }: { label: string; value?: any }) {
+function TripCard({ label, value }: { label: React.ReactNode; value?: any }) {
   return (
     <div className="rounded-md border border-slate-200 p-2.5 dark:border-slate-800">
       <p className="text-[11px] font-semibold uppercase text-slate-400">{label}</p>
@@ -1169,12 +1264,41 @@ function TripDetails({ data }: { data: any }) {
 
 function formatTripDetailValue(label: string, value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "string" && isImagePreviewValue(label, value)) {
+    return (
+      <div className="space-y-2">
+        <AttachmentLink href={value} label="Open image" />
+        <img
+          src={value}
+          alt={label}
+          className="max-h-40 w-full rounded-md border border-slate-200 object-contain dark:border-slate-800"
+        />
+      </div>
+    );
+  }
   return shouldFormatAsDate(label, value) ? formatDisplayDate(value) : value;
 }
 
-function AttachmentLink({ href, label }: { href: string; label: string }) {
+function isImagePreviewValue(label: string, value: string) {
+  const normalizedLabel = label.toLowerCase();
+  const imageExtensionPattern = /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i;
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="inline-flex rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20">
+    normalizedLabel.includes("photo") ||
+    normalizedLabel.includes("screenshot") ||
+    value.startsWith("data:image") ||
+    imageExtensionPattern.test(value)
+  );
+}
+
+function AttachmentLink({ href, label }: { href: string; label: string }) {
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20"
+    >
       {label}
     </a>
   );
@@ -1221,14 +1345,10 @@ function optionalMobileNumber() {
 function buildDutySlipState(trip: any): DutySlipFormState {
   const hasCostCenter = Boolean(String(trip?.booking?.costCenterOfProject ?? "").trim());
   return {
-    kmOut:
-      trip?.kmOut === undefined || trip?.kmOut === null
-        ? ""
-        : String(trip.kmOut),
-    kmIn:
-      trip?.kmIn === undefined || trip?.kmIn === null ? "" : String(trip.kmIn),
-    timeOut: trip?.timeOut ? toDatetimeLocal(trip.timeOut) : "",
-    timeIn: trip?.timeIn ? toDatetimeLocal(trip.timeIn) : "",
+    kmOut: String(trip?.kmOut ?? 0),
+    kmIn: String(trip?.kmIn ?? 0),
+    timeOut: trip?.timeOut ? toDatetimeLocal(trip.timeOut) : toDatetimeLocal(new Date()),
+    timeIn: trip?.timeIn ? toDatetimeLocal(trip.timeIn) : toDatetimeLocal(new Date()),
     closingKm: "",
     closingTime: "",
     closingLocation: String(trip?.closingLocation ?? ""),
@@ -1242,8 +1362,8 @@ function buildDutySlipState(trip: any): DutySlipFormState {
     tollCharges: String(trip?.tollCharges ?? 0),
     parkingCharges: String(trip?.parkingCharges ?? 0),
     extraCharges: String(trip?.extraCharges ?? 0),
-    gstCharges: String(trip?.gstCharges ?? 5),
-    perKmCharges: String(trip?.perKmCharges ?? 0),
+    gstCharges: String(trip?.gstCharges ?? 18),
+    perKmCharges: String(trip?.perKmCharges ?? trip?.vehicle?.rate_per_km ?? trip?.vehicle?.ratePerKm ?? 0),
   };
 }
 
