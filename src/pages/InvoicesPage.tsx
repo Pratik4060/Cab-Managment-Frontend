@@ -1,19 +1,22 @@
-import { Banknote, Download, Eye, FileArchive, FileDown, Loader2, Mail, Pencil, Plus, Trash2 } from "lucide-react";
+import { Banknote, ChevronDown, ChevronRight, Download, Eye, FileArchive, FileDown, Loader2, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { z } from "zod";
 import { EntityForm } from "../components/forms/EntityForm";
 import { Modal } from "../components/common/Modal";
 import { ConfirmDialog } from "../components/common/ConfirmDialog";
+import { EmptyState } from "../components/common/EmptyState";
+import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { invoiceActions, sendInvoice } from "../redux/slices/invoiceSlice";
-import { downloadFile } from "../utils/downloadFile";
+import { bookingActions } from "../redux/slices/bookingSlice";
 import { formatDisplayDate } from "../utils/formatDate";
 import { showToast } from "../utils/toast";
 
 type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Partial" | "Pending";
 type InvoiceProjectType = "Process" | "Management";
+type InvoiceViewMode = "present" | "booking";
 
 type InvoiceDutySlipState = {
   kmOut: string;
@@ -48,11 +51,19 @@ export function InvoicesPage() {
   const [projectTypeFilter, setProjectTypeFilter] = useState<InvoiceProjectType | "">("");
   const [dateFilters, setDateFilters] = useState({ from: "", to: "" });
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
+  const [selectedBookingGroupIds, setSelectedBookingGroupIds] = useState<string[]>([]);
+  const [expandedBookingGroupIds, setExpandedBookingGroupIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<InvoiceViewMode>("present");
   const invoices = useAppSelector((s) => s.invoices);
+  const bookings = useAppSelector((s) => s.bookings.allItems);
 
   useEffect(() => {
     dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
   }, [dispatch, statusFilter]);
+
+  useEffect(() => {
+    dispatch(bookingActions.fetchAll({}));
+  }, [dispatch]);
 
   const rows = useMemo(() => {
     return (invoices.items || []).filter((invoice) => {
@@ -68,42 +79,107 @@ export function InvoicesPage() {
     if (!projectTypeFilter) return rows;
     return rows.filter((invoice) => getInvoiceProjectType(invoice) === projectTypeFilter);
   }, [projectTypeFilter, rows]);
-  const selectedInvoices = filteredRows.filter((invoice) => selectedInvoiceIds.includes(String(invoice._id)));
-  const exportQuery = new URLSearchParams({
-    ...(dateFilters.from ? { from: dateFilters.from } : {}),
-    ...(dateFilters.to ? { to: dateFilters.to } : {}),
-    ...(statusFilter ? { status: statusFilter } : {}),
-    ...(projectTypeFilter ? { projectType: projectTypeFilter } : {}),
-    ...(selectedInvoiceIds.length ? { selected: selectedInvoiceIds.join(",") } : {})
-  }).toString();
+  const invoiceGroups = useMemo(() => buildInvoiceGroups(filteredRows), [filteredRows]);
+  const selectedBookingGroups = invoiceGroups.filter((group) => selectedBookingGroupIds.includes(group._id));
+  const selectedBookingIds = viewMode === "booking" ? selectedBookingGroups.map((group) => group.bookingId) : [];
+  const selectedActionInvoiceIds = viewMode === "present"
+    ? selectedInvoiceIds
+    : Array.from(new Set([...selectedInvoiceIds, ...selectedBookingGroups.flatMap((group) => group.invoiceIds)]));
 
   useEffect(() => {
     const visibleIds = new Set(filteredRows.map((invoice) => String(invoice._id)));
     setSelectedInvoiceIds((current) => current.filter((id) => visibleIds.has(id)));
   }, [filteredRows]);
 
+  useEffect(() => {
+    const visibleIds = new Set(invoiceGroups.map((group) => group._id));
+    setSelectedBookingGroupIds((current) => current.filter((id) => visibleIds.has(id)));
+    setExpandedBookingGroupIds((current) => current.filter((id) => visibleIds.has(id)));
+  }, [invoiceGroups]);
+
   function toggleInvoiceSelection(id: string) {
     setSelectedInvoiceIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   }
 
-  function exportInvoices(format: "xlsx" | "pdf") {
-    const exportRows = selectedInvoices.length ? selectedInvoices : filteredRows;
-    downloadFile(
-      `/reports/invoices/export.${format}${exportQuery ? `?${exportQuery}` : ""}`,
-      `invoices.${format}`,
-      format === "pdf" ? buildBulkPdfExport(exportRows) : buildInvoiceExport(exportRows)
+  async function exportInvoices(format: "xlsx" | "pdf") {
+    const result = await dispatch(invoiceActions.exportInvoices(buildExportPayload(format))).unwrap();
+    downloadBlob(result.blob, `invoices.${format}`);
+    showToast({ type: "success", title: "Download ready", message: `${format === "xlsx" ? "Excel" : "PDF"} report downloaded successfully.` });
+  }
+
+  function toggleBookingGroupSelection(id: string) {
+    setSelectedBookingGroupIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }
+
+  function toggleBookingGroupExpansion(id: string) {
+    setExpandedBookingGroupIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }
+
+  function setGroupInvoiceSelection(group: any, ids: string[]) {
+    const groupInvoiceIds = new Set(group.invoiceIds.map(String));
+    setSelectedInvoiceIds((current) => [...current.filter((id) => !groupInvoiceIds.has(id)), ...ids]);
+  }
+
+  function renderInvoiceActions(row: any) {
+    return (
+      <div className="flex min-w-36 flex-col gap-1.5">
+        <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
+          <Eye className="h-4 w-4" />
+          <span>Preview</span>
+        </button>
+        <button className="btn-secondary w-full justify-start p-2" title="Edit invoice" onClick={() => setEditTarget(row)}>
+          <Pencil className="h-4 w-4" />
+          <span>Edit</span>
+        </button>
+        <button className="btn-secondary w-full justify-start p-2" title="Update payment status" onClick={() => setPaymentTarget(row)}>
+          <Banknote className="h-4 w-4" />
+          <span>Payment Status</span>
+        </button>
+        <button className="btn-secondary w-full justify-start p-2" title="Send invoice to client" onClick={() => setSendTarget(row)}>
+          <Mail className="h-4 w-4" />
+          <span>Send</span>
+        </button>
+        <button className="btn-secondary w-full justify-start p-2" title="Download PDF" onClick={() => downloadInvoicePdf(row)}>
+          <FileDown className="h-4 w-4" />
+          <span>Download PDF</span>
+        </button>
+        <button className="btn-secondary w-full justify-start p-2" title="Booking PDF" onClick={() => exportBookingPdf(row)}>
+          <FileArchive className="h-4 w-4" />
+          <span>Booking PDF</span>
+        </button>
+        <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
+          <Trash2 className="h-4 w-4" />
+          <span>Delete</span>
+        </button>
+      </div>
     );
   }
 
   return (
     <div className="relative space-y-3.5">
+      {invoices.loading && <RequestOverlay message={invoices.requestMessage || "Processing invoice request..."} />}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Invoices</h1>
           <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-       
+          <div className="inline-flex rounded-lg border border-brand-100 bg-white p-1 dark:border-red-950/40 dark:bg-[#111114]">
+            <button
+              type="button"
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+              onClick={() => setViewMode("present")}
+            >
+              List View
+            </button>
+            <button
+              type="button"
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+              onClick={() => setViewMode("booking")}
+            >
+              By Booking
+            </button>
+          </div>
           <select className="input w-28" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Paid">Paid</option>
@@ -157,6 +233,7 @@ export function InvoicesPage() {
       </div>
 
       <div className="panel p-2">
+        {viewMode === "present" && (
         <DataTable
           loading={invoices.loading}
           loadingMessage={invoices.requestMessage || "Loading invoices..."}
@@ -179,39 +256,69 @@ export function InvoicesPage() {
             { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
           ]}
           actionCount={7}
-          actions={(row) => (
-            <div className="flex min-w-36 flex-col gap-1.5">
-              <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
-                <Eye className="h-4 w-4" />
-                <span>Preview</span>
-              </button>
-              <button className="btn-secondary w-full justify-start p-2" title="Edit invoice" onClick={() => setEditTarget(row)}>
-                <Pencil className="h-4 w-4" />
-                <span>Edit</span>
-              </button>
-              <button className="btn-secondary w-full justify-start p-2" title="Update payment status" onClick={() => setPaymentTarget(row)}>
-                <Banknote className="h-4 w-4" />
-                <span>Payment Status</span>
-              </button>
-              <button className="btn-secondary w-full justify-start p-2" title="Send invoice to client" onClick={() => setSendTarget(row)}>
-                <Mail className="h-4 w-4" />
-                <span>Send</span>
-              </button>
-              <button className="btn-secondary w-full justify-start p-2" title="Download PDF" onClick={() => downloadInvoicePdf(row)}>
-                <FileDown className="h-4 w-4" />
-                <span>Download PDF</span>
-              </button>
-              <button className="btn-secondary w-full justify-start p-2" title="Booking PDF" onClick={() => exportBookingPdf(row)}>
-                <FileArchive className="h-4 w-4" />
-                <span>Booking PDF</span>
-              </button>
-              <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
-                <Trash2 className="h-4 w-4" />
-                <span>Delete</span>
-              </button>
-            </div>
-          )}
+          actions={renderInvoiceActions}
         />
+        )}
+        {viewMode === "booking" && (
+          <BookingInvoiceGroups
+            groups={invoiceGroups}
+            loading={invoices.loading}
+            loadingMessage={invoices.requestMessage || "Loading grouped invoices..."}
+            selectedGroupIds={selectedBookingGroupIds}
+            selectedInvoiceIds={selectedInvoiceIds}
+            expandedGroupIds={expandedBookingGroupIds}
+            onToggleGroup={toggleBookingGroupSelection}
+            onToggleGroupAll={setSelectedBookingGroupIds}
+            onToggleExpand={toggleBookingGroupExpansion}
+            onToggleInvoice={toggleInvoiceSelection}
+            onToggleGroupInvoices={setGroupInvoiceSelection}
+            onBookingPdf={(invoice) => exportBookingPdf(invoice)}
+            onBulkSend={(group) => {
+              setSelectedBookingGroupIds([group._id]);
+              setBulkSendOpen(true);
+            }}
+            renderInvoiceActions={renderInvoiceActions}
+          />
+        )}
+        {false && viewMode === "booking" && (
+          <DataTable
+            loading={invoices.loading}
+            loadingMessage={invoices.requestMessage || "Loading grouped invoices..."}
+            rows={invoiceGroups}
+            selectable
+            selectedIds={selectedBookingGroupIds}
+            onToggleRow={(id) => setSelectedBookingGroupIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])}
+            onToggleAll={setSelectedBookingGroupIds}
+            columns={[
+              { key: "bookingId", header: "Booking ID" },
+              { key: "cabRequestNumber", header: "Cab Request" },
+              { key: "passengerName", header: "Passenger" },
+              { key: "invoiceCount", header: "Invoices" },
+              { key: "totalAmount", header: "Total", render: (r) => `₹ ${Number(r.totalAmount || 0).toLocaleString()}` },
+              { key: "balanceAmount", header: "Balance", render: (r) => `₹ ${Number(r.balanceAmount || 0).toLocaleString()}` }
+            ]}
+            actionCount={3}
+            actions={(row) => (
+              <div className="flex min-w-36 flex-col gap-1.5">
+                <button className="btn-secondary w-full justify-start p-2" onClick={() => setPreviewInvoice(row.invoices[0])}>
+                  <Eye className="h-4 w-4" />
+                  <span>Preview First</span>
+                </button>
+                <button className="btn-secondary w-full justify-start p-2" onClick={() => exportBookingPdf(row.invoices[0])}>
+                  <FileArchive className="h-4 w-4" />
+                  <span>Booking PDF</span>
+                </button>
+                <button className="btn-secondary w-full justify-start p-2" onClick={() => {
+                  setSelectedBookingGroupIds([row._id]);
+                  setBulkSendOpen(true);
+                }}>
+                  <Mail className="h-4 w-4" />
+                  <span>Bulk Send</span>
+                </button>
+              </div>
+            )}
+          />
+        )}
       </div>
 
       <Modal open={Boolean(previewInvoice)} title={`Invoice Preview ${previewInvoice?.invoiceNumber || ""}`} onClose={() => setPreviewInvoice(null)}>
@@ -219,6 +326,7 @@ export function InvoicesPage() {
       </Modal>
       <Modal open={addOpen} title="Add Invoice" onClose={() => setAddOpen(false)}>
         <AddInvoiceForm
+          bookings={bookings}
           onSubmit={async (values) => {
             await dispatch(invoiceActions.createOne(values)).unwrap();
             await dispatch(invoiceActions.fetchAll(statusFilter ? { status: statusFilter } : {}));
@@ -297,7 +405,7 @@ export function InvoicesPage() {
           })}
           submitLabel="Send Bulk"
           onSubmit={async (values) => {
-            const response = await dispatch(invoiceActions.sendBulkInvoices(values)).unwrap();
+            const response = await dispatch(invoiceActions.sendBulkInvoices({ ...values, invoiceIds: selectedActionInvoiceIds, bookingIds: selectedBookingIds })).unwrap();
             if (!response?.message) {
               showToast({ type: "success", title: "Bulk send started", message: "Bulk invoice email request submitted successfully." });
             }
@@ -325,25 +433,36 @@ export function InvoicesPage() {
 
   async function downloadInvoicePdf(invoice: any) {
     const result = await dispatch(invoiceActions.downloadPdf(invoice._id)).unwrap();
-    const blobUrl = window.URL.createObjectURL(result.blob);
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = `${invoice.invoiceNumber || "invoice"}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(blobUrl);
+    downloadBlob(result.blob, `${invoice.invoiceNumber || "invoice"}.pdf`);
     showToast({ type: "success", title: "Download ready", message: "Invoice PDF downloaded successfully." });
   }
 
-  function exportBookingPdf(invoice: any) {
+  async function exportBookingPdf(invoice: any) {
     const bookingId = invoice.bookingId || invoice.booking?.bookingId || invoice.booking?._id;
-    const bookingInvoices = filteredRows.filter((row) => String(row.bookingId || row.booking?.bookingId || row.booking?._id) === String(bookingId));
-    downloadFile(
-      `/bookings/${bookingId}/invoice-pack.pdf`,
-      `booking-${bookingId || "invoice-pack"}.pdf`,
-      buildBookingPdfExport(invoice, bookingInvoices.length ? bookingInvoices : [invoice])
-    );
+    const result = await dispatch(invoiceActions.downloadBookingPdf({
+      bookingId,
+      payload: {
+        status: statusFilter || undefined,
+        projectType: projectTypeFilter || undefined,
+        from: dateFilters.from || undefined,
+        to: dateFilters.to || undefined,
+        bookingIds: [bookingId]
+      }
+    })).unwrap();
+    downloadBlob(result.blob, `booking-${bookingId || "invoice-pack"}.pdf`);
+    showToast({ type: "success", title: "Download ready", message: "Booking PDF downloaded successfully." });
+  }
+
+  function buildExportPayload(format: "xlsx" | "pdf") {
+    return {
+      format,
+      status: statusFilter || undefined,
+      projectType: projectTypeFilter || undefined,
+      from: dateFilters.from || undefined,
+      to: dateFilters.to || undefined,
+      invoiceIds: selectedActionInvoiceIds.length ? selectedActionInvoiceIds : undefined,
+      bookingIds: selectedBookingIds.length ? selectedBookingIds : undefined
+    };
   }
 }
 
@@ -399,6 +518,133 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
   );
 }
 
+function BookingInvoiceGroups({
+  groups,
+  loading,
+  loadingMessage,
+  selectedGroupIds,
+  selectedInvoiceIds,
+  expandedGroupIds,
+  onToggleGroup,
+  onToggleGroupAll,
+  onToggleExpand,
+  onToggleInvoice,
+  onToggleGroupInvoices,
+  onBookingPdf,
+  onBulkSend,
+  renderInvoiceActions
+}: {
+  groups: any[];
+  loading?: boolean;
+  loadingMessage?: string;
+  selectedGroupIds: string[];
+  selectedInvoiceIds: string[];
+  expandedGroupIds: string[];
+  onToggleGroup: (id: string) => void;
+  onToggleGroupAll: (ids: string[]) => void;
+  onToggleExpand: (id: string) => void;
+  onToggleInvoice: (id: string) => void;
+  onToggleGroupInvoices: (group: any, ids: string[]) => void;
+  onBookingPdf: (invoice: any) => void;
+  onBulkSend: (group: any) => void;
+  renderInvoiceActions: (invoice: any) => ReactNode;
+}) {
+  if (loading) return <LoadingSkeleton message={loadingMessage} />;
+  if (!groups.length) return <EmptyState />;
+
+  const groupIds = groups.map((group) => group._id);
+  const allGroupsSelected = groupIds.length > 0 && groupIds.every((id) => selectedGroupIds.includes(id));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-red-950/35 dark:bg-[rgb(23,23,25)] dark:text-slate-200">
+        <input
+          type="checkbox"
+          aria-label="Select all booking groups"
+          checked={allGroupsSelected}
+          onChange={() => onToggleGroupAll(allGroupsSelected ? [] : groupIds)}
+        />
+        <span>Select all booking groups</span>
+      </div>
+      {groups.map((group) => {
+        const recentInvoice = group.invoices[0];
+        const otherInvoices = group.invoices.slice(1);
+        const isExpanded = expandedGroupIds.includes(group._id);
+        const childSelectedIds = Array.from(new Set([
+          ...selectedInvoiceIds,
+          ...(selectedGroupIds.includes(group._id) ? group.invoiceIds : [])
+        ]));
+
+        return (
+          <div key={group._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-red-950/35 dark:bg-[#101012]">
+            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1.4fr_1.1fr_.7fr_.8fr_auto] md:items-center">
+              <input
+                type="checkbox"
+                aria-label="Select booking group"
+                checked={selectedGroupIds.includes(group._id)}
+                onChange={() => onToggleGroup(group._id)}
+              />
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Booking ID</p>
+                <p className="font-semibold text-slate-950 dark:text-white">{group.bookingId}</p>
+                <p className="text-xs text-slate-500">{group.cabRequestNumber}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Recent Invoice</p>
+                <p className="font-semibold text-slate-950 dark:text-white">{recentInvoice?.invoiceNumber || "-"}</p>
+                <p className="text-xs text-slate-500">{group.passengerName}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Invoices</p>
+                <p className="font-semibold">{group.invoiceCount}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Balance</p>
+                <p className="font-semibold">₹ {Number(group.balanceAmount || 0).toLocaleString()}</p>
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                {otherInvoices.length > 0 && (
+                  <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onToggleExpand(group._id)}>
+                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    Other ({otherInvoices.length})
+                  </button>
+                )}
+                <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onBookingPdf(recentInvoice)}>
+                  <FileArchive className="h-4 w-4" />
+                  PDF
+                </button>
+                <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onBulkSend(group)}>
+                  <Mail className="h-4 w-4" />
+                  Send
+                </button>
+              </div>
+            </div>
+            <div className="border-t border-slate-100 p-2 dark:border-red-950/25">
+              <DataTable
+                rows={isExpanded ? group.invoices : [recentInvoice]}
+                selectable
+                selectedIds={childSelectedIds}
+                onToggleRow={onToggleInvoice}
+                onToggleAll={(ids) => onToggleGroupInvoices(group, ids)}
+                columns={[
+                  { key: "invoiceNumber", header: "Invoice" },
+                  { key: "createdAt", header: "Date", render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt) },
+                  { key: "clientName", header: "Client" },
+                  { key: "paymentStatus", header: "Payment", render: (r) => <PaymentStatusBadge invoice={r} /> },
+                  { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
+                  { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
+                ]}
+                actionCount={7}
+                actions={renderInvoiceActions}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 type AddInvoiceFormState = {
   bookingId: string;
   clientName: string;
@@ -407,14 +653,20 @@ type AddInvoiceFormState = {
   billingAddress: string;
   kmOut: string;
   kmIn: string;
+  timeOut: string;
+  timeIn: string;
+  closingKm: string;
+  closingTime: string;
+  closingLocation: string;
   vehicleChargesPerKm: string;
   tollCharges: string;
   parkingCharges: string;
   extraCharges: string;
   gstPercent: string;
+  remarks: string;
 };
 
-function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void> | void }) {
+function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (payload: any) => Promise<void> | void }) {
   const [form, setForm] = useState<AddInvoiceFormState>({
     bookingId: "",
     clientName: "",
@@ -423,12 +675,20 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
     billingAddress: "",
     kmOut: "",
     kmIn: "",
+    timeOut: "",
+    timeIn: "",
+    closingKm: "",
+    closingTime: "",
+    closingLocation: "",
     vehicleChargesPerKm: "",
     tollCharges: "0",
     parkingCharges: "0",
     extraCharges: "0",
-    gstPercent: "18"
+    gstPercent: "18",
+    remarks: ""
   });
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingPickerOpen, setBookingPickerOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -444,10 +704,36 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
   const subtotal = tripFare + tollCharges + parkingCharges + extraCharges;
   const gstAmount = Math.round(subtotal * (gstPercent / 100) * 100) / 100;
   const totalAmount = Math.round((subtotal + gstAmount) * 100) / 100;
+  const matchedBookings = useMemo(() => {
+    const query = bookingSearch.trim().toLowerCase();
+    const source = Array.isArray(bookings) ? bookings : [];
+    if (!query) return source.slice(0, 6);
+    return source.filter((booking) => [
+      booking.bookingId,
+      booking.cabRequestNumber,
+      booking.passengerName,
+      booking.businessUnit
+    ].some((value) => String(value || "").toLowerCase().includes(query))).slice(0, 8);
+  }, [bookingSearch, bookings]);
 
   function updateField(field: keyof AddInvoiceFormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: "" }));
+  }
+
+  function selectBooking(booking: any) {
+    setForm((current) => ({
+      ...current,
+      bookingId: String(booking._id || booking.id || booking.bookingId || ""),
+      clientName: booking.businessUnit || booking.passengerName || current.clientName,
+      clientEmail: booking.senderEmail || current.clientEmail,
+      billingAddress: booking.reportingAddress || booking.dropAddress || current.billingAddress,
+      timeOut: booking.travelStartDate ? toDatetimeLocal(booking.travelStartDate) : current.timeOut,
+      timeIn: booking.travelEndDate ? toDatetimeLocal(booking.travelEndDate) : current.timeIn
+    }));
+    setBookingSearch(`${booking.bookingId || booking.cabRequestNumber || booking._id} - ${booking.passengerName || booking.businessUnit || "Booking"}`);
+    setBookingPickerOpen(false);
+    setErrors((current) => ({ ...current, bookingId: "" }));
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -468,10 +754,17 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
         totalKm,
         kmOut: Number(form.kmOut),
         kmIn: Number(form.kmIn),
+        timeOut: form.timeOut || undefined,
+        timeIn: form.timeIn || undefined,
+        closingKm: form.closingKm ? Number(form.closingKm) : undefined,
+        closingTime: form.closingTime || undefined,
+        closingLocation: form.closingLocation.trim() || undefined,
         tollCharges,
         parkingCharges,
         extraCharges,
-        gstPercent
+        ratePerKm: vehicleChargesPerKm,
+        gstPercent,
+        remarks: form.remarks.trim() || undefined
       });
     } finally {
       setSubmitting(false);
@@ -480,7 +773,36 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
 
   return (
     <form className="grid gap-3 sm:grid-cols-2" onSubmit={submit}>
-      <InvoiceInput label="Booking ID" value={form.bookingId} error={errors.bookingId} onChange={(value) => updateField("bookingId", value)} />
+      <div className="sm:col-span-2">
+        <RequiredLabel>Search Booking ID</RequiredLabel>
+        <input
+          className="input"
+          value={bookingSearch}
+          onFocus={() => setBookingPickerOpen(true)}
+          onChange={(event) => {
+            setBookingSearch(event.target.value);
+            setBookingPickerOpen(true);
+            setForm((current) => ({ ...current, bookingId: "" }));
+          }}
+          placeholder="Search booking ID, cab request, passenger..."
+        />
+        {errors.bookingId && <span className="mt-1 block text-xs text-red-500">{errors.bookingId}</span>}
+        {bookingPickerOpen && matchedBookings.length > 0 && (
+        <div className="mt-2 max-h-48 overflow-auto rounded-lg border border-brand-100 bg-white p-2 dark:border-red-950/40 dark:bg-[#111114]">
+          {matchedBookings.map((booking) => (
+            <button
+              key={booking._id || booking.id || booking.bookingId}
+              type="button"
+              className={`w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-brand-50 dark:hover:bg-red-950/20 ${String(form.bookingId) === String(booking._id || booking.id) ? "bg-brand-50 text-brand-700 dark:bg-red-950/25 dark:text-brand-100" : ""}`}
+              onClick={() => selectBooking(booking)}
+            >
+              <span className="font-semibold">{booking.bookingId || booking.cabRequestNumber || booking._id}</span>
+              <span className="ml-2 text-slate-500">{booking.passengerName || booking.businessUnit || "-"}</span>
+            </button>
+          ))}
+        </div>
+        )}
+      </div>
       <InvoiceInput label="Client Name" value={form.clientName} error={errors.clientName} onChange={(value) => updateField("clientName", value)} />
       <InvoiceInput label="Client Email" type="email" value={form.clientEmail} error={errors.clientEmail} onChange={(value) => updateField("clientEmail", value)} />
       <label>
@@ -494,6 +816,11 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
       <InvoiceInput label="KM Out" type="number" value={form.kmOut} error={errors.kmOut} onChange={(value) => updateField("kmOut", value)} />
       <InvoiceInput label="KM In" type="number" value={form.kmIn} error={errors.kmIn} onChange={(value) => updateField("kmIn", value)} />
       <ComputedField label="Total KM" value={totalKm.toLocaleString()} />
+      <InvoiceInput label="Time Out" type="datetime-local" value={form.timeOut} error={errors.timeOut} onChange={(value) => updateField("timeOut", value)} />
+      <InvoiceInput label="Time In" type="datetime-local" value={form.timeIn} error={errors.timeIn} onChange={(value) => updateField("timeIn", value)} />
+      <InvoiceInput label="Closing KM" type="number" value={form.closingKm} error={errors.closingKm} onChange={(value) => updateField("closingKm", value)} />
+      <InvoiceInput label="Closing Time" type="datetime-local" value={form.closingTime} error={errors.closingTime} onChange={(value) => updateField("closingTime", value)} />
+      <InvoiceInput label="Closing Location" value={form.closingLocation} error={errors.closingLocation} onChange={(value) => updateField("closingLocation", value)} />
       <InvoiceInput label="Vehicle Charges Per KM" type="number" value={form.vehicleChargesPerKm} error={errors.vehicleChargesPerKm} onChange={(value) => updateField("vehicleChargesPerKm", value)} />
       <InvoiceInput label="Trip Fare" type="number" value={String(tripFare)} readOnly />
       <InvoiceInput label="Toll Charges" type="number" value={form.tollCharges} error={errors.tollCharges} onChange={(value) => updateField("tollCharges", value)} />
@@ -503,6 +830,7 @@ function AddInvoiceForm({ onSubmit }: { onSubmit: (payload: any) => Promise<void
       <InvoiceInput label="GST (%)" type="number" value={form.gstPercent} error={errors.gstPercent} onChange={(value) => updateField("gstPercent", value)} />
       <ComputedField label="GST Amount" value={`₹ ${gstAmount.toLocaleString()}`} />
       <ComputedField label="Total Amount" value={`₹ ${totalAmount.toLocaleString()}`} />
+      <InvoiceInput label="Remarks" value={form.remarks} error={errors.remarks} onChange={(value) => updateField("remarks", value)} full />
       <div className="sm:col-span-2">
         <button className="btn-primary" disabled={submitting}>{submitting ? "Creating..." : "Create Invoice"}</button>
       </div>
@@ -544,6 +872,54 @@ function RequiredLabel({ children }: { children: ReactNode }) {
   return <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(blobUrl);
+}
+
+function buildInvoiceGroups(rows: any[]) {
+  const groups = new Map<string, any>();
+  rows.forEach((invoice) => {
+    const bookingId = String(invoice.bookingId || invoice.booking?.bookingId || invoice.booking?._id || "unknown");
+    const existing = groups.get(bookingId) || {
+      _id: bookingId,
+      bookingId,
+      cabRequestNumber: invoice.booking?.cabRequestNumber || invoice.cabRequestNumber || "-",
+      passengerName: invoice.booking?.passengerName || invoice.passengerName || invoice.clientName || "-",
+      invoices: [],
+      invoiceIds: [],
+      invoiceCount: 0,
+      totalAmount: 0,
+      balanceAmount: 0
+    };
+    existing.invoices.push(invoice);
+    existing.invoiceIds.push(String(invoice._id));
+    existing.invoiceCount += 1;
+    existing.totalAmount += Number(invoice.finalAmount || 0);
+    existing.balanceAmount += Number(remainingAmount(invoice));
+    groups.set(bookingId, existing);
+  });
+  return Array.from(groups.values()).map((group) => ({
+    ...group,
+    invoices: [...group.invoices].sort((a, b) => getInvoiceTime(b) - getInvoiceTime(a)),
+    invoiceIds: [...group.invoices]
+      .sort((a, b) => getInvoiceTime(b) - getInvoiceTime(a))
+      .map((invoice) => String(invoice._id))
+  }));
+}
+
+function getInvoiceTime(invoice: any) {
+  const value = invoice.invoiceDate || invoice.createdAt || invoice.updatedAt;
+  const time = value ? new Date(value).getTime() : 0;
+  return Number.isNaN(time) ? 0 : time;
+}
+
 function RequestOverlay({ message }: { message: string }) {
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-white/45 backdrop-blur-sm dark:bg-black/45">
@@ -557,12 +933,12 @@ function RequestOverlay({ message }: { message: string }) {
 
 function validateAddInvoiceForm(form: AddInvoiceFormState, totalKm: number) {
   const errors: Record<string, string> = {};
-  const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
+  const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "timeOut", "timeIn", "closingKm", "closingTime", "closingLocation", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
   for (const field of required) {
     if (!String(form[field] ?? "").trim()) errors[field] = "Required";
   }
   if (form.clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.clientEmail)) errors.clientEmail = "Enter a valid email address.";
-  for (const field of ["kmOut", "kmIn", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
+  for (const field of ["kmOut", "kmIn", "closingKm", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
     const value = normalizeNumber(form[field]);
     if (value === null || value < 0) errors[field] = "Enter a number 0 or greater.";
   }
@@ -797,47 +1173,6 @@ function InfoCard({ label, value }: { label: string; value: any }) {
   );
 }
 
-function buildInvoiceExport(rows: any[]) {
-  const headers = getInvoicePreviewRows(rows[0] || {}).map(([label]) => label);
-  const lines = rows.map((invoice) => getInvoicePreviewRows(invoice).map(([, value]) => value));
-
-  return [headers, ...lines]
-    .map((row) => row.map(csvCell).join(","))
-    .join("\n");
-}
-
-function buildBulkPdfExport(rows: any[]) {
-  return [
-    "Unique Carz Bulk Invoice PDF Export",
-    `Generated: ${formatDisplayDate(new Date())}`,
-    "",
-    ...rows.flatMap((invoice, index) => [
-      `Invoice ${index + 1}`,
-      ...getInvoicePreviewRows(invoice).map(([label, value]) => `${label}: ${value}`),
-      ""
-    ])
-  ].join("\n");
-}
-
-function buildBookingPdfExport(anchorInvoice: any, rows: any[]) {
-  const booking = anchorInvoice.booking || {};
-  return [
-    "Unique Carz Booking Invoice Pack",
-    `Booking ID: ${booking.bookingId || anchorInvoice.bookingId || "-"}`,
-    `Cab Request No: ${booking.cabRequestNumber || anchorInvoice.cabRequestNumber || "-"}`,
-    `Passenger: ${booking.passengerName || anchorInvoice.passengerName || "-"}`,
-    `Business Unit: ${booking.businessUnit || anchorInvoice.businessUnit || "-"}`,
-    `Reference Email Screenshot: ${booking.emailScreenshot || anchorInvoice.emailScreenshot ? "Attached / available in booking record" : "Not available"}`,
-    "",
-    "Invoices",
-    ...rows.flatMap((invoice, index) => [
-      `Invoice ${index + 1}`,
-      ...getInvoicePreviewRows(invoice).map(([label, value]) => `${label}: ${value}`),
-      ""
-    ])
-  ].join("\n");
-}
-
 function getInvoicePreviewRows(invoice: any): Array<[string, any]> {
   const booking = invoice.booking || {};
   const trip = invoice.trip || {};
@@ -876,11 +1211,6 @@ function getInvoicePreviewRows(invoice: any): Array<[string, any]> {
     ["Created At", formatDisplayDate(invoice.createdAt)],
     ["Updated At", invoice.updatedAt ? formatDisplayDate(invoice.updatedAt) : "-"]
   ];
-}
-
-function csvCell(value: unknown) {
-  const text = String(value ?? "");
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 function normalizeNumber(value: string | number | undefined) {
