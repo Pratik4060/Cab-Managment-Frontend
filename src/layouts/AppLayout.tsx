@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Topbar } from "../components/layout/Topbar";
 import { useAppSelector } from "../redux/hooks";
@@ -18,6 +18,8 @@ function GlobalRequestOverlay({ message }: { message: string }) {
 
 export function AppLayout({ children }: { children?: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const routePath = location.pathname;
   const { active, message } = useAppSelector((state) => {
     const s = state as any;
     const slices: Array<{ key: string; loading: boolean; message?: string; defaultMessage?: string }> = [
@@ -30,11 +32,26 @@ export function AppLayout({ children }: { children?: ReactNode }) {
       { key: "invoices", loading: s.invoices?.loading, message: s.invoices?.requestMessage, defaultMessage: "Processing invoices..." },
       { key: "payments", loading: s.payments?.loading, message: s.payments?.requestMessage, defaultMessage: "Processing payments..." },
       { key: "admins", loading: s.admins?.loading, message: s.admins?.requestMessage, defaultMessage: "Applying admin changes..." },
-      { key: "reports", loading: s.reports?.loading, message: s.reports?.requestMessage, defaultMessage: "Generating reports..." },
+      { key: "reports", loading: s.reports?.loading, message: s.reports?.requestMessage, defaultMessage: "Loading reports..." },
       { key: "analytics", loading: s.analytics?.loading, message: s.analytics?.requestMessage, defaultMessage: "Loading analytics..." }
     ];
 
-    const activeSlice = slices.find((slice) => slice.loading);
+    const routePriority = routePath.includes("/invoices")
+      ? "invoices"
+      : routePath.includes("/bookings")
+      ? "bookings"
+      : routePath.includes("/trips")
+      ? "trips"
+      : routePath.includes("/drivers")
+      ? "drivers"
+      : routePath.includes("/vehicles")
+      ? "vehicles"
+      : "";
+
+    const activeSlice = routePriority
+      ? slices.find((slice) => slice.key === routePriority && slice.loading) || slices.find((slice) => slice.loading)
+      : slices.find((slice) => slice.loading);
+
     return {
       active: Boolean(activeSlice),
       message: activeSlice?.message || activeSlice?.defaultMessage || "Processing request..."

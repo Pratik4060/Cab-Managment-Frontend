@@ -70,9 +70,9 @@ export function ProfilePage() {
       </div>
       {message && <div className="rounded-md bg-emerald-50 p-2.5 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">{message}</div>}
       {profileError && <div className="rounded-md bg-red-50 p-2.5 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{profileError}</div>}
-      <div className="grid gap-4 xl:grid-cols-2">
-        <form className="panel relative p-4" onSubmit={saveProfile}>
-          {profileLoading && <ProfileLoader />}
+      <div className="relative grid gap-4 xl:grid-cols-2 items-stretch">
+        {profileLoading && <ProfileLoader />}
+        <form className="panel relative p-4 h-full" onSubmit={saveProfile}>
           <h2 className="mb-3 text-[15px] font-semibold">Profile Details</h2>
           <div className="space-y-3">
             <label><span className="mb-1 block text-sm font-medium">Full Name</span><input className="input" value={profile.fullName} onChange={(e) => setProfile((p) => ({ ...p, fullName: e.target.value }))} /></label>
@@ -80,29 +80,26 @@ export function ProfilePage() {
             <button className="btn-primary" disabled={profileLoading}><Save className="h-4 w-4" />Save Profile</button>
           </div>
         </form>
-        <div className="space-y-4">
-          <form className="panel relative p-4" onSubmit={savePassword}>
-            {profileLoading && <ProfileLoader />}
-            <h2 className="mb-3 text-[15px] font-semibold">Change Password</h2>
-            <div className="space-y-3">
-              <PasswordInput
-                placeholder="Current password"
-                value={passwords.currentPassword}
-                visible={showCurrentPassword}
-                onToggle={() => setShowCurrentPassword((value) => !value)}
-                onChange={(value) => setPasswords((p) => ({ ...p, currentPassword: value }))}
-              />
-              <PasswordInput
-                placeholder="New password"
-                value={passwords.newPassword}
-                visible={showNewPassword}
-                onToggle={() => setShowNewPassword((value) => !value)}
-                onChange={(value) => setPasswords((p) => ({ ...p, newPassword: value }))}
-              />
-              <button className="btn-secondary" disabled={profileLoading}><Save className="h-4 w-4" />Change Password</button>
-            </div>
-          </form>
-        </div>
+        <form className="panel relative p-4 h-full" onSubmit={savePassword}>
+          <h2 className="mb-3 text-[15px] font-semibold">Change Password</h2>
+          <div className="space-y-3">
+            <PasswordInput
+              placeholder="Current password"
+              value={passwords.currentPassword}
+              visible={showCurrentPassword}
+              onToggle={() => setShowCurrentPassword((value) => !value)}
+              onChange={(value) => setPasswords((p) => ({ ...p, currentPassword: value }))}
+            />
+            <PasswordInput
+              placeholder="New password"
+              value={passwords.newPassword}
+              visible={showNewPassword}
+              onToggle={() => setShowNewPassword((value) => !value)}
+              onChange={(value) => setPasswords((p) => ({ ...p, newPassword: value }))}
+            />
+            <button className="btn-secondary" disabled={profileLoading}><Save className="h-4 w-4" />Change Password</button>
+          </div>
+        </form>
       </div>
     </div>
   );

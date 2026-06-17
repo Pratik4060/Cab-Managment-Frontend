@@ -8,6 +8,7 @@ import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { fetchReportByType, fetchReports } from "../redux/slices/reportSlice";
 import { reportApi } from "../api/reportApi";
+import { showToast } from "../utils/toast";
 
 type ReportRow = Record<string, any>;
 type ReportColumn = { key: string; header: string };
@@ -40,6 +41,7 @@ export function ReportsPage() {
   const error = useAppSelector((state) => state.reports.error);
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>({});
   const [columnMenuOpen, setColumnMenuOpen] = useState(false);
+  const [exporting, setExporting] = useState<"xlsx" | "pdf" | null>(null);
   const columnMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -92,9 +94,20 @@ export function ReportsPage() {
   }
 
   async function handleExport(format: "xlsx" | "pdf") {
-    const blob = await reportApi.exportReport(REPORT_TYPE, format, filters);
-    const filename = `invoice-reports.${format}`;
-    downloadBlob(blob, filename);
+    if (exporting) return;
+    setExporting(format);
+    showToast({ type: "info", title: "Generating report", message: `Generating ${format.toUpperCase()} report...` });
+
+    try {
+      const blob = await reportApi.exportReport(REPORT_TYPE, format, filters);
+      const filename = `invoice-reports.${format}`;
+      downloadBlob(blob, filename);
+      showToast({ type: "success", title: "Report ready", message: `${format.toUpperCase()} report generated successfully.` });
+    } catch (error) {
+      showToast({ type: "error", title: "Export failed", message: `Failed to generate ${format.toUpperCase()} report.` });
+    } finally {
+      setExporting(null);
+    }
   }
 
   return (
@@ -105,13 +118,13 @@ export function ReportsPage() {
           <p className="text-sm text-slate-500">Analytics, period filters, exports, print support, and invoice tables only.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-secondary" onClick={() => void handleExport("xlsx")}>
+          <button className="btn-secondary" type="button" disabled={Boolean(exporting)} onClick={() => void handleExport("xlsx") }>
             <Download className="h-4 w-4" />
-            Excel
+            {exporting === "xlsx" ? "Generating..." : "Excel"}
           </button>
-          <button className="btn-secondary" onClick={() => void handleExport("pdf")}>
+          <button className="btn-secondary" type="button" disabled={Boolean(exporting)} onClick={() => void handleExport("pdf") }>
             <Download className="h-4 w-4" />
-            PDF
+            {exporting === "pdf" ? "Generating..." : "PDF"}
           </button>
         </div>
       </div>
