@@ -103,6 +103,22 @@ export const downloadPdf = createAsyncThunk("invoices/downloadPdf", async (id: s
   }
 });
 
+export const exportInvoices = createAsyncThunk("invoices/exportInvoices", async (payload: any, { rejectWithValue }) => {
+  try {
+    return { format: payload.format, blob: await invoiceApi.exportInvoices(payload) };
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
+export const downloadBookingPdf = createAsyncThunk("invoices/downloadBookingPdf", async ({ bookingId, payload }: { bookingId: string; payload?: any }, { rejectWithValue }) => {
+  try {
+    return { bookingId, blob: await invoiceApi.downloadBookingPdf(bookingId, payload || {}) };
+  } catch (error) {
+    return rejectWithValue(apiErrorMessage(error));
+  }
+});
+
 function refresh(state: InvoiceState) {
   state.items = applyFilter(state.allItems, state.filter);
   state.total = state.items.length;
@@ -294,7 +310,7 @@ const invoiceSlice = createSlice({
       })
       .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/pending") && action.type !== fetchAll.pending.type, (state, action) => {
         state.loading = true;
-        state.requestMessage = invoiceRequestMessage(action.type);
+        state.requestMessage = invoiceRequestMessage(action.type, action);
         state.error = null;
       })
       .addMatcher((action) => action.type.startsWith("invoices/") && action.type.endsWith("/fulfilled") && action.type !== fetchAll.fulfilled.type, (state, action: any) => {
@@ -305,7 +321,7 @@ const invoiceSlice = createSlice({
           refresh(state);
           return;
         }
-        if (action.type === downloadPdf.fulfilled.type || action.type === sendBulkInvoices.fulfilled.type) return;
+        if ([downloadPdf.fulfilled.type, exportInvoices.fulfilled.type, downloadBookingPdf.fulfilled.type, sendBulkInvoices.fulfilled.type].includes(action.type)) return;
         if (action.payload && typeof action.payload === "object") {
           const updated = normalizeInvoice(action.payload);
           state.allItems = state.allItems.some((invoice) => String(invoice._id) === String(updated._id))
@@ -332,14 +348,18 @@ export const invoiceActions = {
   sendInvoice,
   sendBulkInvoices,
   deleteOne,
-  downloadPdf
+  downloadPdf,
+  exportInvoices,
+  downloadBookingPdf
 };
 export const { generateInvoice, regenerateInvoice, applyPayment, setItems: setInvoices } = invoiceSlice.actions;
 export default invoiceSlice.reducer;
 
-function invoiceRequestMessage(actionType: string) {
+function invoiceRequestMessage(actionType: string, action?: any) {
   if (actionType === sendInvoice.pending.type || actionType === sendBulkInvoices.pending.type) return "Email sending...";
   if (actionType === downloadPdf.pending.type) return "Preparing PDF...";
+  if (actionType === exportInvoices.pending.type) return action?.meta?.arg?.format === "xlsx" ? "Generating Excel report..." : "Generating PDF report...";
+  if (actionType === downloadBookingPdf.pending.type) return "Generating booking PDF...";
   if (actionType === createOne.pending.type) return "Creating invoice...";
   if (actionType === updateOne.pending.type) return "Updating invoice...";
   if (actionType === updatePaymentStatus.pending.type) return "Updating payment status...";

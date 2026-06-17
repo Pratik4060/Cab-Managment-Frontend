@@ -37,10 +37,17 @@ export type InvoiceCreatePayload = {
   totalKm: number | string;
   kmOut: number | string;
   kmIn: number | string;
+  timeOut?: string;
+  timeIn?: string;
+  closingKm?: number | string;
+  closingTime?: string;
+  closingLocation?: string;
   tollCharges: number | string;
   parkingCharges: number | string;
   extraCharges: number | string;
+  ratePerKm?: number | string;
   gstPercent: number | string;
+  remarks?: string;
 };
 
 export type BulkSendPayload = {
@@ -49,8 +56,22 @@ export type BulkSendPayload = {
   from?: string;
   to?: string;
   search?: string;
+  invoiceIds?: string[];
+  bookingIds?: string[];
   emailSubject: string;
   emailBody: string;
+};
+
+export type InvoiceExportPayload = {
+  format: "pdf" | "xlsx";
+  status?: string;
+  paymentStatus?: string;
+  projectType?: string;
+  from?: string;
+  to?: string;
+  search?: string;
+  invoiceIds?: string[];
+  bookingIds?: string[];
 };
 
 export const invoiceApi = {
@@ -135,6 +156,26 @@ export const invoiceApi = {
       url: `/invoices/${id}/pdf`,
       method: "GET",
       responseType: "blob",
+    });
+    return response.data;
+  },
+
+  async exportInvoices(payload: InvoiceExportPayload) {
+    const response = await apiClient.request<Blob>({
+      url: `/invoices/export/${payload.format}`,
+      method: "POST",
+      responseType: "blob",
+      data: toExportPayload(payload),
+    });
+    return response.data;
+  },
+
+  async downloadBookingPdf(bookingId: string, payload: Omit<InvoiceExportPayload, "format"> = {}) {
+    const response = await apiClient.request<Blob>({
+      url: `/invoices/booking/${bookingId}/pdf`,
+      method: "POST",
+      responseType: "blob",
+      data: toExportPayload({ ...payload, format: "pdf", bookingIds: payload.bookingIds?.length ? payload.bookingIds : [bookingId] }),
     });
     return response.data;
   },
@@ -397,10 +438,30 @@ function toInvoiceCreatePayload(payload: InvoiceCreatePayload) {
     totalKm: Number(payload.totalKm),
     kmOut: Number(payload.kmOut),
     kmIn: Number(payload.kmIn),
+    timeOut: toIsoDate(payload.timeOut),
+    timeIn: toIsoDate(payload.timeIn),
+    closingKm: payload.closingKm === undefined || payload.closingKm === "" ? undefined : Number(payload.closingKm),
+    closingTime: toIsoDate(payload.closingTime),
+    closingLocation: payload.closingLocation || undefined,
     tollCharges: Number(payload.tollCharges),
     parkingCharges: Number(payload.parkingCharges),
     extraCharges: Number(payload.extraCharges),
-    gstPercent: Number(payload.gstPercent)
+    ratePerKm: payload.ratePerKm === undefined || payload.ratePerKm === "" ? undefined : Number(payload.ratePerKm),
+    gstPercent: Number(payload.gstPercent),
+    remarks: payload.remarks || undefined
+  };
+}
+
+function toExportPayload(payload: InvoiceExportPayload) {
+  return {
+    status: payload.status || undefined,
+    paymentStatus: payload.paymentStatus || undefined,
+    projectType: payload.projectType || undefined,
+    from: payload.from || undefined,
+    to: payload.to || undefined,
+    search: payload.search || undefined,
+    invoiceIds: payload.invoiceIds?.length ? payload.invoiceIds : undefined,
+    bookingIds: payload.bookingIds?.length ? payload.bookingIds : undefined,
   };
 }
 
