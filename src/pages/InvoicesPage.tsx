@@ -577,7 +577,7 @@ function BookingInvoiceGroups({
 
         return (
           <div key={group._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-red-950/35 dark:bg-[#101012]">
-            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1.4fr_1.1fr_.7fr_.8fr_auto] md:items-center">
+            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1fr_.45fr_auto] md:items-center">
               <input
                 type="checkbox"
                 aria-label="Select booking group"
@@ -590,15 +590,10 @@ function BookingInvoiceGroups({
                 <p className="text-xs text-slate-500">{group.cabRequestNumber}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Recent Invoice</p>
-                <p className="font-semibold text-slate-950 dark:text-white">{recentInvoice?.invoiceNumber || "-"}</p>
-                <p className="text-xs text-slate-500">{group.passengerName}</p>
-              </div>
-              <div>
                 <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Invoices</p>
                 <p className="font-semibold">{group.invoiceCount}</p>
               </div>
-              <div>
+              <div className="hidden">
                 <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Balance</p>
                 <p className="font-semibold">₹ {Number(group.balanceAmount || 0).toLocaleString()}</p>
               </div>
@@ -609,11 +604,11 @@ function BookingInvoiceGroups({
                     Other ({otherInvoices.length})
                   </button>
                 )}
-                <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onBookingPdf(recentInvoice)}>
+                <button type="button" className="hidden btn-secondary px-2 py-1.5" onClick={() => onBookingPdf(recentInvoice)}>
                   <FileArchive className="h-4 w-4" />
                   PDF
                 </button>
-                <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onBulkSend(group)}>
+                <button type="button" className="hidden btn-secondary px-2 py-1.5" onClick={() => onBulkSend(group)}>
                   <Mail className="h-4 w-4" />
                   Send
                 </button>
