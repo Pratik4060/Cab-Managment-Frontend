@@ -189,55 +189,56 @@ export function InvoicesPage() {
   return (
     <div className="relative space-y-3.5">
       {invoices.loading && <RequestOverlay message={invoices.requestMessage || "Processing invoice request..."} />}
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Invoices</h1>
           <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <div className="inline-flex rounded-lg border border-brand-100 bg-white p-1 dark:border-red-950/40 dark:bg-[#111114]">
-            <button
-              type="button"
-              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
-              onClick={() => setViewMode("present")}
-            >
-              List View
-            </button>
-            <button
-              type="button"
-              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
-              onClick={() => setViewMode("booking")}
-            >
-              By Booking
-            </button>
-          </div>
-          <select className="input w-28" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
-            <option value="">All Status</option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-          </select>
-          <input className="input w-32" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
-          <input className="input w-32" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
-          <button className="btn-secondary" onClick={() => exportInvoices("xlsx")}>
-            <Download className="h-4 w-4" />
-            Excel
-          </button>
-          <button className="btn-secondary" onClick={() => exportInvoices("pdf")}>
-            <FileArchive className="h-4 w-4" />
-            Bulk PDFs
+        <button className="btn-primary" onClick={() => setAddOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add Invoice
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-lg border border-brand-100 bg-white p-1 dark:border-red-950/40 dark:bg-[#111114]">
+          <button
+            type="button"
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            onClick={() => setViewMode("present")}
+          >
+            List View
           </button>
           <button
-            className="btn-secondary"
-            onClick={handleBulkSend}
+            type="button"
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            onClick={() => setViewMode("booking")}
           >
-            <Mail className="h-4 w-4" />
-            Bulk Send
-          </button>
-          <button className="btn-primary" onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Add Invoice
+            By Booking
           </button>
         </div>
+        <select className="input w-28" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
+          <option value="">All Status</option>
+          <option value="Paid">Paid</option>
+          <option value="Pending">Pending</option>
+        </select>
+        <input className="input w-32" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
+        <input className="input w-32" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
+        <button className="btn-secondary" onClick={() => exportInvoices("xlsx")}>
+          <Download className="h-4 w-4" />
+          Excel
+        </button>
+        <button className="btn-secondary" onClick={() => exportInvoices("pdf")}>
+          <FileArchive className="h-4 w-4" />
+          Bulk PDFs
+        </button>
+        <button
+          className="btn-secondary"
+          onClick={handleBulkSend}
+        >
+          <Mail className="h-4 w-4" />
+          Bulk Send
+        </button>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -587,21 +588,21 @@ function BookingInvoiceGroups({
 
         return (
           <div key={group._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-red-950/35 dark:bg-[#101012]">
-            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1fr_.45fr_auto] md:items-center">
+            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1fr_auto_auto] md:items-center">
               <input
                 type="checkbox"
                 aria-label="Select booking group"
                 checked={selectedGroupIds.includes(group._id)}
                 onChange={() => onToggleGroup(group._id)}
               />
-              <div>
-                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Booking ID</p>
-                <p className="font-semibold text-slate-950 dark:text-white">{group.bookingId}</p>
-                <p className="text-xs text-slate-500">{group.cabRequestNumber}</p>
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Cab Request Number</p>
+                <p className="font-semibold text-slate-950 dark:text-white">{group.cabRequestNumber}</p>
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Invoices</p>
-                <p className="font-semibold">{group.invoiceCount}</p>
+              <div className="flex justify-center">
+                <span className="inline-flex items-center rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+                  {group.invoiceCount} {group.invoiceCount === 1 ? "invoice" : "invoices"}
+                </span>
               </div>
               <div className="hidden">
                 <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Balance</p>

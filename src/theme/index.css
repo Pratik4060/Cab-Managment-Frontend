@@ -57,6 +57,30 @@ input[type="checkbox"] {
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
   }
+
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: #9ca3af #f3f4f6;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 4px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
 }
 
 .dark .panel {
@@ -90,6 +114,41 @@ input[type="checkbox"] {
 
 .dark .input::placeholder {
   color: #74747b;
+}
+
+.dark .input::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark .input::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 4px;
+}
+
+.dark .input::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.dark .input::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+.dark .scrollbar-slim {
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+.dark .scrollbar-slim::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark .scrollbar-slim::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 .dark select.input option {
