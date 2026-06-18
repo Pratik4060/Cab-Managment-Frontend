@@ -21,7 +21,7 @@ export function LoginPage() {
   });
   const submitLogin = handleSubmit(async (values) => {
     try {
-      await dispatch(login(values)).unwrap();
+      await dispatch(login({ ...values, password: values.password.trim() })).unwrap();
       showToast({ type: "success", title: "Login successful", message: "Welcome back to Unique Carz." });
     } catch {
       // Axios/auth state already surfaces the readable error.
