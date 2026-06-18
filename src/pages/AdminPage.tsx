@@ -51,6 +51,19 @@ export function ProfilePage() {
   async function savePassword(event: FormEvent) {
     event.preventDefault();
     setMessage("");
+    const currentPassword = passwords.currentPassword.trim();
+    const newPassword = passwords.newPassword.trim();
+
+    if (!currentPassword || !newPassword) {
+      setMessage("Please enter both current password and new password.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setMessage("New password must be at least 8 characters.");
+      return;
+    }
+
     const payload = buildProfilePayload(profile, passwords, true);
     if (!payload) {
       setMessage("Please enter both current password and new password.");
@@ -97,6 +110,7 @@ export function ProfilePage() {
               onToggle={() => setShowNewPassword((value) => !value)}
               onChange={(value) => setPasswords((p) => ({ ...p, newPassword: value }))}
             />
+            <p className="text-xs text-slate-500">New password must be at least 8 characters.</p>
             <button className="btn-secondary" disabled={profileLoading}><Save className="h-4 w-4" />Change Password</button>
           </div>
         </form>
