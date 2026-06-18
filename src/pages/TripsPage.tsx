@@ -1326,7 +1326,7 @@ function TripDetails({ data }: { data: any }) {
     ["Purpose of Cab Booking", booking.purposeOfCabBooking],
     ["Employee Count", booking.employeeCount],
     ["Email", booking.senderEmail],
-    ["Email Screenshot", booking.emailScreenshot ? <AttachmentLink href={booking.emailScreenshot} label="View Email Screenshot" /> : "-"],
+    ["Email Screenshot", getBookingScreenshot(booking) ? <AttachmentLink href={getBookingScreenshot(booking)} label="View Email Screenshot" /> : "-"],
     ["Trip Status", data.status || booking.status],
     ["Driver", data.driver?.driverName],
     [
@@ -1391,7 +1391,8 @@ function DutySlipDetails({ data }: { data: any }) {
 
 function formatTripDetailValue(label: string, value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
-  if (typeof value === "string" && isImagePreviewValue(label, value)) {
+  if (typeof value === "string" && isImagePreviewLabel(label)) {
+    if (!isValidScreenshotUrl(value)) return "-";
     return (
       <div className="space-y-2">
         <AttachmentLink href={value} label="Open image" />
@@ -1406,19 +1407,21 @@ function formatTripDetailValue(label: string, value: unknown) {
   return shouldFormatAsDate(label, value) ? formatDisplayDate(value) : value;
 }
 
-function isImagePreviewValue(label: string, value: string) {
+function isImagePreviewLabel(label: string) {
   const normalizedLabel = label.toLowerCase();
-  const imageExtensionPattern = /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i;
-  return (
-    normalizedLabel.includes("photo") ||
-    normalizedLabel.includes("screenshot") ||
-    value.startsWith("data:image") ||
-    imageExtensionPattern.test(value)
-  );
+  return normalizedLabel.includes("photo") || normalizedLabel.includes("screenshot");
+}
+
+function isValidScreenshotUrl(value: string) {
+  const text = value.trim();
+  if (!text || text.length < 8) return false;
+  const invalidValues = ["null", "undefined", "none", "n/a", "na"]; 
+  if (invalidValues.includes(text.toLowerCase())) return false;
+  return /^(?:https?:\/\/|data:image\/)[^\s]+$/i.test(text);
 }
 
 function AttachmentLink({ href, label }: { href: string; label: string }) {
-  if (!href) return null;
+  if (!isValidScreenshotUrl(href)) return null;
   return (
     <a
       href={href}
@@ -1429,6 +1432,12 @@ function AttachmentLink({ href, label }: { href: string; label: string }) {
       {label}
     </a>
   );
+}
+
+function getBookingScreenshot(booking: any): string {
+  const screenshot = booking.emailScreenshot || booking.email_screenshot || booking.email_screenshot_url || "";
+  const value = String(screenshot).trim();
+  return isValidScreenshotUrl(value) ? value : "";
 }
 
 function buildAssignedTripFromBooking(booking: any, drivers: any[], vehicles: any[]) {

@@ -155,7 +155,7 @@ export function EntityPage({ title, subtitle, stateKey, actions, columns, fields
           <div className="grid gap-2.5 sm:grid-cols-2">
             {Object.entries(viewRow).filter(([key]) => !["_id", "__v", ...hiddenViewKeys].includes(key)).map(([key, value]) => (
               <div key={key} className="rounded-md border border-slate-200 p-2.5 dark:border-slate-800">
-                <p className="text-[11px] font-semibold uppercase text-slate-400">{key}</p>
+                <p className="text-[11px] font-semibold uppercase text-slate-400">{formatFieldLabel(key)}</p>
                 <div className="mt-1 text-[13px] text-slate-900 dark:text-white">{formatValue(key, value)}</div>
               </div>
             ))}
@@ -201,6 +201,13 @@ function getErrorMessage(error: unknown) {
     return error.message;
   }
   return "Something went wrong. Please try again.";
+}
+
+function formatFieldLabel(label: string) {
+  return label
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .replace(/\b([a-z])/g, (match) => match.toUpperCase());
 }
 
 function createFieldSchema(field: any) {
