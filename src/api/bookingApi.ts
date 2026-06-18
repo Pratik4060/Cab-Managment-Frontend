@@ -92,7 +92,11 @@ export const bookingApi = {
   },
 
   async createDutySlip(payload: DutySlipPayload) {
-    return normalizeDutySlip(unwrapData<any>(await apiRequest({ url: "/duty-slips", method: "POST", data: toBackendDutySlipPayload(payload) })));
+    return normalizeDutySlip(
+      unwrapData<any>(
+        await apiRequest({ url: "/duty-slips", method: "POST", data: toDutySlipRequestData(payload) }),
+      ),
+    );
   },
 
   async getDutySlipDetails(id: string) {
@@ -238,6 +242,53 @@ function toBackendDutySlipPayload(payload: DutySlipPayload) {
   assignIfPresent(backendPayload, "gstCharges", payload.gstCharges, true);
   assignIfPresent(backendPayload, "remarks", payload.remarks);
   return backendPayload;
+}
+
+function dataUrlToFile(dataUrl: string, filename = "duty-slip.jpg") {
+  try {
+    const parts = dataUrl.split(",");
+    const meta = parts[0] || "";
+    const matches = /data:(.*);base64/.exec(meta);
+    const mime = matches ? matches[1] : "image/jpeg";
+    const bstr = atob(parts[1] || "");
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+  } catch (err) {
+    return undefined as unknown as File;
+  }
+}
+
+function toDutySlipRequestData(payload: DutySlipPayload) {
+  const body = toBackendDutySlipPayload(payload);
+
+  // build FormData for all fields (API expects multipart when file is present)
+  const formData = new FormData();
+  Object.entries(body).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      formData.append(key, String(value));
+    }
+  });
+
+  // handle dutySlipPhoto value: may be File or data URL string
+  const rawPhoto = (payload as any).dutySlipPhoto;
+  let file: File | undefined;
+  if (typeof rawPhoto === "string" && rawPhoto.startsWith("data:")) {
+    const generated = dataUrlToFile(rawPhoto);
+    if (generated) file = generated;
+  } else if (typeof File !== "undefined" && rawPhoto instanceof File) {
+    file = rawPhoto;
+  }
+
+  if (file) {
+    formData.set("dutySlipPhoto", file as unknown as Blob);
+  } else if (rawPhoto && typeof rawPhoto === "string") {
+    // If it's a URL (string) keep it as a field
+    formData.set("dutySlipPhoto", rawPhoto);
+  }
+
+  return formData;
 }
 
 function assignIfPresent(target: Record<string, unknown>, key: string, value: unknown, numeric = false) {
