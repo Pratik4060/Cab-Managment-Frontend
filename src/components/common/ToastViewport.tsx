@@ -57,7 +57,7 @@ export function ToastViewport() {
   if (!toasts.length) return null;
 
   return (
-    <div className="pointer-events-none fixed right-3 top-16 z-[10000] flex w-[min(24rem,calc(100vw-1.5rem))] flex-col gap-2">
+    <div className="pointer-events-none fixed right-3 top-16 z-[100001] flex w-[min(24rem,calc(100vw-1.5rem))] flex-col gap-2">
       {toasts.map((toast) => {
         const tone = styles[toast.type];
         const Icon = tone.icon;
