@@ -155,13 +155,11 @@ export function TripsPage() {
       name: "travelStartDate",
       label: "Travel Start Date",
       type: "datetime-local",
-      required: false,
     },
     {
       name: "travelEndDate",
       label: "Travel End Date",
       type: "datetime-local",
-      required: false,
     },
     { name: "departmentName", label: "Department Name", required: false },
     {
@@ -590,8 +588,8 @@ export function TripsPage() {
             businessUnit: z.string().optional(),
             passengerName: z.string().min(1, "Passenger name is required"),
             mobileNumber: optionalMobileNumber(),
-            travelStartDate: z.string().optional(),
-            travelEndDate: z.string().optional(),
+            travelStartDate: z.string().min(1, "Travel start date is required").refine((value) => !Number.isNaN(new Date(value).getTime()), "Please enter a valid travel start date"),
+            travelEndDate: z.string().min(1, "Travel end date is required").refine((value) => !Number.isNaN(new Date(value).getTime()), "Please enter a valid travel end date"),
             departmentName: z.string().optional(),
             reportingAddress: z.string().optional(),
             dropAddress: z.string().optional(),
@@ -603,6 +601,13 @@ export function TripsPage() {
             purposeOfCabBooking: z.string().optional(),
             senderEmail: z.string().optional(),
             emailScreenshot: z.any().optional(),
+          }).refine((data) => {
+            const start = new Date(data.travelStartDate);
+            const end = new Date(data.travelEndDate);
+            return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start < end;
+          }, {
+            message: "Travel start date must be before travel end date",
+            path: ["travelEndDate"],
           })}
           defaults={{ bookingId: "Auto generated" }}
           submitLabel="Save Booking"
@@ -878,14 +883,27 @@ function DutySlipEditor({
     if (kmInVal === null || kmInVal < 0) {
       nextErrors.kmIn = "Please enter a valid KM IN value.";
     }
-    if (kmOutVal !== null && kmInVal !== null && kmInVal < kmOutVal) {
-      nextErrors.kmIn = "KM IN must be greater than or equal to KM OUT.";
+    if (kmOutVal !== null && kmInVal !== null && kmInVal <= kmOutVal) {
+      nextErrors.kmIn = "KM IN must be greater than KM OUT.";
     }
     if (!timeOutVal) {
       nextErrors.timeOut = "Please select a Time OUT value.";
     }
     if (!timeInVal) {
       nextErrors.timeIn = "Please select a Time IN value.";
+    }
+    if (timeOutVal && timeInVal) {
+      const outDate = new Date(timeOutVal);
+      const inDate = new Date(timeInVal);
+      if (Number.isNaN(outDate.getTime())) {
+        nextErrors.timeOut = "Please enter a valid Time OUT value.";
+      }
+      if (Number.isNaN(inDate.getTime())) {
+        nextErrors.timeIn = "Please enter a valid Time IN value.";
+      }
+      if (!nextErrors.timeOut && !nextErrors.timeIn && inDate <= outDate) {
+        nextErrors.timeIn = "Time IN must be later than Time OUT.";
+      }
     }
     if (perKmVal === null || perKmVal <= 0) {
       nextErrors.perKmCharges = "Please enter the vehicle charge per kilometer.";
