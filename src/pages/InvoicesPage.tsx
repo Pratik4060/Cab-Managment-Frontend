@@ -824,8 +824,8 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
       <ComputedField label="Total KM" value={totalKm.toLocaleString()} />
       <InvoiceInput label="Time Out" type="datetime-local" value={form.timeOut} error={errors.timeOut} onChange={(value) => updateField("timeOut", value)} />
       <InvoiceInput label="Time In" type="datetime-local" value={form.timeIn} error={errors.timeIn} onChange={(value) => updateField("timeIn", value)} />
-      <InvoiceInput label="Closing KM" type="number" value={form.closingKm} error={errors.closingKm} onChange={(value) => updateField("closingKm", value)} />
-      <InvoiceInput label="Closing Time" type="datetime-local" value={form.closingTime} error={errors.closingTime} onChange={(value) => updateField("closingTime", value)} />
+      <InvoiceInput label="Closing KM" type="number" value={form.closingKm} error={errors.closingKm} onChange={(value) => updateField("closingKm", value)} requiredLabel={false} />
+      <InvoiceInput label="Closing Time" type="datetime-local" value={form.closingTime} error={errors.closingTime} onChange={(value) => updateField("closingTime", value)} requiredLabel={false} />
       <InvoiceInput label="Closing Location" value={form.closingLocation} error={errors.closingLocation} onChange={(value) => updateField("closingLocation", value)} />
       <InvoiceInput label="Vehicle Charges Per KM" type="number" value={form.vehicleChargesPerKm} error={errors.vehicleChargesPerKm} onChange={(value) => updateField("vehicleChargesPerKm", value)} />
       <InvoiceInput label="Trip Fare" type="number" value={String(tripFare)} readOnly />
@@ -836,7 +836,7 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
       <InvoiceInput label="GST (%)" type="number" value={form.gstPercent} error={errors.gstPercent} onChange={(value) => updateField("gstPercent", value)} />
       <ComputedField label="GST Amount" value={`₹ ${gstAmount.toLocaleString()}`} />
       <ComputedField label="Total Amount" value={`₹ ${totalAmount.toLocaleString()}`} />
-      <InvoiceInput label="Remarks" value={form.remarks} error={errors.remarks} onChange={(value) => updateField("remarks", value)} full />
+      <InvoiceInput label="Remarks" value={form.remarks} error={errors.remarks} onChange={(value) => updateField("remarks", value)} full requiredLabel={false} />
       <div className="sm:col-span-2">
         <button className="btn-primary" disabled={submitting}>{submitting ? "Creating..." : "Create Invoice"}</button>
       </div>
@@ -844,10 +844,10 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
   );
 }
 
-function InvoiceInput({ label, value, error, onChange, type = "text", full = false, readOnly = false }: { label: string; value: string; error?: string; onChange?: (value: string) => void; type?: string; full?: boolean; readOnly?: boolean }) {
+function InvoiceInput({ label, value, error, onChange, type = "text", full = false, readOnly = false, requiredLabel = true }: { label: string; value: string; error?: string; onChange?: (value: string) => void; type?: string; full?: boolean; readOnly?: boolean; requiredLabel?: boolean }) {
   return (
     <label className={full ? "sm:col-span-2" : ""}>
-      <RequiredLabel>{label}</RequiredLabel>
+      {requiredLabel ? <RequiredLabel>{label}</RequiredLabel> : <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>}
       <input
         className="input"
         type={type}
@@ -939,14 +939,18 @@ function RequestOverlay({ message }: { message: string }) {
 
 function validateAddInvoiceForm(form: AddInvoiceFormState, totalKm: number) {
   const errors: Record<string, string> = {};
-  const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "timeOut", "timeIn", "closingKm", "closingTime", "closingLocation", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
+  const required: Array<keyof AddInvoiceFormState> = ["bookingId", "clientName", "clientEmail", "billingAddress", "kmOut", "kmIn", "timeOut", "timeIn", "closingLocation", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"];
   for (const field of required) {
     if (!String(form[field] ?? "").trim()) errors[field] = "Required";
   }
   if (form.clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.clientEmail)) errors.clientEmail = "Enter a valid email address.";
-  for (const field of ["kmOut", "kmIn", "closingKm", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
+  for (const field of ["kmOut", "kmIn", "vehicleChargesPerKm", "tollCharges", "parkingCharges", "extraCharges", "gstPercent"] as const) {
     const value = normalizeNumber(form[field]);
     if (value === null || value < 0) errors[field] = "Enter a number 0 or greater.";
+  }
+  if (String(form.closingKm).trim()) {
+    const closingKmValue = normalizeNumber(form.closingKm);
+    if (closingKmValue === null || closingKmValue < 0) errors.closingKm = "Enter a number 0 or greater.";
   }
   if (normalizeNumber(form.kmOut) !== null && normalizeNumber(form.kmIn) !== null && totalKm <= 0) {
     errors.kmIn = "KM In must be greater than KM Out";
