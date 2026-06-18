@@ -93,6 +93,10 @@ export const bookingApi = {
 
   async createDutySlip(payload: DutySlipPayload) {
     return normalizeDutySlip(unwrapData<any>(await apiRequest({ url: "/duty-slips", method: "POST", data: toBackendDutySlipPayload(payload) })));
+  },
+
+  async getDutySlipDetails(id: string) {
+    return normalizeDutySlip(unwrapData<any>(await apiRequest({ url: `/duty-slips/${id}/details`, method: "GET" })));
   }
 };
 

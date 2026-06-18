@@ -18,6 +18,7 @@ import { Modal } from "../components/common/Modal";
 import { DataTable } from "../components/tables/DataTable";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { bookingActions } from "../redux/slices/bookingSlice";
+import { bookingApi } from "../api/bookingApi";
 import { driverActions } from "../redux/slices/driverSlice";
 import { vehicleActions } from "../redux/slices/vehicleSlice";
 import { formatDisplayDate, shouldFormatAsDate } from "../utils/formatDate";
@@ -50,6 +51,9 @@ export function TripsPage() {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [selectedTrip, setSelectedTrip] = useState<any>(null);
   const [viewDetails, setViewDetails] = useState<any>(null);
+  const [dutySlipDetails, setDutySlipDetails] = useState<any>(null);
+  const [dutySlipFetchError, setDutySlipFetchError] = useState<string | null>(null);
+  const [loadingDutySlip, setLoadingDutySlip] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "new" | "assigned"; item: any } | null>(null);
   const [activeTable, setActiveTable] = useState<"new" | "assigned" | "closed">("new");
   const bookingState = useAppSelector((state) => state.bookings);
@@ -99,6 +103,43 @@ export function TripsPage() {
     await dispatch(bookingActions.fetchBookingBuckets());
   }
 
+  async function handleOpenDutySlipDetails(row: any) {
+    const bookingId = row.bookingId || row._id || row.booking?._id || row.booking?.bookingId;
+    if (!bookingId) {
+      showToast({ type: "error", title: "Unable to load duty slip", message: "Invalid booking information provided." });
+      return;
+    }
+
+    setDutySlipDetails(null);
+    setDutySlipFetchError(null);
+    setLoadingDutySlip(true);
+    setViewDetails({ type: "dutySlip", data: row });
+
+    try {
+      const details = await bookingApi.getDutySlipDetails(String(bookingId));
+      setDutySlipDetails(details);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unable to load duty slip details.";
+      const isNotFound = (error as any)?.status === 404 || errorMessage.toLowerCase().includes("not found");
+
+      if (isNotFound) {
+        showToast({ type: "info", title: "Duty slip not found", message: "No duty slip found for this booking." });
+        setDutySlipFetchError("No duty slip details were found for this booking.");
+      } else {
+        showToast({ type: "error", title: "Could not load duty slip", message: errorMessage });
+        setDutySlipFetchError("Unable to load duty slip details. Please try again.");
+      }
+    } finally {
+      setLoadingDutySlip(false);
+    }
+  }
+
+  function clearDutySlipDetails() {
+    setDutySlipDetails(null);
+    setDutySlipFetchError(null);
+    setLoadingDutySlip(false);
+  }
+
   const inquiryFields = [
     {
       name: "bookingId",
@@ -130,7 +171,13 @@ export function TripsPage() {
       required: false,
     },
     { name: "dropAddress", label: "Drop Address", full: true, required: false },
-    { name: "carType", label: "Car Type", required: false },
+    {
+      name: "carType",
+      label: "Car Type",
+      type: "select",
+      options: ["Hatchback", "Sedan", "SUV", "MUV/MPV"],
+      required: false,
+    },
     {
       name: "projectExpenses",
       label: "Project Expenses",
@@ -523,7 +570,7 @@ export function TripsPage() {
                 <button
                   className="btn-secondary w-full justify-start p-2"
                   title="View duty slip"
-                  onClick={() => setViewDetails({ type: "dutySlip", data: row })}
+                  onClick={() => handleOpenDutySlipDetails(row)}
                 >
                   <FileText className="h-4 w-4" />
                   <span>View Duty Slip</span>
@@ -691,10 +738,29 @@ export function TripsPage() {
 
       <Modal
         open={Boolean(viewDetails)}
-        title="Booking Details"
-        onClose={() => setViewDetails(null)}
+        title={viewDetails?.type === "dutySlip" ? "Duty Slip Details" : "Booking Details"}
+        onClose={() => {
+          setViewDetails(null);
+          clearDutySlipDetails();
+        }}
       >
-        {viewDetails && <TripDetails data={viewDetails.data} />}
+        {viewDetails?.type === "dutySlip" ? (
+          <div className="space-y-4">
+            {loadingDutySlip ? (
+              <p className="text-sm text-slate-500">Loading duty slip details...</p>
+            ) : dutySlipFetchError ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                {dutySlipFetchError}
+              </div>
+            ) : dutySlipDetails ? (
+              <DutySlipDetails data={dutySlipDetails} />
+            ) : (
+              <p className="text-sm text-slate-500">No duty slip details are available for this booking.</p>
+            )}
+          </div>
+        ) : (
+          viewDetails && <TripDetails data={viewDetails.data} />
+        )}
       </Modal>
 
       <Modal
@@ -1111,13 +1177,14 @@ function DutySlipEditor({
           value={
             <div className="space-y-1">
               <input
-                className="input mt-1"
+                className="input mt-1 bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-200"
                 type="number"
                 step="any"
                 min="0"
                 inputMode="decimal"
                 value={form.perKmCharges}
-                onChange={(event) => updateField("perKmCharges", event.target.value)}
+                disabled
+                readOnly
               />
               {errors.perKmCharges && <p className="text-xs text-red-600">{errors.perKmCharges}</p>}
             </div>
@@ -1244,7 +1311,6 @@ function TripDetails({ data }: { data: any }) {
     ["Email Screenshot", booking.emailScreenshot ? <AttachmentLink href={booking.emailScreenshot} label="View Email Screenshot" /> : "-"],
     ["Trip Status", data.status || booking.status],
     ["Driver", data.driver?.driverName],
-    ["Duty Slip Photo", data.dutySlipPhoto ? <AttachmentLink href={data.dutySlipPhoto} label="View Duty Slip" /> : "-"],
     [
       "Vehicle",
       data.vehicle
@@ -1257,6 +1323,49 @@ function TripDetails({ data }: { data: any }) {
     <div className="grid gap-3 sm:grid-cols-2">
       {rows.map(([label, value]) => (
         <TripCard key={label} label={String(label)} value={formatTripDetailValue(String(label), value)} />
+      ))}
+    </div>
+  );
+}
+
+function DutySlipDetails({ data }: { data: any }) {
+  const rows = [
+    ["Duty Slip Number", data.dutySlipNumber],
+    ["Booking ID", data.bookingId],
+    ["Driver", data.driverId || data.driver?.driverName],
+    ["Vehicle", data.vehicleId || data.vehicle?.registrationNumber || data.vehicle?.registration_number],
+    ["KM OUT", data.kmOut],
+    ["KM IN", data.kmIn],
+    ["Total KM", data.totalKm],
+    ["Time OUT", data.timeOut],
+    ["Time IN", data.timeIn],
+    ["Closing KM", data.closingKm],
+    ["Closing Time", data.closingTime],
+    ["Closing Location", data.closingLocation],
+    ["Project Type", data.projectType],
+    ["Billing Address", data.billingAddress],
+    ["Toll Charges", data.tollCharges],
+    ["Parking Charges", data.parkingCharges],
+    ["Extra Charges", data.extraCharges],
+    ["Rate Per KM", data.ratePerKm],
+    ["Trip Fare", data.tripFare],
+    ["Sub Total", data.subTotal],
+    ["GST (%)", data.gstPercentage ?? data.gstCharges],
+    ["GST Amount", data.gstAmount],
+    ["Final Amount", data.finalAmount || data.amount],
+    ["Status", data.status],
+    ["Remarks", data.remarks],
+    ["Invoice Status", data.invoice?.status],
+    ["Invoice Number", data.invoice?.invoiceNumber],
+    ["Invoice Amount", data.invoice?.amount],
+    ["Duty Slip Photo", data.dutySlipPhoto ? <AttachmentLink href={data.dutySlipPhoto} label="View Duty Slip Photo" /> : "-"],
+    ["Documents", Array.isArray(data.documents) && data.documents.length ? data.documents.map((doc: any) => <AttachmentLink key={doc.id || doc.filePath} href={doc.filePath} label={doc.originalName || "Document"} />) : "-"],
+  ];
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {rows.map(([label, value]) => (
+        <TripCard key={String(label)} label={String(label)} value={formatTripDetailValue(String(label), value)} />
       ))}
     </div>
   );
