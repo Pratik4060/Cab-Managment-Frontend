@@ -1175,7 +1175,7 @@ function DutySlipEditor({
           }
         />
         <TripCard
-          label="Extras"
+          label="Extras / Other Charges"
           value={
             <input
               className="input mt-1"
@@ -1364,7 +1364,7 @@ function DutySlipDetails({ data }: { data: any }) {
     ["Billing Address", data.billingAddress],
     ["Toll Charges", data.tollCharges],
     ["Parking Charges", data.parkingCharges],
-    ["Extra Charges", data.extraCharges],
+    ["Extras / Other Charges", data.extraCharges],
     ["Rate Per KM", data.ratePerKm],
     ["Trip Fare", data.tripFare],
     ["Sub Total", data.subTotal],

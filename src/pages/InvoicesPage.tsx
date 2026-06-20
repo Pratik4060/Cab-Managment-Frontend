@@ -514,7 +514,7 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Trip Fare" value={<input className="input mt-1 bg-slate-50 font-semibold" type="number" value={String(computed.tripFare)} readOnly />} />
         <InfoCard label="Toll Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
         <InfoCard label="Parking Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
-        <InfoCard label="Extra Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
+        <InfoCard label="Extras / Other Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
         <InfoCard label="GST (%)" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
         <InfoCard label="Payment Status" value={<PaymentStatusBadge invoice={buildPreviewInvoice(invoice, form)} />} />
         <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
@@ -831,7 +831,7 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
       <InvoiceInput label="Trip Fare" type="number" value={String(tripFare)} readOnly />
       <InvoiceInput label="Toll Charges" type="number" value={form.tollCharges} error={errors.tollCharges} onChange={(value) => updateField("tollCharges", value)} />
       <InvoiceInput label="Parking Charges" type="number" value={form.parkingCharges} error={errors.parkingCharges} onChange={(value) => updateField("parkingCharges", value)} />
-      <InvoiceInput label="Extra Charges" type="number" value={form.extraCharges} error={errors.extraCharges} onChange={(value) => updateField("extraCharges", value)} />
+      <InvoiceInput label="Extras / Other Charges" type="number" value={form.extraCharges} error={errors.extraCharges} onChange={(value) => updateField("extraCharges", value)} />
       <ComputedField label="Subtotal Without GST" value={`₹ ${subtotal.toLocaleString()}`} />
       <InvoiceInput label="GST (%)" type="number" value={form.gstPercent} error={errors.gstPercent} onChange={(value) => updateField("gstPercent", value)} />
       <ComputedField label="GST Amount" value={`₹ ${gstAmount.toLocaleString()}`} />
@@ -1209,7 +1209,7 @@ function getInvoicePreviewRows(invoice: any): Array<[string, any]> {
     ["Trip Fare", `₹ ${Number(invoice.tripFare || 0).toLocaleString()}`],
     ["Toll Charges", `₹ ${Number(invoice.tollCharges ?? trip.tollCharges ?? 0).toLocaleString()}`],
     ["Parking Charges", `₹ ${Number(invoice.parkingCharges ?? trip.parkingCharges ?? 0).toLocaleString()}`],
-    ["Extra Charges", `₹ ${Number(invoice.extraCharges ?? trip.extraCharges ?? 0).toLocaleString()}`],
+    ["Extras / Other Charges", `₹ ${Number(invoice.extraCharges ?? trip.extraCharges ?? 0).toLocaleString()}`],
     ["Subtotal", `₹ ${Number(invoice.subtotal || 0).toLocaleString()}`],
     [`GST (${invoice.gstPercent || trip.gstCharges || 0}%)`, `₹ ${Number(invoice.gstAmount || 0).toLocaleString()}`],
     ["Final Amount", `₹ ${Number(invoice.finalAmount || 0).toLocaleString()}`],
