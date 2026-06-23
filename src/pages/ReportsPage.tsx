@@ -1,4 +1,4 @@
-import { Banknote, Clock, Columns3, Download, FileBarChart, FileSpreadsheet, RotateCcw } from "lucide-react";
+import { CheckCircle, Clock, Columns3, Download, FileBarChart, FileSpreadsheet, FileText, IndianRupee, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, renderPieLabelLine, renderPiePercentageLabel } from "../components/charts/PiePercentageLabel";
@@ -130,10 +130,10 @@ export function ReportsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Columns3} label="Invoice Count" value={summary?.invoiceCount ?? summary?.records ?? rows.length ?? 0} />
-        <StatCard icon={Banknote} label="Paid Amount" value={`Rs ${Number(summary?.paidAmount ?? stats.paidAmount).toLocaleString()}`} tone="green" />
+        <StatCard icon={FileText} label="Invoice Count" value={summary?.invoiceCount ?? summary?.records ?? rows.length ?? 0} />
+        <StatCard icon={CheckCircle} label="Paid Amount" value={`Rs ${Number(summary?.paidAmount ?? stats.paidAmount).toLocaleString()}`} tone="green" />
         <StatCard icon={Clock} label="Pending" value={`Rs ${Number(summary?.pendingAmount ?? stats.pendingAmount).toLocaleString()}`} tone="amber" />
-        <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(summary?.totalAmount ?? stats.totalAmount).toLocaleString()}`} />
+        <StatCard icon={IndianRupee} label="Total Amount" value={`Rs ${Number(summary?.totalAmount ?? stats.totalAmount).toLocaleString()}`} />
       </div>
 
       {error && (

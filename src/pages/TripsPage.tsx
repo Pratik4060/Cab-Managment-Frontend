@@ -66,6 +66,10 @@ export function TripsPage() {
 
   useEffect(() => {
     dispatch(bookingActions.fetchBookingBuckets());
+    // Mark all notifications as read when user visits bookings page
+    if ((window as any).markAllNotificationsAsRead) {
+      (window as any).markAllNotificationsAsRead();
+    }
   }, [dispatch]);
 
   useEffect(() => {
@@ -90,6 +94,14 @@ export function TripsPage() {
   const availableVehicles = vehicles.filter(
     (vehicle) => vehicle.status === "Available",
   );
+  
+  const filteredVehiclesForAssign = useMemo(() => {
+    if (!selectedBooking?.carType) return availableVehicles;
+    return availableVehicles.filter((vehicle) => {
+      const vehicleType = vehicle.cab_type || vehicle.cabType || vehicle.cabCategory || "";
+      return vehicleType.toLowerCase() === selectedBooking.carType.toLowerCase();
+    });
+  }, [availableVehicles, selectedBooking?.carType]);
 
   async function handleCancelNewTrip(booking: any) {
     if (!booking?._id) return;
@@ -171,7 +183,7 @@ export function TripsPage() {
     { name: "dropAddress", label: "Drop Address", full: true, required: false },
     {
       name: "carType",
-      label: "Car Type",
+      label: "Cab Type",
       type: "select",
       options: ["Hatchback", "Sedan", "SUV", "MUV/MPV"],
       required: false,
@@ -211,7 +223,7 @@ export function TripsPage() {
     },
   ];
 
-  const assignFields = [
+  const assignFields = useMemo(() => [
     {
       name: "driverId",
       label: "Driver",
@@ -227,19 +239,19 @@ export function TripsPage() {
       label: "Vehicle",
       type: "select",
       placeholder: "Select available vehicle",
-      options: availableVehicles.map((vehicle) => ({
+      options: filteredVehiclesForAssign.map((vehicle) => ({
         value: vehicle._id,
         label: `${vehicle.registration_number || vehicle.registrationNumber} - ${vehicle.vehicle_model || vehicle.vehicleModel} (${vehicle.cab_type || vehicle.cabType || vehicle.cabCategory || "Cab"})`,
       })),
     },
-  ];
+  ], [availableDrivers, filteredVehiclesForAssign]);
 
   const pendingColumns = [
     { key: "bookingId", header: "Booking ID" },
     { key: "businessUnit", header: "Business Unit" },
     { key: "passengerName", header: "Passenger" },
     { key: "mobileNumber", header: "Mobile" },
-    { key: "carType", header: "Car Type" },
+    { key: "carType", header: "Cab Type" },
     { key: "cabRequestNumber", header: "Cab Request No" },
   ];
 
@@ -266,7 +278,7 @@ export function TripsPage() {
     },
     {
       key: "carType",
-      header: "Car Type",
+      header: "Cab Type",
       render: (row: any) => row.booking?.carType || "-",
     },
     {
@@ -704,13 +716,16 @@ export function TripsPage() {
         )}
         {(!pendingBookings.length ||
           !availableDrivers.length ||
-          !availableVehicles.length) && (
+          (selectedBooking ? !filteredVehiclesForAssign.length : !availableVehicles.length)) && (
             <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
               {!pendingBookings.length && <p>No new enquiries are available.</p>}
               {!availableDrivers.length && (
                 <p>No available drivers are available.</p>
               )}
-              {!availableVehicles.length && (
+              {selectedBooking && !filteredVehiclesForAssign.length && (
+                <p>No available vehicles matching {selectedBooking.carType} Cab type.</p>
+              )}
+              {!selectedBooking && !availableVehicles.length && (
                 <p>No available vehicles are available.</p>
               )}
             </div>
@@ -722,7 +737,7 @@ export function TripsPage() {
             driverId: z.string().min(1),
             vehicleId: z.string().min(1),
           })}
-          submitLabel="Assign"
+          submitLabel="Assign Booking"
           onSubmit={async (values) => {
             await dispatch(
               bookingActions.assignBooking({

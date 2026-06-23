@@ -17,11 +17,25 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   );
   const [openNotifications, setOpenNotifications] = useState(false);
   const [notifications, setNotifications] = useState<BookingNotification[]>([]);
-  const [seenIds, setSeenIds] = useState<string[]>([]);
+  const [seenIds, setSeenIds] = useState<string[]>(() => {
+    const stored = localStorage.getItem("notificationSeenIds");
+    return stored ? JSON.parse(stored) : [];
+  });
   const [clearedIds, setClearedIds] = useState<string[]>([]);
   const notificationButtonRef = useRef<HTMLButtonElement | null>(null);
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
   const unreadNotifications = notifications.filter((item) => !seenIds.includes(item._id));
+
+  useEffect(() => {
+    localStorage.setItem("notificationSeenIds", JSON.stringify(seenIds));
+  }, [seenIds]);
+
+  useEffect(() => {
+    (window as any).markAllNotificationsAsRead = () => {
+      const allIds = notifications.map((n) => n._id);
+      setSeenIds((prev) => Array.from(new Set([...prev, ...allIds])));
+    };
+  }, [notifications]);
 
   useEffect(() => {
     setNotifications(newBookings.filter((item: BookingNotification) => !clearedIds.includes(item._id)));
