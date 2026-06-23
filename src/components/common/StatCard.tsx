@@ -41,7 +41,7 @@ export function StatCard({ icon: Icon, label, value, tone = "brand" }: StatCardP
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-900 dark:text-slate-100">{label}</p>
           <p className="mt-4 text-2xl font-bold leading-none text-slate-950 dark:text-white">{value ?? 0}</p>
         </div>
-        <div className={`rounded-full bg-transparent p-1 transition group-hover:scale-105 ${styles.icon}`}>
+        <div className={`rounded-full bg-slate-100 p-2 transition group-hover:scale-105 dark:bg-slate-900 ${styles.icon}`}>
           <Icon className="h-4 w-4" />
         </div>
       </div>

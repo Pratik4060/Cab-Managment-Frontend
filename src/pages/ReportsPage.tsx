@@ -1,4 +1,4 @@
-import { Columns3, Download, FileBarChart, RotateCcw } from "lucide-react";
+import { Banknote, Clock, Columns3, Download, FileBarChart, FileSpreadsheet, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, renderPieLabelLine, renderPiePercentageLabel } from "../components/charts/PiePercentageLabel";
@@ -119,7 +119,7 @@ export function ReportsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" type="button" disabled={Boolean(exporting)} onClick={() => void handleExport("xlsx") }>
-            <Download className="h-4 w-4" />
+            <FileSpreadsheet className="h-4 w-4" />
             {exporting === "xlsx" ? "Generating..." : "Excel"}
           </button>
           <button className="btn-secondary" type="button" disabled={Boolean(exporting)} onClick={() => void handleExport("pdf") }>
@@ -130,9 +130,9 @@ export function ReportsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={FileBarChart} label="Invoice Count" value={summary?.invoiceCount ?? summary?.records ?? rows.length ?? 0} />
-        <StatCard icon={FileBarChart} label="Paid Amount" value={`Rs ${Number(summary?.paidAmount ?? stats.paidAmount).toLocaleString()}`} tone="green" />
-        <StatCard icon={FileBarChart} label="Pending" value={`Rs ${Number(summary?.pendingAmount ?? stats.pendingAmount).toLocaleString()}`} tone="amber" />
+        <StatCard icon={Columns3} label="Invoice Count" value={summary?.invoiceCount ?? summary?.records ?? rows.length ?? 0} />
+        <StatCard icon={Banknote} label="Paid Amount" value={`Rs ${Number(summary?.paidAmount ?? stats.paidAmount).toLocaleString()}`} tone="green" />
+        <StatCard icon={Clock} label="Pending" value={`Rs ${Number(summary?.pendingAmount ?? stats.pendingAmount).toLocaleString()}`} tone="amber" />
         <StatCard icon={FileBarChart} label="Total Amount" value={`Rs ${Number(summary?.totalAmount ?? stats.totalAmount).toLocaleString()}`} />
       </div>
 
@@ -161,7 +161,6 @@ export function ReportsPage() {
             <option value="">All Status</option>
             <option value="Draft">Draft</option>
             <option value="Sent">Sent</option>
-            <option value="Partial">Partial</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>

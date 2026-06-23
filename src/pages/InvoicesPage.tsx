@@ -253,45 +253,49 @@ export function InvoicesPage() {
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-lg border border-brand-100 bg-white p-1 dark:border-red-950/40 dark:bg-[#111114]">
+      <div className="grid gap-2 sm:grid-flow-col sm:auto-cols-max sm:grid-cols-[auto_auto_1fr] sm:items-center">
+        <div className="inline-flex flex-wrap gap-2 rounded-lg border border-brand-100 bg-white p-1 w-full sm:w-auto dark:border-red-950/40 dark:bg-[#111114]">
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition w-full sm:w-auto ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("present")}
           >
             List View
           </button>
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition w-full sm:w-auto ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("booking")}
           >
             By Booking
           </button>
         </div>
-        <select className="input w-28" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
-          <option value="">All Status</option>
-          <option value="Paid">Paid</option>
-          <option value="Pending">Pending</option>
-        </select>
-        <input className="input w-32" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
-        <input className="input w-32" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
-        <button className="btn-secondary" onClick={() => exportInvoices("xlsx")}>
-          <Download className="h-4 w-4" />
-          Excel
-        </button>
-        <button className="btn-secondary" onClick={() => exportInvoices("pdf")}>
-          <FileArchive className="h-4 w-4" />
-          Bulk PDFs
-        </button>
-        <button
-          className="btn-secondary"
-          onClick={handleBulkSend}
-        >
-          <Mail className="h-4 w-4" />
-          Bulk Send
-        </button>
+        <div className="grid w-full gap-2 sm:grid-cols-[auto_auto] lg:grid-cols-[auto_auto_auto] xl:grid-cols-[auto_auto_auto_auto]">
+          <select className="input w-full sm:w-28" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
+            <option value="">All Status</option>
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <input className="input w-full sm:w-32" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
+          <input className="input w-full sm:w-32" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
+        </div>
+        <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-3">
+          <button className="btn-secondary w-full sm:w-auto" onClick={() => exportInvoices("xlsx")}>
+            <Download className="h-4 w-4" />
+            Excel
+          </button>
+          <button className="btn-secondary w-full sm:w-auto" onClick={() => exportInvoices("pdf")}>
+            <FileArchive className="h-4 w-4" />
+            Bulk PDFs
+          </button>
+          <button
+            className="btn-secondary w-full sm:w-auto"
+            onClick={handleBulkSend}
+          >
+            <Mail className="h-4 w-4" />
+            Bulk Send
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
