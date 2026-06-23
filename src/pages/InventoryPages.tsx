@@ -35,7 +35,7 @@ export function CarsPage() {
     vehicle_model: z.string().min(1, "Vehicle model is required."),
     cab_type: z.string().min(1, "Cab type is required."),
     seating_capacity: z.coerce.number({ invalid_type_error: "Seating capacity must be a number." }).min(0, "Seating capacity cannot be negative."),
-    rate_per_km: z.coerce.number({ invalid_type_error: "Rate per KM must be a number." }).min(0, "Rate per KM cannot be negative."),
+    rate_per_km: z.coerce.number({invalid_type_error: "Rate per KM must be a number."}).gt(0, "Rate Per KM must be greater than 0."),
     insurance_policy_number: z.string().optional(),
     insurance_expiry: z.string().optional(),
     registration_date: z.string().optional()
@@ -60,8 +60,8 @@ export function DriversPage() {
     driverName: z.string().min(1, "Driver name is required."),
     contactNumber: mobileNumberSchema("Contact number"),
     alternateContact: optionalMobileNumberSchema("Alternate contact"),
-    aadhaarNumber: z.string().min(1, "Aadhaar number is required."),
-    panNumber: z.string().min(1, "PAN number is required."),
+    aadhaarNumber: z.string().min(1, "Aadhaar Card Number is required."),
+    panNumber: z.string().min(1, "PAN Card Number is required."),
     licenseNumber: z.string().min(1, "License number is required."),
     aadhaarCardPhoto: isEditing ? z.any().optional() : requiredUpload("Aadhaar card photo"),
     panCardPhoto: isEditing ? z.any().optional() : requiredUpload("PAN card photo"),
@@ -92,9 +92,17 @@ function optionalMobileNumberSchema(label: string) {
 }
 
 function requiredUpload(label: string) {
-  return z.any().refine((value) => {
-    if (typeof value === "string") return value.trim().length > 0;
-    return Boolean(value?.[0]);
-  }, `${label} is required`);
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+
+  return z.any()
+    .refine((value) => {
+      if (typeof value === "string") return value.trim().length > 0;
+      return Boolean(value?.[0]);
+    }, `${label} is required`)
+    .refine((value) => {
+      if (typeof value === "string" || !value?.[0]) return true;
+
+      return value[0].size <= MAX_FILE_SIZE;
+    }, `${label} size must not exceed 2 MB.`);
 }
 
