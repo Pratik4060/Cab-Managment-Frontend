@@ -261,14 +261,14 @@ export function InvoicesPage() {
         <div className="inline-flex flex-wrap gap-1 rounded-lg border border-brand-100 bg-white p-0.5 w-full lg:w-auto dark:border-red-950/40 dark:bg-[#111114]">
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 lg:px-3 py-1 lg:py-1.5 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-2 sm:px-3 lg:px-3 py-1 lg:py-1 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("present")}
           >
             List View
           </button>
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 lg:px-3 py-1 lg:py-1.5 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-2 sm:px-3 lg:px-3 py-1 lg:py-1 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("booking")}
           >
             By Booking
