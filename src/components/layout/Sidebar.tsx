@@ -84,6 +84,13 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
   }
 
   return (
+    <>
+      {open && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={onClose}
+        />
+      )}
     <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-brand-100 bg-white/95 shadow-xl backdrop-blur transition md:static md:translate-x-0 dark:border-red-950/45 dark:bg-[#09090b]/98 dark:shadow-black/50`}>
       <div
         onClick={() => goTo("/")}
@@ -144,6 +151,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose?: () => void
         </button>
       </div>
     </aside>
+    </>
   );
 }
 
