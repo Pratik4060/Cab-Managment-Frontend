@@ -317,7 +317,7 @@ export function TripsPage() {
                   {pendingBookings.length}
                 </span>
               </div>
-              <p className="hidden sm:block mt-1 text-sm text-slate-500">
+              <p className="hidden lg:block mt-1 text-sm text-slate-500">
                 New enquiries awaiting assignment.
               </p>
             </div>
@@ -342,7 +342,7 @@ export function TripsPage() {
                   {assignedTrips.length}
                 </span>
               </div>
-              <p className="hidden sm:block mt-1 text-sm text-slate-500">
+              <p className="hidden lg:block mt-1 text-sm text-slate-500">
                 Bookings already assigned to drivers.
               </p>
             </div>
@@ -367,7 +367,7 @@ export function TripsPage() {
                   {closedTrips.length}
                 </span>
               </div>
-              <p className="hidden sm:block mt-1 text-sm text-slate-500">
+              <p className="hidden lg:block mt-1 text-sm text-slate-500">
                 Trips completed or cancelled.
               </p>
             </div>
