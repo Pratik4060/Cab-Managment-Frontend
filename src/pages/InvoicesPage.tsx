@@ -255,30 +255,30 @@ export function InvoicesPage() {
         </button>
       </div>
 
-      {/* Filters Section - Fully Responsive */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[auto_1fr_auto] gap-2 sm:gap-3">
-        {/* View Mode Toggle */}
-        <div className="inline-flex flex-wrap gap-1.5 sm:gap-2 rounded-lg border border-brand-100 bg-white p-1 w-full sm:w-auto dark:border-red-950/40 dark:bg-[#111114]">
+      {/* Filters Section - Fixed for iPad */}
+      <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-2 sm:gap-3">
+        {/* View Mode Toggle - Made smaller for iPad */}
+        <div className="inline-flex flex-wrap gap-1 rounded-lg border border-brand-100 bg-white p-0.5 w-full dark:border-red-950/40 dark:bg-[#111114]">
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold transition flex-1 sm:flex-none ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-2 sm:px-3 py-1 text-xs font-semibold transition flex-1 ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("present")}
           >
             List View
           </button>
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold transition flex-1 sm:flex-none ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-2 sm:px-3 py-1 text-xs font-semibold transition flex-1 ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("booking")}
           >
             By Booking
           </button>
         </div>
 
-        {/* Filter Controls */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
+        {/* Filter Controls - Date filters on next line for iPad */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
           <select 
-            className="input w-full text-xs sm:text-sm h-9 sm:h-10" 
+            className="input w-full text-xs h-8 sm:h-9" 
             value={paymentStatusFilter} 
             onChange={(event) => setPaymentStatusFilter(event.target.value)}
           >
@@ -287,14 +287,14 @@ export function InvoicesPage() {
             <option value="Pending">Pending</option>
           </select>
           <input 
-            className="input w-full text-xs sm:text-sm h-9 sm:h-10" 
+            className="input w-full text-xs h-8 sm:h-9" 
             type="date" 
             value={dateFilters.from} 
             onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} 
             aria-label="Invoice from date" 
           />
           <input 
-            className="input w-full text-xs sm:text-sm h-9 sm:h-10" 
+            className="input w-full text-xs h-8 sm:h-9" 
             type="date" 
             value={dateFilters.to} 
             onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} 
@@ -302,27 +302,27 @@ export function InvoicesPage() {
           />
         </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full sm:w-auto">
-          <button className="btn-secondary w-full text-xs sm:text-sm py-1.5 sm:py-2" onClick={() => exportInvoices("xlsx")}>
-            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Excel</span>
+        {/* Action Buttons - Made smaller for iPad */}
+        <div className="grid grid-cols-3 gap-1 sm:gap-1.5 w-full">
+          <button className="btn-secondary w-full text-xs py-1 px-1.5" onClick={() => exportInvoices("xlsx")}>
+            <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span className="text-[10px] sm:text-xs">Excel</span>
           </button>
-          <button className="btn-secondary w-full text-xs sm:text-sm py-1.5 sm:py-2" onClick={() => exportInvoices("pdf")}>
-            <FileArchive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Bulk PDFs</span>
+          <button className="btn-secondary w-full text-xs py-1 px-1.5" onClick={() => exportInvoices("pdf")}>
+            <FileArchive className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span className="text-[10px] sm:text-xs">Bulk PDFs</span>
           </button>
           <button
-            className="btn-secondary w-full text-xs sm:text-sm py-1.5 sm:py-2"
+            className="btn-secondary w-full text-xs py-1 px-1.5"
             onClick={handleBulkSend}
           >
-            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Bulk Send</span>
+            <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span className="text-[10px] sm:text-xs">Bulk Send</span>
           </button>
         </div>
       </div>
 
-      {/* Project Type Cards - Desktop unchanged, responsive on mobile */}
+      {/* Project Type Cards */}
       <div className="grid gap-3 md:grid-cols-2">
         {(["Process", "Management"] as InvoiceProjectType[]).map((type) => {
           const typeRows = rows.filter((invoice) => getInvoiceProjectType(invoice) === type);
@@ -346,10 +346,10 @@ export function InvoicesPage() {
         })}
       </div>
 
-      {/* Main Table Section - Responsive */}
+      {/* Main Table Section - Responsive for all devices */}
       <div className="panel p-2 overflow-x-auto -mx-2 sm:mx-0">
         {viewMode === "present" && (
-        <div className="min-w-[600px] sm:min-w-0">
+        <div className="min-w-[600px] md:min-w-0">
           <DataTable
             loading={invoices.loading}
             loadingMessage={invoices.requestMessage || "Loading invoices..."}
@@ -637,7 +637,7 @@ function BookingInvoiceGroups({
 
         return (
           <div key={group._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-red-950/35 dark:bg-[#101012]">
-            <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_auto_auto] gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 items-center">
+            <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 items-center">
               <input
                 type="checkbox"
                 aria-label="Select booking group"
@@ -653,7 +653,7 @@ function BookingInvoiceGroups({
                   {group.invoiceCount} {group.invoiceCount === 1 ? "invoice" : "invoices"}
                 </span>
               </div>
-              <div className="flex flex-wrap justify-end gap-2 col-span-3 sm:col-span-1 sm:justify-end">
+              <div className="flex flex-wrap justify-end gap-2 col-span-3 md:col-span-1 md:justify-end">
                 {otherInvoices.length > 0 && (
                   <button type="button" className="btn-secondary px-2 py-1.5 text-sm" onClick={() => onToggleExpand(group._id)}>
                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -663,7 +663,7 @@ function BookingInvoiceGroups({
               </div>
             </div>
             <div className="border-t border-slate-100 p-2 dark:border-red-950/25 overflow-x-auto">
-              <div className="min-w-[500px] sm:min-w-0">
+              <div className="min-w-[500px] md:min-w-0">
                 <DataTable
                   rows={isExpanded ? group.invoices : [recentInvoice]}
                   selectable
