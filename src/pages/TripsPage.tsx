@@ -313,7 +313,7 @@ export function TripsPage() {
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
-                <span className="hidden lg:inline-flex rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
+                <span className="hidden lg:inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
