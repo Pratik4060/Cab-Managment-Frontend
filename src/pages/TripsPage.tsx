@@ -313,7 +313,7 @@ export function TripsPage() {
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
-                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
+                <span className="hidden lg:inline-flex rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
@@ -338,7 +338,7 @@ export function TripsPage() {
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   Assigned
                 </h2>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                <span className="hidden lg:inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
@@ -363,7 +363,7 @@ export function TripsPage() {
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   History
                 </h2>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                <span className="hidden lg:inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {closedTrips.length}
                 </span>
               </div>
@@ -1127,7 +1127,9 @@ function DutySlipEditor({
               </p>
               {form.dutySlipPhoto && (
                 <div className="space-y-2">
-                 
+                  <a href={form.dutySlipPhoto} target="_blank" rel="noreferrer" className="inline-flex rounded-md border border-brand-100 px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-red-950/40 dark:text-brand-200 dark:hover:bg-red-950/20">
+                    View Duty Slip
+                  </a>
                   <img
                     src={form.dutySlipPhoto}
                     alt="Duty slip preview"
