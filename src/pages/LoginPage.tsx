@@ -59,9 +59,9 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-brand-50 p-3 text-slate-900 dark:bg-[#08080a] dark:text-slate-100">
-      <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-6xl overflow-hidden rounded-xl border border-brand-100 bg-white shadow-2xl md:grid-cols-[1.05fr_0.95fr] dark:border-red-950/40 dark:bg-[#101012]">
-        {/* Left Section - Branding */}
-        <section className="flex flex-col justify-between bg-gradient-to-br from-[#070708] via-[#15090a] to-[#08080a] p-4 sm:p-6 text-white">
+      <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-6xl overflow-hidden rounded-xl border border-brand-100 bg-white shadow-2xl xl:grid-cols-[1.05fr_0.95fr] dark:border-red-950/40 dark:bg-[#101012]">
+        {/* Left Section - Branding - Only visible on extra large screens (desktop 1280px+) */}
+        <section className="hidden xl:flex flex-col justify-between bg-gradient-to-br from-[#070708] via-[#15090a] to-[#08080a] p-4 sm:p-6 text-white">
           <div>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center overflow-hidden rounded-lg border border-brand-500/30 bg-white shadow-lg shadow-brand-600/30">
@@ -82,7 +82,7 @@ export function LoginPage() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-red-200">
                 Corporate Operations Console
               </p>
-              <h2 className="hidden sm:block mt-2 sm:mt-3 text-xl sm:text-2xl md:text-3xl font-bold leading-tight">
+              <h2 className="hidden sm:block mt-2 sm:mt-3 text-xl sm:text-2xl xl:text-3xl font-bold leading-tight">
                 Control bookings, trips, invoices, and payments from one
                 workspace.
               </h2>
@@ -109,9 +109,38 @@ export function LoginPage() {
           </div>
         </section>
 
-        {/* Right Section - Login Form */}
-        <section className="flex items-center justify-center p-4 sm:p-6 md:p-8">
+        {/* Right Section - Login Form - Full width on all screens below xl */}
+        <section className="flex items-center justify-center p-4 sm:p-6 xl:p-8 col-span-1 xl:col-span-1">
           <div className="w-full max-w-md px-2 sm:px-0">
+            {/* Mobile/Tablet Branding - Visible on screens below xl (all tablets including iPad Pro) */}
+            <div className="xl:hidden mb-6 sm:mb-8 flex flex-col items-center">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center overflow-hidden rounded-lg border border-brand-500/30 bg-white shadow-lg shadow-brand-600/30">
+                  <img
+                    src={logo}
+                    alt="Unique Carz"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-950 dark:text-white">
+                    Unique Carz
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    Corporate Cabs and Transportation
+                  </p>
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
+                  Corporate Operations Console
+                </p>
+                <h2 className="mt-1 text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+                  Control bookings, trips, invoices & payments
+                </h2>
+              </div>
+            </div>
+
             <div className="mb-4 sm:mb-6">
               <p className="text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-200">
                 Welcome back
