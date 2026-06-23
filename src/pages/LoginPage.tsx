@@ -82,7 +82,7 @@ export function LoginPage() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-red-200">
                 Corporate Operations Console
               </p>
-              <h2 className="mt-2 sm:mt-3 text-xl sm:text-2xl md:text-3xl font-bold leading-tight">
+              <h2 className="hidden sm:block mt-2 sm:mt-3 text-xl sm:text-2xl md:text-3xl font-bold leading-tight">
                 Control bookings, trips, invoices, and payments from one
                 workspace.
               </h2>
