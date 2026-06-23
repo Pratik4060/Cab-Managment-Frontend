@@ -11,6 +11,7 @@ import { fetchDashboard } from "../redux/slices/dashboardSlice";
 
 type Period = "day" | "week" | "month" | "year";
 type ChartRow = { _id: string; value: number };
+type ChartDataPoint = { name: string; value: number };
 
 export function DashboardPage() {
   const dispatch = useAppDispatch();
@@ -23,8 +24,14 @@ export function DashboardPage() {
   if (loading && !data) return <LoadingSkeleton rows={8} />;
   
   const cards = data?.cards || {};
-  const bookingsPerDayChart = (data?.charts?.bookings || []).map((row: ChartRow) => ({ name: row._id, value: row.value }));
-  const vehicleCompanyChart = (data?.charts?.vehicleCompany || []).map((row: ChartRow) => ({ name: row._id, value: row.value }));
+  let bookingsPerDayChart: ChartDataPoint[] = (data?.charts?.bookings || []).map((row: ChartRow) => ({ name: row._id, value: row.value }));
+  
+  // For "day" filter, show only alternate hours (every other hour)
+  if (period === "day") {
+    bookingsPerDayChart = bookingsPerDayChart.filter((_, index) => index % 2 === 0);
+  }
+  
+  const vehicleCompanyChart: ChartDataPoint[] = (data?.charts?.vehicleCompany || []).map((row: ChartRow) => ({ name: row._id, value: row.value }));
   const periodLabel = periodOptions.find((option) => option.value === period)?.label || "Month";
   
   const tooltipStyle = { borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)" };
@@ -79,10 +86,11 @@ export function DashboardPage() {
                     tickLine={false} 
                     axisLine={false} 
                     interval={0} 
-                    angle={-65} 
+                    angle={-90} 
                     textAnchor="end" 
-                    height={50} 
-                    tick={{ fill: "#64748b", fontSize: 10 }}
+                    height={80} 
+                    dx={-6}
+                    tick={{ fill: "#64748b", fontSize: 10, fontWeight: 500 }}
                   />
                   <YAxis 
                     allowDecimals={false} 

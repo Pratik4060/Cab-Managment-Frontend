@@ -144,7 +144,7 @@ export function ReportsPage() {
 
       <section className="panel p-3">
         <div className="mb-2.5 flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold">Period Filters</h2>
+          <h2 className="text-[14px] sm:text-[15px] font-semibold">Period Filters</h2>
           <button className="btn-secondary" onClick={resetFilters}>
             <RotateCcw className="h-4 w-4" />
             Reset
@@ -170,13 +170,21 @@ export function ReportsPage() {
 
       <div className="grid gap-4 xl:grid-cols-3">
         <section className="panel p-3 xl:col-span-2">
-          <h2 className="mb-1 text-[15px] font-semibold">Invoice Trend</h2>
-          <p className="mb-3 text-xs text-slate-500">Period-wise invoice movement by amount</p>
+          <h2 className="mb-1 text-[14px] sm:text-[15px] font-semibold">Invoice Trend</h2>
+          <p className="mb-3 text-[11px] sm:text-xs text-slate-500">Period-wise invoice movement by amount</p>
           {trendData.length ? (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" vertical={false} />
-                <XAxis dataKey="_id" tickLine={false} axisLine={false} />
+                <XAxis 
+                  dataKey="_id" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  angle={-90} 
+                  textAnchor="end" 
+                  height={80} 
+                  tick={{ fill: "#64748b", fontSize: 10, fontWeight: 500 }}
+                />
                 <YAxis tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={44}>
@@ -189,8 +197,8 @@ export function ReportsPage() {
           )}
         </section>
         <section className="panel p-3">
-          <h2 className="mb-1 text-[15px] font-semibold">Payment Status Split</h2>
-          <p className="mb-3 text-xs text-slate-500">Invoice payment status distribution</p>
+          <h2 className="mb-1 text-[14px] sm:text-[15px] font-semibold">Payment Status Split</h2>
+          <p className="mb-3 text-[11px] sm:text-xs text-slate-500">Invoice payment status distribution</p>
           {statusData.length ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart margin={{ top: 18, right: 34, bottom: 18, left: 34 }}>
@@ -208,7 +216,7 @@ export function ReportsPage() {
 
       <section className="panel p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[15px] font-semibold">Invoice Report Table</h2>
+          <h2 className="text-[14px] sm:text-[15px] font-semibold">Invoice Report Table</h2>
           <div className="relative" ref={columnMenuRef}>
             <button className="btn-secondary" type="button" onClick={() => setColumnMenuOpen((open) => !open)}>
               <Columns3 className="h-4 w-4" />

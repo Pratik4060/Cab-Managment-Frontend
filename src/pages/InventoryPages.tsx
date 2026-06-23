@@ -49,12 +49,12 @@ export function DriversPage() {
     { name: "driverName", label: "Driver Name", required: true },
     { name: "contactNumber", label: "Contact Number", required: true },
     { name: "alternateContact", label: "Alternate Contact", required: false },
-    { name: "aadhaarNumber", label: "Aadhaar Card Number" },
+    { name: "aadhaarNumber", label: "Aadhaar Card Number", required: true },
     { name: "panNumber", label: "PAN Card Number" , required: true},
     { name: "licenseNumber", label: "License Number (e.g: MH1220110012345)", required: true },
-    { name: "aadhaarCardPhoto", label: "Aadhaar Card Photo", type: "file", accept: "image/*", required: false },
-    { name: "panCardPhoto", label: "PAN Card Photo", type: "file", accept: "image/*", required: false },
-    { name: "licensePhoto", label: "License Photo", type: "file", accept: "image/*", required: false, full: true },
+    { name: "aadhaarCardPhoto", label: "Aadhaar Card Photo", type: "file", accept: "image/*", required: true },
+    { name: "panCardPhoto", label: "PAN Card Photo", type: "file", accept: "image/*", required: true },
+    { name: "licensePhoto", label: "License Photo", type: "file", accept: "image/*", required: true, full: true },
     { name: "address", label: "Address", required: true, full: true }
   ]} schema={(isEditing: boolean) => z.object({
     driverName: z.string().min(1, "Driver name is required."),
