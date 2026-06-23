@@ -55,7 +55,7 @@ export function DataTable({ columns, rows = [], loading, loadingMessage, actions
       const spaceBelow = scrollRect.bottom - triggerRect.bottom;
       const spaceAbove = triggerRect.top - scrollRect.top;
       const openRowIndex = rows.findIndex((row, index) => String(row._id ?? row.id ?? index) === openMenuId);
-      const nearBottomRow = openRowIndex >= Math.max(0, rows.length - 3);
+      const nearBottomRow = openRowIndex >= Math.max(0, rows.length - 2);
       const openUp = rows.length > 3 && (nearBottomRow || (spaceBelow < menuRect.height + 24 && spaceAbove > menuRect.height + 24));
       setMenuDirection(openUp ? "up" : "down");
     };
