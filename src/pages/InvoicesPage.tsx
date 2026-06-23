@@ -206,33 +206,33 @@ export function InvoicesPage() {
 
   function renderInvoiceActions(row: any) {
     return (
-      <div className="flex min-w-36 flex-col gap-1.5">
-        <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
-          <Eye className="h-4 w-4" />
+      <div className="flex min-w-[140px] flex-col gap-1.5">
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
+          <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Preview</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Edit invoice" onClick={() => setEditTarget(row)}>
-          <Pencil className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Edit invoice" onClick={() => setEditTarget(row)}>
+          <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Edit</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Update payment status" onClick={() => setPaymentTarget(row)}>
-          <Banknote className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Update payment status" onClick={() => setPaymentTarget(row)}>
+          <Banknote className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Payment Status</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Send invoice to client" onClick={() => setSendTarget(row)}>
-          <Mail className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Send invoice to client" onClick={() => setSendTarget(row)}>
+          <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Send</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Download PDF" onClick={() => downloadInvoicePdf(row)}>
-          <FileDown className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Download PDF" onClick={() => downloadInvoicePdf(row)}>
+          <FileDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Download PDF</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Booking PDF" onClick={() => exportBookingPdf(row)}>
-          <FileArchive className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Booking PDF" onClick={() => exportBookingPdf(row)}>
+          <FileArchive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Booking PDF</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
-          <Trash2 className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
+          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Delete</span>
         </button>
       </div>
@@ -240,65 +240,74 @@ export function InvoicesPage() {
   }
 
   return (
-    <div className="relative space-y-3.5">
+    <div className="relative space-y-3 sm:space-y-4 px-2 sm:px-0">
       {invoices.loading && <RequestOverlay message={invoices.requestMessage || "Processing invoice request..."} />}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Invoices</h1>
-          <p className="text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
+      
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-lg sm:text-xl font-bold">Invoices</h1>
+          <p className="text-xs sm:text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
-        <button className="btn-primary" onClick={() => setAddOpen(true)}>
+        <button className="btn-primary w-full sm:w-auto text-sm sm:text-base" onClick={() => setAddOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Invoice
         </button>
       </div>
 
-      <div className="grid gap-2 sm:grid-flow-col sm:auto-cols-max sm:grid-cols-[auto_auto_1fr] sm:items-center">
-        <div className="inline-flex flex-wrap gap-2 rounded-lg border border-brand-100 bg-white p-1 w-full sm:w-auto dark:border-red-950/40 dark:bg-[#111114]">
+      {/* Filters Section - Fully Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[auto_1fr_auto] gap-2 sm:gap-3">
+        {/* View Mode Toggle */}
+        <div className="inline-flex flex-wrap gap-1 rounded-lg border border-brand-100 bg-white p-1 w-full sm:w-auto dark:border-red-950/40 dark:bg-[#111114]">
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition w-full sm:w-auto ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`flex-1 sm:flex-none rounded-md px-2 sm:px-3 py-1.5 text-[11px] sm:text-sm font-semibold transition ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("present")}
           >
             List View
           </button>
           <button
             type="button"
-            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition w-full sm:w-auto ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`flex-1 sm:flex-none rounded-md px-2 sm:px-3 py-1.5 text-[11px] sm:text-sm font-semibold transition ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("booking")}
           >
             By Booking
           </button>
         </div>
-        <div className="grid w-full gap-2 sm:grid-cols-[auto_auto] lg:grid-cols-[auto_auto_auto] xl:grid-cols-[auto_auto_auto_auto]">
-          <select className="input w-full sm:w-28" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
+
+        {/* Filter Controls */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+          <select className="input w-full text-xs sm:text-sm h-9 sm:h-10" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
-          <input className="input w-full sm:w-32" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
-          <input className="input w-full sm:w-32" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
+          <input className="input w-full text-xs sm:text-sm h-9 sm:h-10" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
+          <input className="input w-full text-xs sm:text-sm h-9 sm:h-10" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
         </div>
-        <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-3">
-          <button className="btn-secondary w-full sm:w-auto" onClick={() => exportInvoices("xlsx")}>
-            <Download className="h-4 w-4" />
-            Excel
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 w-full sm:w-auto">
+          <button className="btn-secondary w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2" onClick={() => exportInvoices("xlsx")}>
+            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Excel</span>
+            <span className="xs:hidden">XLS</span>
           </button>
-          <button className="btn-secondary w-full sm:w-auto" onClick={() => exportInvoices("pdf")}>
-            <FileArchive className="h-4 w-4" />
-            Bulk PDFs
+          <button className="btn-secondary w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2" onClick={() => exportInvoices("pdf")}>
+            <FileArchive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Bulk PDFs</span>
+            <span className="xs:hidden">PDF</span>
           </button>
-          <button
-            className="btn-secondary w-full sm:w-auto"
-            onClick={handleBulkSend}
-          >
-            <Mail className="h-4 w-4" />
-            Bulk Send
+          <button className="btn-secondary w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2" onClick={handleBulkSend}>
+            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Bulk Send</span>
+            <span className="xs:hidden">Send</span>
           </button>
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      {/* Project Type Cards */}
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
         {(["Process", "Management"] as InvoiceProjectType[]).map((type) => {
           const typeRows = rows.filter((invoice) => getInvoiceProjectType(invoice) === type);
           const isActive = projectTypeFilter === type;
@@ -307,13 +316,13 @@ export function InvoicesPage() {
             <button
               key={type}
               type="button"
-              className={`panel p-4 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${isActive ? "ring-2 ring-brand-500" : ""}`}
+              className={`panel p-3 sm:p-4 text-left transition hover:-translate-y-0.5 hover:shadow-lg ${isActive ? "ring-2 ring-brand-500" : ""}`}
               onClick={() => setProjectTypeFilter((current) => current === type ? "" : type)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">{type}</p>
-                  <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{typeRows.length}</h2>
+                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-slate-600">{type}</p>
+                  <h2 className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-slate-950 dark:text-white">{typeRows.length}</h2>
                 </div>
               </div>
             </button>
@@ -321,32 +330,37 @@ export function InvoicesPage() {
         })}
       </div>
 
-      <div className="panel p-2">
+      {/* Main Table Section */}
+      <div className="panel p-1 sm:p-2 overflow-hidden">
         {viewMode === "present" && (
-        <DataTable
-          loading={invoices.loading}
-          loadingMessage={invoices.requestMessage || "Loading invoices..."}
-          rows={filteredRows}
-          selectable
-          selectedIds={selectedInvoiceIds}
-          onToggleRow={toggleInvoiceSelection}
-          onToggleAll={setSelectedInvoiceIds}
-          columns={[
-            { key: "invoiceNumber", header: "Invoice" },
-            {
-              key: "createdAt",
-              header: "Date",
-              render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt),
-            },
-            { key: "clientName", header: "Client" },
-            { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
-            { key: "paymentStatus", header: "Payment Status", render: (r) => <PaymentStatusBadge invoice={r} /> },
-            { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
-            { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
-          ]}
-          actionCount={7}
-          actions={renderInvoiceActions}
-        />
+          <div className="overflow-x-auto -mx-1 sm:-mx-2">
+            <div className="min-w-[320px] px-1 sm:px-2">
+              <DataTable
+                loading={invoices.loading}
+                loadingMessage={invoices.requestMessage || "Loading invoices..."}
+                rows={filteredRows}
+                selectable
+                selectedIds={selectedInvoiceIds}
+                onToggleRow={toggleInvoiceSelection}
+                onToggleAll={setSelectedInvoiceIds}
+                columns={[
+                  { key: "invoiceNumber", header: "Invoice" },
+                  {
+                    key: "createdAt",
+                    header: "Date",
+                    render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt),
+                  },
+                  { key: "clientName", header: "Client" },
+                  { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
+                  { key: "paymentStatus", header: "Payment Status", render: (r) => <PaymentStatusBadge invoice={r} /> },
+                  { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
+                  { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
+                ]}
+                actionCount={7}
+                actions={renderInvoiceActions}
+              />
+            </div>
+          </div>
         )}
         {viewMode === "booking" && (
           <BookingInvoiceGroups
@@ -366,47 +380,9 @@ export function InvoicesPage() {
             renderInvoiceActions={renderInvoiceActions}
           />
         )}
-        {false && viewMode === "booking" && (
-          <DataTable
-            loading={invoices.loading}
-            loadingMessage={invoices.requestMessage || "Loading grouped invoices..."}
-            rows={invoiceGroups}
-            selectable
-            selectedIds={selectedBookingGroupIds}
-            onToggleRow={(id) => setSelectedBookingGroupIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])}
-            onToggleAll={setSelectedBookingGroupIds}
-            columns={[
-              { key: "bookingId", header: "Booking ID" },
-              { key: "cabRequestNumber", header: "Cab Request" },
-              { key: "passengerName", header: "Passenger" },
-              { key: "invoiceCount", header: "Invoices" },
-              { key: "totalAmount", header: "Total", render: (r) => `₹ ${Number(r.totalAmount || 0).toLocaleString()}` },
-              { key: "balanceAmount", header: "Balance", render: (r) => `₹ ${Number(r.balanceAmount || 0).toLocaleString()}` }
-            ]}
-            actionCount={3}
-            actions={(row) => (
-              <div className="flex min-w-36 flex-col gap-1.5">
-                <button className="btn-secondary w-full justify-start p-2" onClick={() => setPreviewInvoice(row.invoices[0])}>
-                  <Eye className="h-4 w-4" />
-                  <span>Preview First</span>
-                </button>
-                <button className="btn-secondary w-full justify-start p-2" onClick={() => exportBookingPdf(row.invoices[0])}>
-                  <FileArchive className="h-4 w-4" />
-                  <span>Booking PDF</span>
-                </button>
-                <button className="btn-secondary w-full justify-start p-2" onClick={() => {
-                  setSelectedBookingGroupIds([row._id]);
-                  handleBulkSend();
-                }}>
-                  <Mail className="h-4 w-4" />
-                  <span>Bulk Send</span>
-                </button>
-              </div>
-            )}
-          />
-        )}
       </div>
 
+      {/* Modals */}
       <Modal open={Boolean(previewInvoice)} title={`Invoice Preview ${previewInvoice?.invoiceNumber || ""}`} onClose={() => setPreviewInvoice(null)}>
         {previewInvoice && <InvoicePreview invoice={previewInvoice} onDownload={() => downloadInvoicePdf(previewInvoice)} />}
       </Modal>
@@ -484,7 +460,6 @@ export function InvoicesPage() {
           <div className="space-y-2">
             <p>
               {bulkSendIsSelected
-                // ? `Send invoices to ${bulkSendInvoiceCount} selected invoice${bulkSendInvoiceCount > 1 ? "s" : ""}?`
                 ? `Send ${bulkSendInvoiceCount} selected invoice${bulkSendInvoiceCount > 1 ? "s" : ""}?`
                 : `Send all ${bulkSendInvoiceCount} invoice${bulkSendInvoiceCount > 1 ? "s" : ""} to respective clients?`}
             </p>
@@ -554,33 +529,33 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
         <InfoCard label="Invoice" value={invoice.invoiceNumber} />
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Passenger" value={invoice.booking?.passengerName || "-"} />
         <InfoCard label="Trip" value={invoice.trip?.tripNumber || "-"} />
         <InfoCard label="Project Type" value={getInvoiceProjectType(invoice)} />
         <InfoCard label="Billing Address" value={invoice.billingAddress || invoice.trip?.billingAddress || invoice.booking?.reportingAddress || invoice.booking?.dropAddress || "-"} />
-        <InfoCard label="KM OUT" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
-        <InfoCard label="KM IN" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
-        <InfoCard label="Time OUT" value={<input className="input mt-1" type="datetime-local" value={form.timeOut} onChange={(event) => updateField("timeOut", event.target.value)} />} />
-        <InfoCard label="Time IN" value={<input className="input mt-1" type="datetime-local" value={form.timeIn} onChange={(event) => updateField("timeIn", event.target.value)} />} />
-        <InfoCard label="Project Type" value={<select className="input mt-1" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}><option value="Process">Process</option><option value="Management">Management</option></select>} />
-        <InfoCard label="Address" value={<input className="input mt-1" type="text" value={form.billingAddress} onChange={(event) => updateField("billingAddress", event.target.value)} placeholder="Enter address" />} />
-        <InfoCard label="Vehicle Charges Per KM" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.vehicleChargesPerKm} onChange={(event) => updateField("vehicleChargesPerKm", event.target.value)} />} />
-        <InfoCard label="Trip Fare" value={<input className="input mt-1 bg-slate-50 font-semibold" type="number" value={String(computed.tripFare)} readOnly />} />
-        <InfoCard label="Toll Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
-        <InfoCard label="Parking Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
-        <InfoCard label="Extras / Other Charges" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
-        <InfoCard label="GST (%)" value={<input className="input mt-1" type="number" step="any" min="0" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
+        <InfoCard label="KM OUT" value={<input className="input mt-1 text-sm" type="number" step="any" min="0" inputMode="decimal" value={form.kmOut} onChange={(event) => updateField("kmOut", event.target.value)} />} />
+        <InfoCard label="KM IN" value={<input className="input mt-1 text-sm" type="number" step="any" min="0" inputMode="decimal" value={form.kmIn} onChange={(event) => updateField("kmIn", event.target.value)} />} />
+        <InfoCard label="Time OUT" value={<input className="input mt-1 text-sm" type="datetime-local" value={form.timeOut} onChange={(event) => updateField("timeOut", event.target.value)} />} />
+        <InfoCard label="Time IN" value={<input className="input mt-1 text-sm" type="datetime-local" value={form.timeIn} onChange={(event) => updateField("timeIn", event.target.value)} />} />
+        <InfoCard label="Project Type" value={<select className="input mt-1 text-sm" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}><option value="Process">Process</option><option value="Management">Management</option></select>} />
+        <InfoCard label="Address" value={<input className="input mt-1 text-sm" type="text" value={form.billingAddress} onChange={(event) => updateField("billingAddress", event.target.value)} placeholder="Enter address" />} />
+        <InfoCard label="Vehicle Charges Per KM" value={<input className="input mt-1 text-sm" type="number" step="any" min="0" inputMode="decimal" value={form.vehicleChargesPerKm} onChange={(event) => updateField("vehicleChargesPerKm", event.target.value)} />} />
+        <InfoCard label="Trip Fare" value={<input className="input mt-1 bg-slate-50 font-semibold text-sm" type="number" value={String(computed.tripFare)} readOnly />} />
+        <InfoCard label="Toll Charges" value={<input className="input mt-1 text-sm" type="number" step="any" min="0" inputMode="decimal" value={form.tollCharges} onChange={(event) => updateField("tollCharges", event.target.value)} />} />
+        <InfoCard label="Parking Charges" value={<input className="input mt-1 text-sm" type="number" step="any" min="0" inputMode="decimal" value={form.parkingCharges} onChange={(event) => updateField("parkingCharges", event.target.value)} />} />
+        <InfoCard label="Extras / Other Charges" value={<input className="input mt-1 text-sm" type="number" step="any" min="0" inputMode="decimal" value={form.extraCharges} onChange={(event) => updateField("extraCharges", event.target.value)} />} />
+        <InfoCard label="GST (%)" value={<input className="input mt-1 text-sm" type="number" step="any" min="0" inputMode="decimal" value={form.gstCharges} onChange={(event) => updateField("gstCharges", event.target.value)} />} />
         <InfoCard label="Payment Status" value={<PaymentStatusBadge invoice={buildPreviewInvoice(invoice, form)} />} />
-        <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
-        <InfoCard label="Total KM" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{computed.totalKm.toLocaleString()}</p>} />
+        <InfoCard label="Balance" value={<p className="mt-1 text-base sm:text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
+        <InfoCard label="Total KM" value={<p className="mt-1 text-base sm:text-lg font-semibold text-slate-950 dark:text-white">{computed.totalKm.toLocaleString()}</p>} />
       </div>
 
-      <div className="flex justify-end gap-2">
-        <button type="button" className="btn-secondary" onClick={() => setForm(invoiceDutySlipDefaults(invoice))}>Reset</button>
-        <button type="button" className="btn-primary" onClick={submit}>Update Invoice</button>
+      <div className="flex flex-col xs:flex-row justify-end gap-2">
+        <button type="button" className="btn-secondary w-full xs:w-auto text-sm" onClick={() => setForm(invoiceDutySlipDefaults(invoice))}>Reset</button>
+        <button type="button" className="btn-primary w-full xs:w-auto text-sm" onClick={submit}>Update Invoice</button>
       </div>
     </div>
   );
@@ -625,14 +600,14 @@ function BookingInvoiceGroups({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-red-950/35 dark:bg-[rgb(23,23,25)] dark:text-slate-200">
+      <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:border-red-950/35 dark:bg-[rgb(23,23,25)] dark:text-slate-200">
         <input
           type="checkbox"
           aria-label="Select all booking groups"
           checked={allGroupsSelected}
           onChange={() => onToggleGroupAll(allGroupsSelected ? [] : groupIds)}
         />
-        <span>Select all booking groups</span>
+        <span className="text-[11px] sm:text-sm">Select all booking groups</span>
       </div>
       {groups.map((group) => {
         const recentInvoice = group.invoices[0];
@@ -645,61 +620,56 @@ function BookingInvoiceGroups({
 
         return (
           <div key={group._id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-red-950/35 dark:bg-[#101012]">
-            <div className="grid gap-3 p-3 text-sm text-slate-700 dark:text-slate-200 md:grid-cols-[auto_1fr_auto_auto] md:items-center">
+            <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_auto_auto] gap-2 sm:gap-3 p-2 sm:p-3 text-xs sm:text-sm text-slate-700 dark:text-slate-200 items-center">
               <input
                 type="checkbox"
                 aria-label="Select booking group"
                 checked={selectedGroupIds.includes(group._id)}
                 onChange={() => onToggleGroup(group._id)}
               />
-              <div className="flex flex-col gap-1">
-                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Cab Request Number</p>
-                <p className="font-semibold text-slate-950 dark:text-white">{group.cabRequestNumber}</p>
+              <div className="flex flex-col gap-0.5 sm:gap-1">
+                <p className="text-[10px] sm:text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Cab Request</p>
+                <p className="font-semibold text-slate-950 dark:text-white text-xs sm:text-sm">{group.cabRequestNumber}</p>
               </div>
               <div className="flex justify-center">
-                <span className="inline-flex items-center rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
-                  {group.invoiceCount} {group.invoiceCount === 1 ? "invoice" : "invoices"}
+                <span className="inline-flex items-center rounded-full bg-brand-100 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+                  {group.invoiceCount} {group.invoiceCount === 1 ? "inv" : "invs"}
                 </span>
               </div>
-              <div className="hidden">
-                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Balance</p>
-                <p className="font-semibold">₹ {Number(group.balanceAmount || 0).toLocaleString()}</p>
+              <div className="hidden sm:block">
+                <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400">Balance</p>
+                <p className="font-semibold text-xs">₹ {Number(group.balanceAmount || 0).toLocaleString()}</p>
               </div>
-              <div className="flex flex-wrap justify-end gap-2">
+              <div className="flex flex-wrap justify-end gap-1 sm:gap-2 col-span-3 sm:col-span-1">
                 {otherInvoices.length > 0 && (
-                  <button type="button" className="btn-secondary px-2 py-1.5" onClick={() => onToggleExpand(group._id)}>
-                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    {isExpanded?"Hide":"View"} ({otherInvoices.length})
+                  <button type="button" className="btn-secondary px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs" onClick={() => onToggleExpand(group._id)}>
+                    {isExpanded ? <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" /> : <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />}
+                    <span className="hidden xs:inline">{isExpanded ? "Hide" : "View"} ({otherInvoices.length})</span>
+                    <span className="xs:hidden">{otherInvoices.length}</span>
                   </button>
                 )}
-                <button type="button" className="hidden btn-secondary px-2 py-1.5" onClick={() => onBookingPdf(recentInvoice)}>
-                  <FileArchive className="h-4 w-4" />
-                  PDF
-                </button>
-                <button type="button" className="hidden btn-secondary px-2 py-1.5" onClick={() => onBulkSend(group)}>
-                  <Mail className="h-4 w-4" />
-                  Send
-                </button>
               </div>
             </div>
-            <div className="border-t border-slate-100 p-2 dark:border-red-950/25">
-              <DataTable
-                rows={isExpanded ? group.invoices : [recentInvoice]}
-                selectable
-                selectedIds={childSelectedIds}
-                onToggleRow={onToggleInvoice}
-                onToggleAll={(ids) => onToggleGroupInvoices(group, ids)}
-                columns={[
-                  { key: "invoiceNumber", header: "Invoice" },
-                  { key: "createdAt", header: "Date", render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt) },
-                  { key: "clientName", header: "Client" },
-                  { key: "paymentStatus", header: "Payment", render: (r) => <PaymentStatusBadge invoice={r} /> },
-                  { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
-                  { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
-                ]}
-                actionCount={7}
-                actions={renderInvoiceActions}
-              />
+            <div className="border-t border-slate-100 p-1 sm:p-2 dark:border-red-950/25 overflow-x-auto">
+              <div className="min-w-[280px]">
+                <DataTable
+                  rows={isExpanded ? group.invoices : [recentInvoice]}
+                  selectable
+                  selectedIds={childSelectedIds}
+                  onToggleRow={onToggleInvoice}
+                  onToggleAll={(ids) => onToggleGroupInvoices(group, ids)}
+                  columns={[
+                    { key: "invoiceNumber", header: "Invoice" },
+                    { key: "createdAt", header: "Date", render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt) },
+                    { key: "clientName", header: "Client" },
+                    { key: "paymentStatus", header: "Payment", render: (r) => <PaymentStatusBadge invoice={r} /> },
+                    { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
+                    { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
+                  ]}
+                  actionCount={7}
+                  actions={renderInvoiceActions}
+                />
+              </div>
             </div>
           </div>
         );
@@ -835,11 +805,11 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
   }
 
   return (
-    <form className="grid gap-3 sm:grid-cols-2" onSubmit={submit}>
-      <div className="sm:col-span-2">
+    <form className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3" onSubmit={submit}>
+      <div className="xs:col-span-2">
         <RequiredLabel>Search Booking ID</RequiredLabel>
         <input
-          className="input"
+          className="input text-sm"
           value={bookingSearch}
           onFocus={() => setBookingPickerOpen(true)}
           onChange={(event) => {
@@ -856,7 +826,7 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
             <button
               key={booking._id || booking.id || booking.bookingId}
               type="button"
-              className={`w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-brand-50 dark:hover:bg-red-950/20 ${String(form.bookingId) === String(booking._id || booking.id) ? "bg-brand-50 text-brand-700 dark:bg-red-950/25 dark:text-brand-100" : ""}`}
+              className={`w-full rounded-md px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm transition hover:bg-brand-50 dark:hover:bg-red-950/20 ${String(form.bookingId) === String(booking._id || booking.id) ? "bg-brand-50 text-brand-700 dark:bg-red-950/25 dark:text-brand-100" : ""}`}
               onClick={() => selectBooking(booking)}
             >
               <span className="font-semibold">{booking.bookingId || booking.cabRequestNumber || booking._id}</span>
@@ -870,7 +840,7 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
       <InvoiceInput label="Client Email" type="email" value={form.clientEmail} error={errors.clientEmail} onChange={(value) => updateField("clientEmail", value)} />
       <label>
         <RequiredLabel>Project Type</RequiredLabel>
-        <select className="input" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}>
+        <select className="input text-sm" value={form.projectType} onChange={(event) => updateField("projectType", event.target.value as InvoiceProjectType)}>
           <option value="Process">Process</option>
           <option value="Management">Management</option>
         </select>
@@ -894,8 +864,8 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
       <ComputedField label="GST Amount" value={`₹ ${gstAmount.toLocaleString()}`} />
       <ComputedField label="Total Amount" value={`₹ ${totalAmount.toLocaleString()}`} />
       <InvoiceInput label="Remarks" value={form.remarks} error={errors.remarks} onChange={(value) => updateField("remarks", value)} full requiredLabel={false} />
-      <div className="sm:col-span-2">
-        <button className="btn-primary" disabled={submitting}>{submitting ? "Creating..." : "Create Invoice"}</button>
+      <div className="xs:col-span-2">
+        <button className="btn-primary w-full xs:w-auto text-sm" disabled={submitting}>{submitting ? "Creating..." : "Create Invoice"}</button>
       </div>
     </form>
   );
@@ -903,10 +873,10 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
 
 function InvoiceInput({ label, value, error, onChange, type = "text", full = false, readOnly = false, requiredLabel = true }: { label: string; value: string; error?: string; onChange?: (value: string) => void; type?: string; full?: boolean; readOnly?: boolean; requiredLabel?: boolean }) {
   return (
-    <label className={full ? "sm:col-span-2" : ""}>
-      {requiredLabel ? <RequiredLabel>{label}</RequiredLabel> : <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>}
+    <label className={full ? "xs:col-span-2" : ""}>
+      {requiredLabel ? <RequiredLabel>{label}</RequiredLabel> : <span className="mb-0.5 block text-[11px] sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>}
       <input
-        className="input"
+        className="input text-sm"
         type={type}
         step={type === "number" ? "any" : undefined}
         min={type === "number" ? 0 : undefined}
@@ -925,14 +895,14 @@ function InvoiceInput({ label, value, error, onChange, type = "text", full = fal
 function ComputedField({ label, value }: { label: string; value: string }) {
   return (
     <label>
-      <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>
-      <input className="input bg-slate-50 font-semibold text-slate-700 dark:bg-slate-900/70 dark:text-slate-100" value={value} readOnly />
+      <span className="mb-0.5 block text-[11px] sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>
+      <input className="input bg-slate-50 font-semibold text-slate-700 text-sm dark:bg-slate-900/70 dark:text-slate-100" value={value} readOnly />
     </label>
   );
 }
 
 function RequiredLabel({ children }: { children: ReactNode }) {
-  return <span className="mb-0.5 block text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
+  return <span className="mb-0.5 block text-[11px] sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -986,9 +956,9 @@ function getInvoiceTime(invoice: any) {
 function RequestOverlay({ message }: { message: string }) {
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-white/45 backdrop-blur-sm dark:bg-black/45">
-      <div className="rounded-2xl border border-brand-100 bg-white px-6 py-5 text-center shadow-2xl shadow-brand-600/20 dark:border-red-950/45 dark:bg-[#111114]">
-        <Loader2 className="mx-auto h-7 w-7 animate-spin text-brand-600 dark:text-brand-200" />
-        <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-white">{message}</p>
+      <div className="rounded-2xl border border-brand-100 bg-white px-4 sm:px-6 py-4 sm:py-5 text-center shadow-2xl shadow-brand-600/20 dark:border-red-950/45 dark:bg-[#111114]">
+        <Loader2 className="mx-auto h-6 w-6 sm:h-7 sm:w-7 animate-spin text-brand-600 dark:text-brand-200" />
+        <p className="mt-2 sm:mt-3 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">{message}</p>
       </div>
     </div>
   );
@@ -1054,7 +1024,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
   return (
     <>
       <div className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
           <InfoCard label="Invoice" value={invoice.invoiceNumber} />
           <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
           <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
@@ -1062,7 +1032,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
             label="Payment Status"
             value={
               <select
-                className="input mt-1"
+                className="input mt-1 text-sm"
                 value={form.paymentStatus}
                 onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentState["paymentStatus"])}
               >
@@ -1078,7 +1048,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
             label="Payment Type"
             value={
               <select
-                className="input mt-1"
+                className="input mt-1 text-sm"
                 value={form.paymentType}
                 disabled={isPendingSelection}
                 onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentState["paymentType"])}
@@ -1095,7 +1065,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
             label="Remark"
             value={
               <textarea
-                className="input mt-1 min-h-24"
+                className="input mt-1 min-h-20 sm:min-h-24 text-sm"
                 value={form.remark}
                 disabled={isPendingSelection}
                 onChange={(event) => updateField("remark", event.target.value)}
@@ -1103,18 +1073,18 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
             }
           />
           {isPendingSelection && (
-            <div className="sm:col-span-2 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900 dark:border-orange-950/40 dark:bg-orange-950/10 dark:text-orange-100">
+            <div className="xs:col-span-2 rounded-lg border border-orange-200 bg-orange-50 p-2 sm:p-3 text-xs sm:text-sm text-orange-900 dark:border-orange-950/40 dark:bg-orange-950/10 dark:text-orange-100">
               Marking this invoice Pending disables payment type and remark, and clears the payment details on save.
             </div>
           )}
-          <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
-          <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
-          <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
+          <InfoCard label="Balance" value={<p className="mt-1 text-base sm:text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
+          <InfoCard label="Paid Amount" value={<p className="mt-1 text-base sm:text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
+          <InfoCard label="Final Amount" value={<p className="mt-1 text-base sm:text-lg font-semibold text-slate-950 dark:text-white">₹ {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
         </div>
 
-        <div className="flex justify-end gap-2">
-          <button type="button" className="btn-secondary" onClick={() => setForm(invoicePaymentDefaults(invoice))}>Reset</button>
-          <button type="button" className="btn-primary" onClick={handleSubmit}>Update Payment Status</button>
+        <div className="flex flex-col xs:flex-row justify-end gap-2">
+          <button type="button" className="btn-secondary w-full xs:w-auto text-sm" onClick={() => setForm(invoicePaymentDefaults(invoice))}>Reset</button>
+          <button type="button" className="btn-primary w-full xs:w-auto text-sm" onClick={handleSubmit}>Update Payment Status</button>
         </div>
       </div>
 
@@ -1125,7 +1095,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
         confirmLabel="Yes, mark Pending"
         cancelLabel="Cancel"
         message={
-          <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+          <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
             <p>This invoice is currently marked as Paid.</p>
             <p>Marking it Pending will clear the payment type and remark, and update the payment status accordingly.</p>
           </div>
@@ -1266,7 +1236,7 @@ function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
     Partial: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200",
     Pending: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-200"
   };
-  return <span className={`rounded-md px-2 py-1 text-xs font-semibold ${styles[status] || styles.Draft}`}>{status}</span>;
+  return <span className={`rounded-md px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold ${styles[status] || styles.Draft}`}>{status}</span>;
 }
 
 function PaymentStatusBadge({ invoice }: { invoice: any }) {
@@ -1276,7 +1246,7 @@ function PaymentStatusBadge({ invoice }: { invoice: any }) {
     Paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
     Pending: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
   };
-  return <span className={`rounded-md px-2 py-1 text-xs font-semibold ${styles[status]}`}>{status}</span>;
+  return <span className={`rounded-md px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold ${styles[status]}`}>{status}</span>;
 }
 
 function InvoicePreview({ invoice, onDownload }: { invoice: any; onDownload: () => void }) {
@@ -1284,13 +1254,13 @@ function InvoicePreview({ invoice, onDownload }: { invoice: any; onDownload: () 
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-        <div className="flex items-start justify-between gap-4">
+      <div className="rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-950 dark:text-white">Unique Carz</h3>
-            <p className="text-sm text-slate-500">Tax invoice preview</p>
+            <h3 className="text-base sm:text-lg font-bold text-slate-950 dark:text-white">Unique Carz</h3>
+            <p className="text-xs sm:text-sm text-slate-500">Tax invoice preview</p>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">{invoice.invoiceNumber}</p>
             <p className="text-xs text-slate-500">{formatDisplayDate(invoice.createdAt)}</p>
           </div>
@@ -1298,14 +1268,14 @@ function InvoicePreview({ invoice, onDownload }: { invoice: any; onDownload: () 
       </div>
       <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
         {rows.map(([label, value]) => (
-          <div key={label} className="grid grid-cols-2 border-b border-slate-100 text-sm last:border-b-0 dark:border-slate-800">
-            <div className="bg-slate-50 px-3 py-2 font-medium text-slate-600 dark:bg-slate-900 dark:text-slate-300">{label}</div>
-            <div className="px-3 py-2 text-slate-900 dark:text-white">{value}</div>
+          <div key={label} className="grid grid-cols-1 xs:grid-cols-2 border-b border-slate-100 text-xs sm:text-sm last:border-b-0 dark:border-slate-800">
+            <div className="bg-slate-50 px-2 sm:px-3 py-1.5 sm:py-2 font-medium text-slate-600 dark:bg-slate-900 dark:text-slate-300">{label}</div>
+            <div className="px-2 sm:px-3 py-1.5 sm:py-2 text-slate-900 dark:text-white break-words">{value}</div>
           </div>
         ))}
       </div>
       <div className="flex justify-end gap-2">
-        <button className="btn-secondary" onClick={onDownload}>
+        <button className="btn-secondary text-sm" onClick={onDownload}>
           <FileDown className="h-4 w-4" />
           Download PDF
         </button>
@@ -1316,9 +1286,9 @@ function InvoicePreview({ invoice, onDownload }: { invoice: any; onDownload: () 
 
 function InfoCard({ label, value }: { label: string; value: any }) {
   return (
-    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
-      <p className="text-xs font-semibold uppercase text-slate-400">{label}</p>
-      <div className="mt-1 break-words text-sm text-slate-900 dark:text-white">{value ?? "-"}</div>
+    <div className="rounded-md border border-slate-200 p-2 sm:p-3 dark:border-slate-800">
+      <p className="text-[10px] sm:text-xs font-semibold uppercase text-slate-400">{label}</p>
+      <div className="mt-0.5 sm:mt-1 break-words text-xs sm:text-sm text-slate-900 dark:text-white">{value ?? "-"}</div>
     </div>
   );
 }
