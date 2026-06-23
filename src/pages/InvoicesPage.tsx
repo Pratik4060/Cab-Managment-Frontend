@@ -206,33 +206,33 @@ export function InvoicesPage() {
 
   function renderInvoiceActions(row: any) {
     return (
-      <div className="flex min-w-36 flex-col gap-1.5">
-        <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
-          <Eye className="h-4 w-4" />
+      <div className="flex min-w-[140px] flex-col gap-1.5">
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
+          <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Preview</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Edit invoice" onClick={() => setEditTarget(row)}>
-          <Pencil className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Edit invoice" onClick={() => setEditTarget(row)}>
+          <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Edit</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Update payment status" onClick={() => setPaymentTarget(row)}>
-          <Banknote className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Update payment status" onClick={() => setPaymentTarget(row)}>
+          <Banknote className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Payment Status</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Send invoice to client" onClick={() => setSendTarget(row)}>
-          <Mail className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Send invoice to client" onClick={() => setSendTarget(row)}>
+          <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Send</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Download PDF" onClick={() => downloadInvoicePdf(row)}>
-          <FileDown className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Download PDF" onClick={() => downloadInvoicePdf(row)}>
+          <FileDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Download PDF</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2" title="Booking PDF" onClick={() => exportBookingPdf(row)}>
-          <FileArchive className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm" title="Booking PDF" onClick={() => exportBookingPdf(row)}>
+          <FileArchive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Booking PDF</span>
         </button>
-        <button className="btn-secondary w-full justify-start p-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
-          <Trash2 className="h-4 w-4" />
+        <button className="btn-secondary w-full justify-start p-2 text-xs sm:text-sm text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200" title="Delete invoice" onClick={() => setDeleteTarget(row)}>
+          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span>Delete</span>
         </button>
       </div>
@@ -240,11 +240,11 @@ export function InvoicesPage() {
   }
 
   return (
-    <div className="relative space-y-3 sm:space-y-3.5 px-2 sm:px-0">
+    <div className="relative space-y-3 sm:space-y-4 px-2 sm:px-0">
       {invoices.loading && <RequestOverlay message={invoices.requestMessage || "Processing invoice request..."} />}
       
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="w-full sm:w-auto">
           <h1 className="text-lg sm:text-xl font-bold">Invoices</h1>
           <p className="text-xs sm:text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
@@ -258,17 +258,17 @@ export function InvoicesPage() {
       {/* Filters Section - Fully Responsive */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[auto_1fr_auto] gap-2 sm:gap-3">
         {/* View Mode Toggle */}
-        <div className="inline-flex flex-wrap gap-1.5 sm:gap-2 rounded-lg border border-brand-100 bg-white p-1 w-full sm:w-auto dark:border-red-950/40 dark:bg-[#111114]">
+        <div className="inline-flex flex-wrap gap-1 rounded-lg border border-brand-100 bg-white p-1 w-full sm:w-auto dark:border-red-950/40 dark:bg-[#111114]">
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold transition flex-1 sm:flex-none ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`flex-1 sm:flex-none rounded-md px-2 sm:px-3 py-1.5 text-[11px] sm:text-sm font-semibold transition ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("present")}
           >
             List View
           </button>
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold transition flex-1 sm:flex-none ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`flex-1 sm:flex-none rounded-md px-2 sm:px-3 py-1.5 text-[11px] sm:text-sm font-semibold transition ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("booking")}
           >
             By Booking
@@ -276,54 +276,38 @@ export function InvoicesPage() {
         </div>
 
         {/* Filter Controls */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-1.5 sm:gap-2">
-          <select 
-            className="input w-full text-xs sm:text-sm h-9 sm:h-10" 
-            value={paymentStatusFilter} 
-            onChange={(event) => setPaymentStatusFilter(event.target.value)}
-          >
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+          <select className="input w-full text-xs sm:text-sm h-9 sm:h-10" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)}>
             <option value="">All Status</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
-          <input 
-            className="input w-full text-xs sm:text-sm h-9 sm:h-10" 
-            type="date" 
-            value={dateFilters.from} 
-            onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} 
-            aria-label="Invoice from date" 
-          />
-          <input 
-            className="input w-full text-xs sm:text-sm h-9 sm:h-10" 
-            type="date" 
-            value={dateFilters.to} 
-            onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} 
-            aria-label="Invoice to date" 
-          />
+          <input className="input w-full text-xs sm:text-sm h-9 sm:h-10" type="date" value={dateFilters.from} onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} aria-label="Invoice from date" />
+          <input className="input w-full text-xs sm:text-sm h-9 sm:h-10" type="date" value={dateFilters.to} onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} aria-label="Invoice to date" />
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-3 sm:grid-cols-3 gap-1.5 sm:gap-2 w-full sm:w-auto">
-          <button className="btn-secondary w-full text-xs sm:text-sm py-1.5 sm:py-2" onClick={() => exportInvoices("xlsx")}>
+        <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 w-full sm:w-auto">
+          <button className="btn-secondary w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2" onClick={() => exportInvoices("xlsx")}>
             <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden xs:inline">Excel</span>
+            <span className="xs:hidden">XLS</span>
           </button>
-          <button className="btn-secondary w-full text-xs sm:text-sm py-1.5 sm:py-2" onClick={() => exportInvoices("pdf")}>
+          <button className="btn-secondary w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2" onClick={() => exportInvoices("pdf")}>
             <FileArchive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden xs:inline">Bulk PDFs</span>
+            <span className="xs:hidden">PDF</span>
           </button>
-          <button
-            className="btn-secondary w-full text-xs sm:text-sm py-1.5 sm:py-2"
-            onClick={handleBulkSend}
-          >
+          <button className="btn-secondary w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2" onClick={handleBulkSend}>
             <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden xs:inline">Bulk Send</span>
+            <span className="xs:hidden">Send</span>
           </button>
         </div>
       </div>
 
       {/* Project Type Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
         {(["Process", "Management"] as InvoiceProjectType[]).map((type) => {
           const typeRows = rows.filter((invoice) => getInvoiceProjectType(invoice) === type);
           const isActive = projectTypeFilter === type;
@@ -347,34 +331,36 @@ export function InvoicesPage() {
       </div>
 
       {/* Main Table Section */}
-      <div className="panel p-2 sm:p-2 overflow-x-auto -mx-2 sm:mx-0">
+      <div className="panel p-1 sm:p-2 overflow-hidden">
         {viewMode === "present" && (
-        <div className="min-w-[600px] sm:min-w-0">
-          <DataTable
-            loading={invoices.loading}
-            loadingMessage={invoices.requestMessage || "Loading invoices..."}
-            rows={filteredRows}
-            selectable
-            selectedIds={selectedInvoiceIds}
-            onToggleRow={toggleInvoiceSelection}
-            onToggleAll={setSelectedInvoiceIds}
-            columns={[
-              { key: "invoiceNumber", header: "Invoice" },
-              {
-                key: "createdAt",
-                header: "Date",
-                render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt),
-              },
-              { key: "clientName", header: "Client" },
-              { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
-              { key: "paymentStatus", header: "Payment Status", render: (r) => <PaymentStatusBadge invoice={r} /> },
-              { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
-              { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
-            ]}
-            actionCount={7}
-            actions={renderInvoiceActions}
-          />
-        </div>
+          <div className="overflow-x-auto -mx-1 sm:-mx-2">
+            <div className="min-w-[320px] px-1 sm:px-2">
+              <DataTable
+                loading={invoices.loading}
+                loadingMessage={invoices.requestMessage || "Loading invoices..."}
+                rows={filteredRows}
+                selectable
+                selectedIds={selectedInvoiceIds}
+                onToggleRow={toggleInvoiceSelection}
+                onToggleAll={setSelectedInvoiceIds}
+                columns={[
+                  { key: "invoiceNumber", header: "Invoice" },
+                  {
+                    key: "createdAt",
+                    header: "Date",
+                    render: (r) => formatDisplayDate(r.invoiceDate || r.createdAt),
+                  },
+                  { key: "clientName", header: "Client" },
+                  { key: "status", header: "Invoice Status", render: (r) => <InvoiceStatusBadge status={r.status} /> },
+                  { key: "paymentStatus", header: "Payment Status", render: (r) => <PaymentStatusBadge invoice={r} /> },
+                  { key: "finalAmount", header: "Total", render: (r) => `₹ ${Number(r.finalAmount || 0).toLocaleString()}` },
+                  { key: "remainingAmount", header: "Balance", render: (r) => `₹ ${Number(remainingAmount(r)).toLocaleString()}` }
+                ]}
+                actionCount={7}
+                actions={renderInvoiceActions}
+              />
+            </div>
+          </div>
         )}
         {viewMode === "booking" && (
           <BookingInvoiceGroups
@@ -400,7 +386,6 @@ export function InvoicesPage() {
       <Modal open={Boolean(previewInvoice)} title={`Invoice Preview ${previewInvoice?.invoiceNumber || ""}`} onClose={() => setPreviewInvoice(null)}>
         {previewInvoice && <InvoicePreview invoice={previewInvoice} onDownload={() => downloadInvoicePdf(previewInvoice)} />}
       </Modal>
-      
       <Modal open={addOpen} title="Add Invoice" onClose={() => setAddOpen(false)}>
         <AddInvoiceForm
           bookings={bookings}
@@ -451,7 +436,6 @@ export function InvoicesPage() {
           }}
         />
       </Modal>
-      
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title="Delete Invoice"
@@ -467,7 +451,6 @@ export function InvoicesPage() {
           setDeleteTarget(null);
         }}
       />
-      
       <ConfirmDialog
         open={bulkSendConfirmOpen}
         title="Send Invoices"
@@ -546,7 +529,7 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
         <InfoCard label="Invoice" value={invoice.invoiceNumber} />
         <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
         <InfoCard label="Passenger" value={invoice.booking?.passengerName || "-"} />
@@ -570,9 +553,9 @@ function InvoiceDutySlipEditor({ invoice, onSubmit }: { invoice: any; onSubmit: 
         <InfoCard label="Total KM" value={<p className="mt-1 text-base sm:text-lg font-semibold text-slate-950 dark:text-white">{computed.totalKm.toLocaleString()}</p>} />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end gap-2">
-        <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setForm(invoiceDutySlipDefaults(invoice))}>Reset</button>
-        <button type="button" className="btn-primary w-full sm:w-auto" onClick={submit}>Update Invoice</button>
+      <div className="flex flex-col xs:flex-row justify-end gap-2">
+        <button type="button" className="btn-secondary w-full xs:w-auto text-sm" onClick={() => setForm(invoiceDutySlipDefaults(invoice))}>Reset</button>
+        <button type="button" className="btn-primary w-full xs:w-auto text-sm" onClick={submit}>Update Invoice</button>
       </div>
     </div>
   );
@@ -616,7 +599,7 @@ function BookingInvoiceGroups({
   const allGroupsSelected = groupIds.length > 0 && groupIds.every((id) => selectedGroupIds.includes(id));
 
   return (
-    <div className="space-y-2 min-w-[280px]">
+    <div className="space-y-2">
       <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:border-red-950/35 dark:bg-[rgb(23,23,25)] dark:text-slate-200">
         <input
           type="checkbox"
@@ -624,7 +607,7 @@ function BookingInvoiceGroups({
           checked={allGroupsSelected}
           onChange={() => onToggleGroupAll(allGroupsSelected ? [] : groupIds)}
         />
-        <span>Select all booking groups</span>
+        <span className="text-[11px] sm:text-sm">Select all booking groups</span>
       </div>
       {groups.map((group) => {
         const recentInvoice = group.invoices[0];
@@ -644,24 +627,31 @@ function BookingInvoiceGroups({
                 checked={selectedGroupIds.includes(group._id)}
                 onChange={() => onToggleGroup(group._id)}
               />
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-0.5 sm:gap-1">
                 <p className="text-[10px] sm:text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Cab Request</p>
                 <p className="font-semibold text-slate-950 dark:text-white text-xs sm:text-sm">{group.cabRequestNumber}</p>
               </div>
-              <span className="inline-flex items-center rounded-full bg-brand-100 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
-                {group.invoiceCount} {group.invoiceCount === 1 ? "inv" : "invs"}
-              </span>
-              <div className="flex flex-wrap justify-end gap-1 sm:gap-2 col-span-3 sm:col-span-1 sm:justify-end">
+              <div className="flex justify-center">
+                <span className="inline-flex items-center rounded-full bg-brand-100 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+                  {group.invoiceCount} {group.invoiceCount === 1 ? "inv" : "invs"}
+                </span>
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400">Balance</p>
+                <p className="font-semibold text-xs">₹ {Number(group.balanceAmount || 0).toLocaleString()}</p>
+              </div>
+              <div className="flex flex-wrap justify-end gap-1 sm:gap-2 col-span-3 sm:col-span-1">
                 {otherInvoices.length > 0 && (
-                  <button type="button" className="btn-secondary px-1.5 sm:px-2 py-1 text-xs" onClick={() => onToggleExpand(group._id)}>
+                  <button type="button" className="btn-secondary px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs" onClick={() => onToggleExpand(group._id)}>
                     {isExpanded ? <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" /> : <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />}
-                    <span className="hidden xs:inline">{isExpanded?"Hide":"View"} ({otherInvoices.length})</span>
+                    <span className="hidden xs:inline">{isExpanded ? "Hide" : "View"} ({otherInvoices.length})</span>
+                    <span className="xs:hidden">{otherInvoices.length}</span>
                   </button>
                 )}
               </div>
             </div>
             <div className="border-t border-slate-100 p-1 sm:p-2 dark:border-red-950/25 overflow-x-auto">
-              <div className="min-w-[500px] sm:min-w-0">
+              <div className="min-w-[280px]">
                 <DataTable
                   rows={isExpanded ? group.invoices : [recentInvoice]}
                   selectable
@@ -815,8 +805,8 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
   }
 
   return (
-    <form className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3" onSubmit={submit}>
-      <div className="sm:col-span-2">
+    <form className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3" onSubmit={submit}>
+      <div className="xs:col-span-2">
         <RequiredLabel>Search Booking ID</RequiredLabel>
         <input
           className="input text-sm"
@@ -874,8 +864,8 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
       <ComputedField label="GST Amount" value={`₹ ${gstAmount.toLocaleString()}`} />
       <ComputedField label="Total Amount" value={`₹ ${totalAmount.toLocaleString()}`} />
       <InvoiceInput label="Remarks" value={form.remarks} error={errors.remarks} onChange={(value) => updateField("remarks", value)} full requiredLabel={false} />
-      <div className="sm:col-span-2">
-        <button className="btn-primary w-full sm:w-auto" disabled={submitting}>{submitting ? "Creating..." : "Create Invoice"}</button>
+      <div className="xs:col-span-2">
+        <button className="btn-primary w-full xs:w-auto text-sm" disabled={submitting}>{submitting ? "Creating..." : "Create Invoice"}</button>
       </div>
     </form>
   );
@@ -883,8 +873,8 @@ function AddInvoiceForm({ bookings, onSubmit }: { bookings: any[]; onSubmit: (pa
 
 function InvoiceInput({ label, value, error, onChange, type = "text", full = false, readOnly = false, requiredLabel = true }: { label: string; value: string; error?: string; onChange?: (value: string) => void; type?: string; full?: boolean; readOnly?: boolean; requiredLabel?: boolean }) {
   return (
-    <label className={full ? "sm:col-span-2" : ""}>
-      {requiredLabel ? <RequiredLabel>{label}</RequiredLabel> : <span className="mb-0.5 block text-xs sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>}
+    <label className={full ? "xs:col-span-2" : ""}>
+      {requiredLabel ? <RequiredLabel>{label}</RequiredLabel> : <span className="mb-0.5 block text-[11px] sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>}
       <input
         className="input text-sm"
         type={type}
@@ -905,14 +895,14 @@ function InvoiceInput({ label, value, error, onChange, type = "text", full = fal
 function ComputedField({ label, value }: { label: string; value: string }) {
   return (
     <label>
-      <span className="mb-0.5 block text-xs sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>
-      <input className="input bg-slate-50 font-semibold text-slate-700 dark:bg-slate-900/70 dark:text-slate-100 text-sm" value={value} readOnly />
+      <span className="mb-0.5 block text-[11px] sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{label}</span>
+      <input className="input bg-slate-50 font-semibold text-slate-700 text-sm dark:bg-slate-900/70 dark:text-slate-100" value={value} readOnly />
     </label>
   );
 }
 
 function RequiredLabel({ children }: { children: ReactNode }) {
-  return <span className="mb-0.5 block text-xs sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
+  return <span className="mb-0.5 block text-[11px] sm:text-[13px] font-medium text-slate-700 dark:text-slate-200">{children}<span className="ml-0.5 text-brand-600">*</span></span>;
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -1034,7 +1024,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
   return (
     <>
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3">
           <InfoCard label="Invoice" value={invoice.invoiceNumber} />
           <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
           <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
@@ -1083,7 +1073,7 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
             }
           />
           {isPendingSelection && (
-            <div className="sm:col-span-2 rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs sm:text-sm text-orange-900 dark:border-orange-950/40 dark:bg-orange-950/10 dark:text-orange-100">
+            <div className="xs:col-span-2 rounded-lg border border-orange-200 bg-orange-50 p-2 sm:p-3 text-xs sm:text-sm text-orange-900 dark:border-orange-950/40 dark:bg-orange-950/10 dark:text-orange-100">
               Marking this invoice Pending disables payment type and remark, and clears the payment details on save.
             </div>
           )}
@@ -1092,9 +1082,9 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
           <InfoCard label="Final Amount" value={<p className="mt-1 text-base sm:text-lg font-semibold text-slate-950 dark:text-white">₹ {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
-          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => setForm(invoicePaymentDefaults(invoice))}>Reset</button>
-          <button type="button" className="btn-primary w-full sm:w-auto" onClick={handleSubmit}>Update Payment Status</button>
+        <div className="flex flex-col xs:flex-row justify-end gap-2">
+          <button type="button" className="btn-secondary w-full xs:w-auto text-sm" onClick={() => setForm(invoicePaymentDefaults(invoice))}>Reset</button>
+          <button type="button" className="btn-primary w-full xs:w-auto text-sm" onClick={handleSubmit}>Update Payment Status</button>
         </div>
       </div>
 
@@ -1276,18 +1266,16 @@ function InvoicePreview({ invoice, onDownload }: { invoice: any; onDownload: () 
           </div>
         </div>
       </div>
-      <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto">
-        <div className="min-w-[300px]">
-          {rows.map(([label, value]) => (
-            <div key={label} className="grid grid-cols-1 sm:grid-cols-2 border-b border-slate-100 text-xs sm:text-sm last:border-b-0 dark:border-slate-800">
-              <div className="bg-slate-50 px-2 sm:px-3 py-1.5 sm:py-2 font-medium text-slate-600 dark:bg-slate-900 dark:text-slate-300">{label}</div>
-              <div className="px-2 sm:px-3 py-1.5 sm:py-2 text-slate-900 dark:text-white break-words">{value}</div>
-            </div>
-          ))}
-        </div>
+      <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+        {rows.map(([label, value]) => (
+          <div key={label} className="grid grid-cols-1 xs:grid-cols-2 border-b border-slate-100 text-xs sm:text-sm last:border-b-0 dark:border-slate-800">
+            <div className="bg-slate-50 px-2 sm:px-3 py-1.5 sm:py-2 font-medium text-slate-600 dark:bg-slate-900 dark:text-slate-300">{label}</div>
+            <div className="px-2 sm:px-3 py-1.5 sm:py-2 text-slate-900 dark:text-white break-words">{value}</div>
+          </div>
+        ))}
       </div>
       <div className="flex justify-end gap-2">
-        <button className="btn-secondary w-full sm:w-auto" onClick={onDownload}>
+        <button className="btn-secondary text-sm" onClick={onDownload}>
           <FileDown className="h-4 w-4" />
           Download PDF
         </button>
