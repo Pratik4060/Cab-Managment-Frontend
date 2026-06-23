@@ -199,7 +199,6 @@ export function TripsPage() {
     {
       name: "purposeOfCabBooking",
       label: "Purpose of Cab Booking",
-      full: true,
       required: false,
     },
     { name: "senderEmail", label: "Sender Email", required: false },
@@ -208,7 +207,6 @@ export function TripsPage() {
       label: "Email Screenshot",
       type: "file",
       accept: "image/*",
-      full: true,
       required: false,
     },
   ];
@@ -303,27 +301,27 @@ export function TripsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 items-stretch">
         <button
           type="button"
-          className={`group relative overflow-hidden rounded-xl border border-l-[4px] p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "new" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
+          className={`group relative h-full overflow-hidden rounded-xl border border-l-[4px] p-3 sm:p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "new" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
           onClick={() => setActiveTable("new")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
+                <h2 className="hidden lg:block text-xl font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
                 <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
-              <p className="mt-2.5 text-sm text-slate-500">
-                Click to jump to the new bookings table.
+              <p className="hidden lg:block mt-1 text-sm text-slate-500">
+                New enquiries awaiting assignment.
               </p>
             </div>
-            <span className="rounded-full bg-brand-50 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-brand-950/40 dark:text-brand-200">
+            <span className="inline-flex rounded-full bg-slate-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
               <ClipboardList className="h-4 w-4" />
             </span>
           </div>
@@ -331,24 +329,24 @@ export function TripsPage() {
 
         <button
           type="button"
-          className={`group relative overflow-hidden rounded-xl border border-l-[4px] p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "assigned" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
+          className={`group relative h-full overflow-hidden rounded-xl border border-l-[4px] p-3 sm:p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "assigned" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
           onClick={() => setActiveTable("assigned")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
+                <h2 className="hidden lg:block text-xl font-bold text-slate-950 dark:text-white">
                   Assigned
                 </h2>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
-              <p className="mt-2.5 text-sm text-slate-500">
-                Click to jump to the assigned trips table.
+              <p className="hidden lg:block mt-1 text-sm text-slate-500">
+                Bookings already assigned to drivers.
               </p>
             </div>
-            <span className="rounded-full bg-zinc-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
+            <span className="inline-flex rounded-full bg-slate-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
               <Route className="h-4 w-4" />
             </span>
           </div>
@@ -356,24 +354,24 @@ export function TripsPage() {
 
         <button
           type="button"
-          className={`group relative overflow-hidden rounded-xl border border-l-[4px] p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "closed" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
+          className={`group relative h-full overflow-hidden rounded-xl border border-l-[4px] p-3 sm:p-4 text-left shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl dark:bg-gradient-to-br dark:from-[#181113] dark:to-[#0e0e10] ${activeTable === "closed" ? "border-brand-500 border-l-brand-600 shadow-brand-600/20 dark:border-brand-400 dark:border-l-brand-400" : "border-brand-100/80 border-l-brand-600/80 dark:border-red-950/35 dark:border-l-brand-400/70"}`}
           onClick={() => setActiveTable("closed")}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
+                <h2 className="hidden lg:block text-xl font-bold text-slate-950 dark:text-white">
                   Completed / Cancelled
                 </h2>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {closedTrips.length}
                 </span>
               </div>
-              <p className="mt-2.5 text-sm text-slate-500">
-               Click to jump to the Completed/cancelled trip history.
+              <p className="hidden lg:block mt-1 text-sm text-slate-500">
+                Trips completed or cancelled.
               </p>
             </div>
-            <span className="rounded-full bg-zinc-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-zinc-900 dark:text-brand-300">
+            <span className="inline-flex rounded-full bg-slate-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
               <CheckCircle2 className="h-4 w-4" />
             </span>
           </div>

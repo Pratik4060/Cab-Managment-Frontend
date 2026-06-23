@@ -89,7 +89,7 @@ export function ProfilePage() {
           <h2 className="mb-3 text-[15px] font-semibold">Profile Details</h2>
           <div className="space-y-3">
             <label><span className="mb-1 block text-sm font-medium">Full Name</span><input className="input" value={profile.fullName} onChange={(e) => setProfile((p) => ({ ...p, fullName: e.target.value }))} /></label>
-            <label><span className="mb-1 block text-sm font-medium">Email</span><input className="input" type="email" value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} /></label>
+            <label><span className="mb-1 block text-sm font-medium">Email</span><input className="input" type="email" value={profile.email} disabled /></label>
             <button className="btn-primary" disabled={profileLoading}><Save className="h-4 w-4" />Save Profile</button>
           </div>
         </form>
