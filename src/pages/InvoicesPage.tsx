@@ -249,7 +249,7 @@ export function InvoicesPage() {
           <h1 className="text-lg sm:text-xl font-bold">Invoices</h1>
           <p className="text-xs sm:text-sm text-slate-500">Preview, export PDF, email, and manage duty slip billing details.</p>
         </div>
-        <button className="btn-primary w-full sm:w-auto text-sm sm:text-base" onClick={() => setAddOpen(true)}>
+        <button className="btn-primary w-full sm:w-auto text-xs sm:text-sm py-1 px-2 sm:py-1.5 sm:px-3 lg:h-8 lg:px-2" onClick={() => setAddOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Invoice
         </button>
@@ -261,14 +261,14 @@ export function InvoicesPage() {
         <div className="inline-flex flex-wrap gap-1 rounded-lg border border-brand-100 bg-white p-0.5 w-full lg:w-auto dark:border-red-950/40 dark:bg-[#111114]">
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 lg:px-4 py-1 lg:py-2 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-2 sm:px-3 lg:px-3 py-1 lg:py-1.5 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "present" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("present")}
           >
             List View
           </button>
           <button
             type="button"
-            className={`rounded-md px-2 sm:px-3 lg:px-4 py-1 lg:py-2 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
+            className={`rounded-md px-2 sm:px-3 lg:px-3 py-1 lg:py-1.5 text-xs lg:text-sm font-semibold transition flex-1 lg:flex-none ${viewMode === "booking" ? "bg-brand-600 text-white shadow-sm" : "text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-red-950/20"}`}
             onClick={() => setViewMode("booking")}
           >
             By Booking
@@ -278,7 +278,7 @@ export function InvoicesPage() {
         {/* Filter Controls - Date filters on next line for iPad */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2 lg:gap-3">
           <select 
-            className="input w-full text-xs h-8 sm:h-9 lg:h-10 lg:text-sm" 
+            className="input w-full text-xs h-8 sm:h-8 lg:h-8 lg:text-sm" 
             value={paymentStatusFilter} 
             onChange={(event) => setPaymentStatusFilter(event.target.value)}
           >
@@ -287,14 +287,14 @@ export function InvoicesPage() {
             <option value="Pending">Pending</option>
           </select>
           <input 
-            className="input w-full text-xs h-8 sm:h-9 lg:h-10 lg:text-sm" 
+            className="input w-full text-xs h-8 sm:h-8 lg:h-8 lg:text-sm" 
             type="date" 
             value={dateFilters.from} 
             onChange={(event) => setDateFilters((filters) => ({ ...filters, from: event.target.value }))} 
             aria-label="Invoice from date" 
           />
           <input 
-            className="input w-full text-xs h-8 sm:h-9 lg:h-10 lg:text-sm" 
+            className="input w-full text-xs h-8 sm:h-8 lg:h-8 lg:text-sm" 
             type="date" 
             value={dateFilters.to} 
             onChange={(event) => setDateFilters((filters) => ({ ...filters, to: event.target.value }))} 
@@ -304,16 +304,16 @@ export function InvoicesPage() {
 
         {/* Action Buttons - Made smaller for iPad */}
         <div className="grid grid-cols-3 gap-1 sm:gap-1.5 lg:gap-2 w-full lg:w-auto">
-          <button className="btn-secondary w-full text-xs py-1 px-1.5 sm:text-sm sm:py-1.5 lg:h-10 lg:px-3" onClick={() => exportInvoices("xlsx")}>
+          <button className="btn-secondary w-full text-xs py-1 px-1.5 sm:text-sm sm:py-1.5 lg:h-8 lg:px-2" onClick={() => exportInvoices("xlsx")}>
             <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4" />
             <span className="text-[10px] sm:text-xs lg:text-sm">Excel</span>
           </button>
-          <button className="btn-secondary w-full text-xs py-1 px-1.5 sm:text-sm sm:py-1.5 lg:h-10 lg:px-3" onClick={() => exportInvoices("pdf")}>
+          <button className="btn-secondary w-full text-xs py-1 px-1.5 sm:text-sm sm:py-1.5 lg:h-8 lg:px-2" onClick={() => exportInvoices("pdf")}>
             <FileArchive className="h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4" />
             <span className="text-[10px] sm:text-xs lg:text-sm">Bulk PDFs</span>
           </button>
           <button
-            className="btn-secondary w-full text-xs py-1 px-1.5 sm:text-sm sm:py-1.5 lg:h-10 lg:px-3"
+            className="btn-secondary w-full text-xs py-1 px-1.5 sm:text-sm sm:py-1.5 lg:h-8 lg:px-2"
             onClick={handleBulkSend}
           >
             <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4" />
