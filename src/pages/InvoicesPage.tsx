@@ -207,7 +207,14 @@ export function InvoicesPage() {
   function renderInvoiceActions(row: any) {
     return (
       <div className="flex min-w-36 flex-col gap-1.5">
-        <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => setPreviewInvoice(await dispatch(invoiceActions.fetchById(row._id)).unwrap())}>
+        <button className="btn-secondary w-full justify-start p-2" title="Preview invoice" onClick={async () => {
+          try {
+            const invoice = await dispatch(invoiceActions.fetchById(row._id)).unwrap();
+            setPreviewInvoice(invoice);
+          } catch (error) {
+            showToast({ type: "error", title: "Failed to load invoice", message: error instanceof Error ? error.message : "Unable to preview invoice" });
+          }
+        }}>
           <Eye className="h-4 w-4" />
           <span>Preview</span>
         </button>
