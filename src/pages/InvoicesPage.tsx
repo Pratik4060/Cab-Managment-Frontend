@@ -38,6 +38,28 @@ type InvoicePaymentState = {
   remark: string;
 };
 
+function parseDateOnly(value?: string | Date | null) {
+  if (!value) return null;
+  const date = typeof value === "string" ? new Date(value) : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+function toEndOfDay(date: Date) {
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+function formatDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function InvoicesPage() {
   const dispatch = useAppDispatch();
   const [previewInvoice, setPreviewInvoice] = useState<any>(null);
@@ -67,16 +89,47 @@ export function InvoicesPage() {
     dispatch(bookingActions.fetchAll({}));
   }, [dispatch]);
 
+  const effectiveDateRange = useMemo(() => {
+    if (!dateFilters.from && !dateFilters.to) {
+      return { from: null as Date | null, to: null as Date | null };
+    }
+
+    const invoiceDates = (invoices.items || [])
+      .map((invoice) => parseDateOnly(invoice.invoiceDate || invoice.createdAt || invoice.updatedAt))
+      .filter((date): date is Date => Boolean(date));
+
+    const minInvoiceDate = invoiceDates.length
+      ? new Date(Math.min(...invoiceDates.map((date) => date.getTime())))
+      : null;
+
+    const selectedFrom = parseDateOnly(dateFilters.from);
+    const selectedTo = parseDateOnly(dateFilters.to);
+    const defaultTo = selectedFrom ? parseDateOnly(new Date()) : null;
+    const defaultFrom = selectedTo ? minInvoiceDate : null;
+
+    let from = selectedFrom || defaultFrom;
+    let to = selectedTo || defaultTo;
+
+    if (from && to && from > to) {
+      [from, to] = [to, from];
+    }
+
+    return { from, to };
+  }, [dateFilters.from, dateFilters.to, invoices.items]);
+
   const rows = useMemo(() => {
+    if (!effectiveDateRange.from && !effectiveDateRange.to) {
+      return invoices.items || [];
+    }
+
     return (invoices.items || []).filter((invoice) => {
-      if (!dateFilters.from && !dateFilters.to) return true;
-      const createdAt = invoice.createdAt ? new Date(invoice.createdAt) : null;
-      if (!createdAt || Number.isNaN(createdAt.getTime())) return false;
-      if (dateFilters.from && createdAt < new Date(dateFilters.from)) return false;
-      if (dateFilters.to && createdAt > new Date(`${dateFilters.to}T23:59:59`)) return false;
+      const invoiceDate = parseDateOnly(invoice.invoiceDate || invoice.createdAt || invoice.updatedAt);
+      if (!invoiceDate) return false;
+      if (effectiveDateRange.from && invoiceDate < effectiveDateRange.from) return false;
+      if (effectiveDateRange.to && invoiceDate > toEndOfDay(effectiveDateRange.to)) return false;
       return true;
     });
-  }, [dateFilters.from, dateFilters.to, invoices.items]);
+  }, [effectiveDateRange, invoices.items]);
   const filteredRows = useMemo(() => {
     if (!projectTypeFilter) return rows;
     return rows.filter((invoice) => getInvoiceProjectType(invoice) === projectTypeFilter);
@@ -455,8 +508,8 @@ export function InvoicesPage() {
       payload: {
         paymentStatus: paymentStatusFilter || undefined,
         projectType: projectTypeFilter || undefined,
-        from: dateFilters.from || undefined,
-        to: dateFilters.to || undefined,
+        from: effectiveDateRange.from ? formatDateInputValue(effectiveDateRange.from) : undefined,
+        to: effectiveDateRange.to ? formatDateInputValue(effectiveDateRange.to) : undefined,
         bookingIds: [bookingId]
       }
     })).unwrap();
@@ -469,8 +522,8 @@ export function InvoicesPage() {
       format,
       paymentStatus: paymentStatusFilter || undefined,
       projectType: projectTypeFilter || undefined,
-      from: dateFilters.from || undefined,
-      to: dateFilters.to || undefined,
+      from: effectiveDateRange.from ? formatDateInputValue(effectiveDateRange.from) : undefined,
+      to: effectiveDateRange.to ? formatDateInputValue(effectiveDateRange.to) : undefined,
       invoiceIds: selectedActionInvoiceIds.length ? selectedActionInvoiceIds : undefined,
       bookingIds: selectedBookingIds.length ? selectedBookingIds : undefined
     };
@@ -960,12 +1013,18 @@ function validateAddInvoiceForm(form: AddInvoiceFormState, totalKm: number) {
 
 function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSubmit: (payload: any) => Promise<void> | void }) {
   const [form, setForm] = useState<InvoicePaymentState>(() => invoicePaymentDefaults(invoice));
+  const [confirmPendingOpen, setConfirmPendingOpen] = useState(false);
 
   useEffect(() => {
     setForm(invoicePaymentDefaults(invoice));
   }, [invoice]);
 
   const computed = useMemo(() => calculatePaymentTotals(invoice, form), [invoice, form]);
+  const currentStatus = invoice.paymentStatus === "Paid" || Number(invoice.remainingAmount ?? invoice.balanceAmount ?? 0) === 0
+    ? "Paid"
+    : "Pending";
+  const isPendingSelection = form.paymentStatus === "Pending";
+  const isDowngradeToPending = currentStatus === "Paid" && isPendingSelection;
 
   function updateField(field: keyof InvoicePaymentState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -975,25 +1034,102 @@ function InvoicePaymentStatusEditor({ invoice, onSubmit }: { invoice: any; onSub
     await onSubmit(buildPaymentUpdatePayload(invoice, form));
   }
 
+  function handleSubmit() {
+    if (isDowngradeToPending) {
+      setConfirmPendingOpen(true);
+      return;
+    }
+    submit();
+  }
+
+  async function confirmPending() {
+    setConfirmPendingOpen(false);
+    await submit();
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <InfoCard label="Invoice" value={invoice.invoiceNumber} />
-        <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
-        <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
-        <InfoCard label="Payment Status" value={<select className="input mt-1" value={form.paymentStatus} onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentState["paymentStatus"])}>{["Pending", "Paid"].map((status) => <option key={status} value={status}>{status}</option>)}</select>} />
-        <InfoCard label="Payment Type" value={<select className="input mt-1" value={form.paymentType} onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentState["paymentType"])}>{["Cash", "UPI","Cheque","NEFT", "RTGS","Other"].map((type) => <option key={type} value={type}>{type}</option>)}</select>} />
-        <InfoCard label="Remark" value={<textarea className="input mt-1 min-h-24" value={form.remark} onChange={(event) => updateField("remark", event.target.value)} />} />
-        <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
-        <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
-        <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
+    <>
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <InfoCard label="Invoice" value={invoice.invoiceNumber} />
+          <InfoCard label="Client" value={invoice.clientName || invoice.booking?.businessUnit || "-"} />
+          <InfoCard label="Current Payment Status" value={<PaymentStatusBadge invoice={invoice} />} />
+          <InfoCard
+            label="Payment Status"
+            value={
+              <select
+                className="input mt-1"
+                value={form.paymentStatus}
+                onChange={(event) => updateField("paymentStatus", event.target.value as InvoicePaymentState["paymentStatus"])}
+              >
+                {["Pending", "Paid"].map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            }
+          />
+          <InfoCard
+            label="Payment Type"
+            value={
+              <select
+                className="input mt-1"
+                value={form.paymentType}
+                disabled={isPendingSelection}
+                onChange={(event) => updateField("paymentType", event.target.value as InvoicePaymentState["paymentType"])}
+              >
+                {["Cash", "UPI", "Cheque", "NEFT", "RTGS", "Other"].map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            }
+          />
+          <InfoCard
+            label="Remark"
+            value={
+              <textarea
+                className="input mt-1 min-h-24"
+                value={form.remark}
+                disabled={isPendingSelection}
+                onChange={(event) => updateField("remark", event.target.value)}
+              />
+            }
+          />
+          {isPendingSelection && (
+            <div className="sm:col-span-2 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900 dark:border-orange-950/40 dark:bg-orange-950/10 dark:text-orange-100">
+              Marking this invoice Pending disables payment type and remark, and clears the payment details on save.
+            </div>
+          )}
+          <InfoCard label="Balance" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.remainingAmount.toLocaleString()}</p>} />
+          <InfoCard label="Paid Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {computed.paidAmount.toLocaleString()}</p>} />
+          <InfoCard label="Final Amount" value={<p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">₹ {Number(invoice.finalAmount || 0).toLocaleString()}</p>} />
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-secondary" onClick={() => setForm(invoicePaymentDefaults(invoice))}>Reset</button>
+          <button type="button" className="btn-primary" onClick={handleSubmit}>Update Payment Status</button>
+        </div>
       </div>
 
-      <div className="flex justify-end gap-2">
-        <button type="button" className="btn-secondary" onClick={() => setForm(invoicePaymentDefaults(invoice))}>Reset</button>
-        <button type="button" className="btn-primary" onClick={submit}>Update Payment Status</button>
-      </div>
-    </div>
+      <ConfirmDialog
+        open={confirmPendingOpen}
+        title="Confirm Pending Payment"
+        prompt="Mark invoice as Pending?"
+        confirmLabel="Yes, mark Pending"
+        cancelLabel="Cancel"
+        message={
+          <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+            <p>This invoice is currently marked as Paid.</p>
+            <p>Marking it Pending will clear the payment type and remark, and update the payment status accordingly.</p>
+          </div>
+        }
+        onCancel={() => setConfirmPendingOpen(false)}
+        onConfirm={confirmPending}
+      />
+    </>
   );
 }
 
