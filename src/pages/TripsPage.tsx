@@ -313,7 +313,7 @@ export function TripsPage() {
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
-                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
+                <span className="hidden lg:inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
@@ -321,7 +321,7 @@ export function TripsPage() {
                 New enquiries awaiting assignment.
               </p>
             </div>
-            <span className="inline-flex rounded-full bg-slate-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
+            <span className="inline-flex rounded-full bg-transparent p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
               <ClipboardList className="h-4 w-4" />
             </span>
           </div>
@@ -338,7 +338,7 @@ export function TripsPage() {
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   Assigned
                 </h2>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                <span className="hidden lg:inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
@@ -346,7 +346,7 @@ export function TripsPage() {
                 Bookings already assigned to drivers.
               </p>
             </div>
-            <span className="inline-flex rounded-full bg-slate-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
+            <span className="inline-flex rounded-full bg-transparent p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
               <Route className="h-4 w-4" />
             </span>
           </div>
@@ -361,9 +361,9 @@ export function TripsPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                  Completed / Cancelled
+                  History
                 </h2>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
+                <span className="hidden lg:inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {closedTrips.length}
                 </span>
               </div>
@@ -371,7 +371,7 @@ export function TripsPage() {
                 Trips completed or cancelled.
               </p>
             </div>
-            <span className="inline-flex rounded-full bg-slate-100 p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
+            <span className="inline-flex rounded-full bg-transparent p-2.5 text-brand-700 transition group-hover:scale-105 dark:bg-slate-900 dark:text-brand-200">
               <CheckCircle2 className="h-4 w-4" />
             </span>
           </div>
