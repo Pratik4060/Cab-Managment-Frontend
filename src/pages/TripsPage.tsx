@@ -309,15 +309,15 @@ export function TripsPage() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="hidden lg:block text-xl font-bold text-slate-950 dark:text-white">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   New
                 </h2>
                 <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
                   {pendingBookings.length}
                 </span>
               </div>
-              <p className="hidden lg:block mt-1 text-sm text-slate-500">
+              <p className="hidden sm:block mt-1 text-sm text-slate-500">
                 New enquiries awaiting assignment.
               </p>
             </div>
@@ -334,15 +334,15 @@ export function TripsPage() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="hidden lg:block text-xl font-bold text-slate-950 dark:text-white">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   Assigned
                 </h2>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {assignedTrips.length}
                 </span>
               </div>
-              <p className="hidden lg:block mt-1 text-sm text-slate-500">
+              <p className="hidden sm:block mt-1 text-sm text-slate-500">
                 Bookings already assigned to drivers.
               </p>
             </div>
@@ -359,15 +359,15 @@ export function TripsPage() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="hidden lg:block text-xl font-bold text-slate-950 dark:text-white">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   Completed / Cancelled
                 </h2>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-zinc-900 dark:text-brand-300">
                   {closedTrips.length}
                 </span>
               </div>
-              <p className="hidden lg:block mt-1 text-sm text-slate-500">
+              <p className="hidden sm:block mt-1 text-sm text-slate-500">
                 Trips completed or cancelled.
               </p>
             </div>
